@@ -705,3 +705,42 @@ Implemented scope:
 - Training run creation validates lineage source selection and hyperparameter JSON before submitting.
 - Result recording validates metrics and evaluation report JSON before submitting.
 - Vitest covers the full training run operations workflow with mocked training, experiment, dataset, and feature store APIs.
+
+## Sprint 25: Experiments Operations UI
+
+Goal: Turn experiment tracking into an operator workflow for creating experiment groups, launching experiment runs, recording metrics, attaching artifacts, and completing run reviews from the Experiments page.
+
+Deliverables:
+
+- Experiment creation client method
+- Experiment run start client method
+- Experiment metric logging client method
+- Experiment artifact logging client method
+- Experiment artifact listing client method
+- Experiment run completion client method
+- Experiment creation form
+- Run creation form with dataset version or feature set lineage
+- Selected run detail panel with parameters and evaluation report
+- Metric logging, artifact logging, and completion workflows
+- Run artifact browser
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create experiments for the selected project.
+- Experiment creation sends name and description to the public experiment API.
+- Users can start runs under the selected experiment.
+- Run creation sends run name, model type, artifact URI, parameters, and exactly one lineage source to the public experiment API.
+- Users can log numeric metrics and evaluation report JSON for a selected run.
+- Users can log artifact name, type, URI, and metadata for a selected run.
+- Users can complete a running experiment run with a terminal status, metrics, evaluation report, and optional error message.
+- Experiment, run, and artifact state refresh after lifecycle actions.
+- Frontend tests cover experiment creation, run creation, metric logging, artifact logging, and completion payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/experiments/api/experiments.ts` now exposes create, start, metric, artifact, artifact listing, and completion operations.
+- `ExperimentsPage` includes experiment creation, run submission, dependency selection, run selection, detail inspection, metric logging, artifact logging, completion, and artifact browsing.
+- Experiment run creation validates lineage source selection and parameter JSON before submitting.
+- Tracking operations validate metric, evaluation report, and artifact metadata JSON before submitting.
+- Vitest covers the complete experiment operations workflow with mocked experiment, dataset, and feature store APIs.

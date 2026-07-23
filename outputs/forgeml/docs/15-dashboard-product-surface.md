@@ -84,11 +84,18 @@ Purpose: Compare training experiments and inspect run quality.
 Capabilities:
 
 - Experiment list
+- Experiment creation
+- Selected experiment state
+- Experiment run launch with dataset version or feature set lineage
 - Run table with status, metrics, duration, creator
 - Metric comparison charts
 - Parameter comparison
+- Metric and evaluation report logging
+- Artifact metadata logging
 - Artifact browser
 - Evaluation report view
+- Terminal run completion
+- Operation feedback for tracking actions
 
 ## Training Runs
 
