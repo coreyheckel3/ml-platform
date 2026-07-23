@@ -449,3 +449,40 @@ Implemented scope:
 - Version rows expose request approval, approve, and reject actions based on status.
 - React Query invalidation refreshes registry views after successful mutations.
 - Vitest covers promotion request payloads and approval state transitions through mocked API calls.
+
+## Sprint 18: Deployment Release Console
+
+Goal: Make approved model versions releasable and operable from the Deployments page.
+
+Deliverables:
+
+- Deployment mutation client methods
+- Deployment target creation form
+- Release console for approved model versions
+- Runtime config JSON editor
+- Canary traffic input
+- Revision health recording actions
+- Traffic promotion and drain actions
+- Rollback action for healthy revisions
+- Deployment event history
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create deployment targets for the selected project.
+- The release console lists registered models and only approved versions as deployable candidates.
+- Creating a revision sends model version, serving image, runtime config, and traffic percentage to the deployment API.
+- Revision rows can record healthy, degraded, and unhealthy checks with latency and error-rate observations.
+- Revision rows can move traffic to full allocation or drain traffic to zero.
+- Healthy revisions expose rollback as an explicit action.
+- Deployment queries, revision state, health state, and event history refresh after successful operations.
+- Frontend tests cover revision creation, health recording, and traffic promotion through mocked API calls.
+
+Implemented scope:
+
+- `frontend/src/modules/deployments/api/deployments.ts` now exposes create target, create revision, traffic, health, rollback, and events calls.
+- `DeploymentsPage` includes a release console backed by approved registry versions and existing deployment targets.
+- Deployment target creation is available from the Deployment Targets panel.
+- Rollout State rows expose health, traffic, and rollback controls while preserving immutable revision history.
+- Deployment Events shows the selected target's rollout and health activity.
+- Vitest covers the release workflow payloads and post-mutation state transitions.

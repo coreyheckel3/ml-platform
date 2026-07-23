@@ -184,11 +184,12 @@ Training job request:
 | `GET` | `/projects/{project_id}/deployments` | List deployments |
 | `GET` | `/deployments/{deployment_id}` | Get deployment |
 | `POST` | `/deployments/{deployment_id}/revisions` | Create deployment revision |
-| `POST` | `/deployment-revisions/{revision_id}/rollout` | Start rollout |
-| `POST` | `/deployment-revisions/{revision_id}/promote` | Promote canary to full traffic |
+| `GET` | `/deployments/{deployment_id}/revisions` | List deployment revisions |
+| `POST` | `/deployment-revisions/{revision_id}/traffic` | Update revision traffic allocation |
+| `POST` | `/deployment-revisions/{revision_id}/health-checks` | Record revision health |
+| `GET` | `/deployment-revisions/{revision_id}/health-checks` | List revision health checks |
 | `POST` | `/deployments/{deployment_id}/rollback` | Roll back to prior healthy revision |
 | `GET` | `/deployments/{deployment_id}/events` | Get rollout events |
-| `GET` | `/deployments/{deployment_id}/health` | Get deployment health |
 
 ## Inference
 

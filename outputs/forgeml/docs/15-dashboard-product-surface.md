@@ -127,11 +127,14 @@ Purpose: Operate production model serving safely.
 Capabilities:
 
 - Deployment list
+- Deployment target creation
+- Approved model-version release console
 - Revision history
 - Canary rollout status
-- Promote and rollback actions
-- Health checks
+- Traffic promotion, drain, and rollback actions
+- Revision health checks with latency and error-rate observations
 - Runtime configuration
+- Deployment event history
 - Linked monitoring panels
 
 ## Monitoring

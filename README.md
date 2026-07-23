@@ -28,7 +28,7 @@ Implemented foundation:
 - Production hardening with secure response headers, configurable API rate limiting, Prometheus metrics for throttling, production-readiness CI checks, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
-- React/Vite frontend shell with SaaS-style navigation, core pages, registry promotion workbench, and model approval actions.
+- React/Vite frontend shell with SaaS-style navigation, core pages, registry promotion workbench, model approval actions, and deployment release console.
 - Example Projects page showing cross-workload lifecycle coverage without coupling core platform modules to example names.
 - Docker Compose infrastructure for local platform services.
 - Docker Compose full profile with Prometheus and Grafana provisioning.
