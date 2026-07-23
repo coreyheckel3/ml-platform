@@ -1,4 +1,4 @@
-import { apiGet } from "../../../shared/api/client";
+import { apiGet, apiPost } from "../../../shared/api/client";
 
 export type AlertRule = {
   id: string;
@@ -32,6 +32,14 @@ export type AlertEvent = {
   resolved_by: string | null;
 };
 
+export type AlertEvaluation = {
+  rule_id: string;
+  endpoint_id: string;
+  triggered: boolean;
+  observed_value: number;
+  event: AlertEvent | null;
+};
+
 export type AlertRuleListResponse = {
   items: AlertRule[];
   next_cursor: string | null;
@@ -42,14 +50,38 @@ export type AlertEventListResponse = {
   next_cursor: string | null;
 };
 
-export function listAlertRules(projectId: string, token: string): Promise<AlertRuleListResponse> {
-  return apiGet<AlertRuleListResponse>(`/api/v1/projects/${projectId}/alert-rules`, {
-    token
-  });
+export function listAlertRules(
+  projectId: string,
+  token: string,
+): Promise<AlertRuleListResponse> {
+  return apiGet<AlertRuleListResponse>(
+    `/api/v1/projects/${projectId}/alert-rules`,
+    {
+      token,
+    },
+  );
 }
 
-export function listAlertEvents(projectId: string, token: string): Promise<AlertEventListResponse> {
-  return apiGet<AlertEventListResponse>(`/api/v1/projects/${projectId}/alert-events`, {
-    token
-  });
+export function listAlertEvents(
+  projectId: string,
+  token: string,
+): Promise<AlertEventListResponse> {
+  return apiGet<AlertEventListResponse>(
+    `/api/v1/projects/${projectId}/alert-events`,
+    {
+      token,
+    },
+  );
+}
+
+export function evaluateAlertRule(
+  ruleId: string,
+  endpointId: string,
+  token: string,
+): Promise<AlertEvaluation> {
+  return apiPost<{ endpoint_id: string }, AlertEvaluation>(
+    `/api/v1/alert-rules/${ruleId}/evaluate`,
+    { endpoint_id: endpointId },
+    { token },
+  );
 }

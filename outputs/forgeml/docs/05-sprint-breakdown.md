@@ -523,3 +523,40 @@ Implemented scope:
 - The probe console accepts JSON payloads and surfaces mutation feedback.
 - Metric snapshot recording is available from the Metric Snapshots panel.
 - Vitest covers the end-to-end inference operations workflow through mocked API calls.
+
+## Sprint 20: Monitoring Operations UI
+
+Goal: Turn project monitoring into an endpoint-level triage surface with alert evaluation and production health context.
+
+Deliverables:
+
+- Alert evaluation client method
+- Endpoint health table with selected endpoint state
+- Endpoint drilldown panel
+- Error-rate and p95 latency budget indicators
+- Endpoint risk classification
+- Endpoint-linked alert context
+- Alert rule selector
+- Manual alert evaluation action
+- Operational focus panel for highest-risk endpoint
+- Frontend regression tests
+
+Acceptance criteria:
+
+- The Monitoring page loads project summaries, endpoint summaries, alert rules, and alert events for the selected project.
+- Endpoint rows expose prediction count, error rate, p50, p95, risk classification, and selection.
+- The selected endpoint drilldown shows route, status, deployment revision, monitoring window, error budget, latency budget, and open alert count.
+- Operators can evaluate a selected alert rule against the selected endpoint.
+- Evaluation sends the selected endpoint id to the public alerting API.
+- Evaluation feedback distinguishes triggered and clear outcomes.
+- Alert events refresh after evaluation.
+- The page highlights the highest-risk endpoint for operational focus.
+- Frontend tests cover alert evaluation payloads and monitoring state rendering.
+
+Implemented scope:
+
+- `frontend/src/modules/alerts/api/alerts.ts` now exposes alert rule evaluation.
+- `MonitoringPage` includes endpoint selection, risk badges, budget bars, drilldown metrics, and endpoint-linked alert context.
+- Alert Evaluation lets operators select a rule and evaluate it against the selected endpoint.
+- Operational Focus highlights the endpoint with the highest latency/error risk score.
+- Vitest covers alert rule evaluation from monitoring with mocked monitoring and alerting APIs.

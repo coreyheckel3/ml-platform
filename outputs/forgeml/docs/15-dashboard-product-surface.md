@@ -163,6 +163,13 @@ Capabilities:
 - Training duration and failures
 - Inference throughput and latency
 - Prediction count
+- Endpoint health table
+- Endpoint drilldown
+- Error-rate and latency budget indicators
+- Endpoint risk classification
+- Alert rule evaluation
+- Endpoint-linked alert context
+- Highest-risk endpoint focus
 - Feature drift
 - Inference errors
 - Pipeline failures
