@@ -110,9 +110,12 @@ Purpose: Govern registered model versions.
 Capabilities:
 
 - Registered model list
+- Promotion workbench for succeeded training runs
+- Model signature editor
 - Version table
 - Model lineage
 - Metrics summary
+- Approval request and review actions
 - Signature view
 - Approval request
 - Approval and rejection workflow

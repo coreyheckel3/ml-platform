@@ -416,3 +416,36 @@ Implemented scope:
 - The ForgeML SDK and example bootstrapper now promote training runs through the public API.
 - `forgeml_model_promotions_total` tracks successful and idempotent promotions.
 - Frontend project creation is covered by Vitest and Playwright smoke coverage.
+
+## Sprint 17: Registry Operations UI
+
+Goal: Make model promotion and approval usable from the web interface.
+
+Deliverables:
+
+- Model registry mutation client methods
+- Promotion workbench on the Models page
+- Succeeded training-run picker
+- Model format selection
+- Editable model signature JSON
+- Candidate approval request action
+- Pending approval review actions
+- Frontend regression tests
+
+Acceptance criteria:
+
+- The Models page loads registered models, selected model versions, and succeeded training runs for the selected project.
+- Users can promote an unregistered succeeded training run into the selected model.
+- The promotion request sends model format and signature metadata to the promotion API.
+- Candidate versions can request approval.
+- Pending versions can be approved or rejected.
+- Registry queries refresh after promotion and review actions.
+- Frontend tests cover the promotion and approval workflow.
+
+Implemented scope:
+
+- `frontend/src/modules/models/api/models.ts` now exposes promotion and approval mutation calls.
+- `ModelsPage` includes a promotion workbench with model, training-run, format, and signature controls.
+- Version rows expose request approval, approve, and reject actions based on status.
+- React Query invalidation refreshes registry views after successful mutations.
+- Vitest covers promotion request payloads and approval state transitions through mocked API calls.
