@@ -57,6 +57,25 @@ class ExecuteTrainingRunCommand:
     training_run_id: UUID
 
 
+@dataclass(frozen=True)
+class ExecuteNextTrainingRunsCommand:
+    organization_id: UUID
+    project_id: UUID | None = None
+    max_runs: int = 1
+    worker_id: str = "local-training-worker"
+
+
+@dataclass(frozen=True)
+class TrainingWorkerRunSummary:
+    worker_id: str
+    scanned: int
+    executed: int
+    succeeded: int
+    failed: int
+    skipped: int
+    training_run_ids: list[UUID]
+
+
 class TrainingRunService:
     def __init__(
         self,
@@ -204,20 +223,83 @@ class TrainingRunService:
         if self._runner is None or not self._runner.can_run(training_run):
             raise DomainValidationError("No training runner is configured for this run.")
 
-        running = replace(training_run, status=TrainingRunStatus.RUNNING)
-        saved_running = self._training_runs.update_training_run(running)
+        return self._execute_claimed_training_run(
+            training_run,
+            worker_id="manual-training-execution",
+        )
+
+    def execute_next_training_runs(
+        self,
+        command: ExecuteNextTrainingRunsCommand,
+        principal: Principal,
+    ) -> TrainingWorkerRunSummary:
+        self._require(principal, "training_runs:write")
+        self._require_same_organization(command.organization_id, principal)
+        if command.max_runs < 1 or command.max_runs > 100:
+            raise DomainValidationError("Worker max_runs must be between 1 and 100.")
+        if self._runner is None:
+            raise DomainValidationError("No training runner is configured for this worker.")
+
+        candidates = self._training_runs.list_runnable_training_runs(
+            command.organization_id,
+            command.project_id,
+            limit=command.max_runs * 10,
+        )
+        executed_runs: list[TrainingRun] = []
+        skipped = 0
+        for candidate in candidates:
+            if len(executed_runs) >= command.max_runs:
+                break
+            if not self._runner.can_run(candidate):
+                skipped += 1
+                continue
+            try:
+                executed_runs.append(
+                    self._execute_claimed_training_run(
+                        candidate,
+                        worker_id=command.worker_id,
+                    )
+                )
+            except DomainValidationError:
+                skipped += 1
+        return TrainingWorkerRunSummary(
+            worker_id=command.worker_id,
+            scanned=len(candidates),
+            executed=len(executed_runs),
+            succeeded=sum(
+                run.status == TrainingRunStatus.SUCCEEDED for run in executed_runs
+            ),
+            failed=sum(run.status == TrainingRunStatus.FAILED for run in executed_runs),
+            skipped=skipped,
+            training_run_ids=[run.id for run in executed_runs],
+        )
+
+    def _execute_claimed_training_run(
+        self,
+        training_run: TrainingRun,
+        *,
+        worker_id: str,
+    ) -> TrainingRun:
+        if self._runner is None or not self._runner.can_run(training_run):
+            raise DomainValidationError("No training runner is configured for this run.")
+        claimed = self._training_runs.claim_training_run(training_run.id)
+        if claimed is None:
+            raise DomainValidationError("Training run is no longer executable.")
         self._training_runs.add_event(
             TrainingRunEvent(
                 id=uuid4(),
-                training_run_id=saved_running.id,
+                training_run_id=claimed.id,
                 event_type="running",
                 message="Training run execution started.",
-                metadata={"orchestrator_run_id": saved_running.orchestrator_run_id},
+                metadata={
+                    "orchestrator_run_id": claimed.orchestrator_run_id,
+                    "worker_id": worker_id,
+                },
             )
         )
 
         try:
-            execution_result = self._runner.run(saved_running)
+            execution_result = self._runner.run(claimed)
         except Exception as exc:  # noqa: BLE001
             execution_result = TrainingExecutionResult(
                 status=TrainingRunStatus.FAILED,
@@ -225,11 +307,11 @@ class TrainingRunService:
                 evaluation_report={},
                 artifacts=[],
                 runner_name=self._runner.__class__.__name__,
-                external_run_id=saved_running.orchestrator_run_id,
+                external_run_id=claimed.orchestrator_run_id,
                 error_message=str(exc),
             )
         return self._record_terminal_result(
-            saved_running,
+            claimed,
             status=execution_result.status,
             metrics=execution_result.metrics,
             evaluation_report=_with_execution_metadata(execution_result),

@@ -23,6 +23,11 @@ from forgeml.modules.training.infrastructure.sqlalchemy_models import (
     TrainingRunModel,
 )
 
+_RUNNABLE_TRAINING_STATUSES = {
+    TrainingRunStatus.REQUESTED.value,
+    TrainingRunStatus.QUEUED.value,
+}
+
 
 class SqlAlchemyTrainingRunRepository:
     def __init__(self, session: Session) -> None:
@@ -66,6 +71,35 @@ class SqlAlchemyTrainingRunRepository:
             .order_by(TrainingRunModel.created_at.desc())
         ).all()
         return [_training_run_to_domain(model) for model in models]
+
+    def list_runnable_training_runs(
+        self,
+        organization_id: UUID,
+        project_id: UUID | None,
+        limit: int,
+    ) -> list[TrainingRun]:
+        query = select(TrainingRunModel).where(
+            TrainingRunModel.organization_id == organization_id,
+            TrainingRunModel.status.in_(_RUNNABLE_TRAINING_STATUSES),
+        )
+        if project_id is not None:
+            query = query.where(TrainingRunModel.project_id == project_id)
+        models = self._session.scalars(
+            query.order_by(TrainingRunModel.created_at).limit(limit)
+        ).all()
+        return [_training_run_to_domain(model) for model in models]
+
+    def claim_training_run(self, training_run_id: UUID) -> TrainingRun | None:
+        model = self._session.scalar(
+            select(TrainingRunModel)
+            .where(TrainingRunModel.id == training_run_id)
+            .with_for_update()
+        )
+        if model is None or model.status not in _RUNNABLE_TRAINING_STATUSES:
+            return None
+        model.status = TrainingRunStatus.RUNNING.value
+        self._session.flush()
+        return _training_run_to_domain(model)
 
     def update_training_run(self, training_run: TrainingRun) -> TrainingRun:
         model = self._session.get(TrainingRunModel, training_run.id)

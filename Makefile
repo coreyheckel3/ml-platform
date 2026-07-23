@@ -23,11 +23,11 @@ example-training:
 	PYTHONPATH=. $(PYTHON) scripts/examples/run_local_training.py
 
 lint:
-	$(RUFF) check backend/src backend/tests scripts/ci scripts/dev scripts/examples ml/libraries ml/examples
+	$(RUFF) check backend/src backend/tests scripts/ci scripts/dev scripts/examples scripts/workers ml/libraries ml/examples
 	$(NPM) --prefix frontend run lint
 
 format:
-	$(RUFF) format backend/src backend/tests scripts/ci scripts/dev scripts/examples ml/libraries ml/examples
+	$(RUFF) format backend/src backend/tests scripts/ci scripts/dev scripts/examples scripts/workers ml/libraries ml/examples
 	$(NPM) --prefix frontend run format
 
 production-readiness:

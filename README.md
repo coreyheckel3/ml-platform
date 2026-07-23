@@ -88,6 +88,12 @@ Run deterministic local example training:
 PYTHONPATH=. .venv/bin/python scripts/examples/run_local_training.py
 ```
 
+Run one local worker polling cycle for an organization:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/workers/run_training_worker.py --organization-id <organization-id>
+```
+
 ## Architecture
 
 Start with [the architecture index](outputs/forgeml/docs/index.md).

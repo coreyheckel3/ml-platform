@@ -39,6 +39,7 @@ REQUIRED_FILES = (
     "load/k6/api_smoke.js",
     "backend/src/forgeml/modules/training/infrastructure/execution.py",
     "backend/tests/unit/training/test_training_execution.py",
+    "scripts/workers/run_training_worker.py",
     "ml/examples/fraud_detection/train.py",
     "ml/examples/movie_recommendation/train.py",
     "ml/examples/semantic_search/build_index.py",
@@ -257,6 +258,7 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
     )
     required_fragments = {
         "execute_training_run": service_source,
+        "execute_next_training_runs": service_source,
         "TrainingJobRunner": service_source,
         "forgeml.training_execution_result.v1": service_source,
         "EXAMPLE_PROJECT_SLUG_PARAMETER": runner_source,
@@ -264,6 +266,12 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
         "FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT": config_source,
         "runner=LocalExampleTrainingRunner": routes_source,
         "build_training_execution_report": bootstrap_source,
+        "claim_training_run": (
+            repo_root / "backend/src/forgeml/modules/training/repositories/interfaces.py"
+        ).read_text(encoding="utf-8"),
+        "run_once": (
+            repo_root / "scripts/workers/run_training_worker.py"
+        ).read_text(encoding="utf-8"),
     }
     missing = [
         fragment for fragment, source in required_fragments.items() if fragment not in source

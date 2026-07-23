@@ -1,9 +1,11 @@
+from dataclasses import replace
 from uuid import UUID, uuid4
 
 import pytest
 
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.application.services import (
+    ExecuteNextTrainingRunsCommand,
     ExecuteTrainingRunCommand,
     RecordTrainingResultCommand,
     StartTrainingRunCommand,
@@ -45,6 +47,32 @@ class FakeTrainingRunRepository:
             for run in self.training_runs.values()
             if run.organization_id == organization_id and run.project_id == project_id
         ]
+
+    def list_runnable_training_runs(
+        self,
+        organization_id: UUID,
+        project_id: UUID | None,
+        limit: int,
+    ) -> list[TrainingRun]:
+        runs = [
+            run
+            for run in self.training_runs.values()
+            if run.organization_id == organization_id
+            and run.status in {TrainingRunStatus.REQUESTED, TrainingRunStatus.QUEUED}
+            and (project_id is None or run.project_id == project_id)
+        ]
+        return runs[:limit]
+
+    def claim_training_run(self, training_run_id: UUID) -> TrainingRun | None:
+        training_run = self.training_runs.get(training_run_id)
+        if training_run is None or training_run.status not in {
+            TrainingRunStatus.REQUESTED,
+            TrainingRunStatus.QUEUED,
+        }:
+            return None
+        claimed = replace(training_run, status=TrainingRunStatus.RUNNING)
+        self.training_runs[training_run_id] = claimed
+        return claimed
 
     def update_training_run(self, training_run: TrainingRun) -> TrainingRun:
         self.training_runs[training_run.id] = training_run
@@ -317,6 +345,100 @@ def test_training_service_rejects_execution_without_matching_runner() -> None:
         )
 
     assert repository.training_runs[training_run.id].status == TrainingRunStatus.QUEUED
+
+
+def test_training_service_worker_executes_next_supported_queued_run() -> None:
+    repository = FakeTrainingRunRepository()
+    recorder = FakeExperimentRunRecorder()
+    service = TrainingRunService(
+        training_runs=repository,
+        experiment_runs=recorder,
+        orchestrator=FakeOrchestrator(),
+        artifact_bucket="forgeml-artifacts",
+        runner=FakeRunner(),
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    actor = principal(
+        organization_id,
+        user_id,
+        {"training_runs:create", "training_runs:write"},
+    )
+    unsupported_run = service.start_training_run(
+        StartTrainingRunCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            experiment_id=experiment_id,
+            run_name="fraud-lightgbm-baseline",
+            dataset_version_id=dataset_version_id,
+            feature_set_id=None,
+            algorithm="lightgbm",
+            model_type="lightgbm",
+            objective_metric_name="auc",
+            hyperparameters={},
+            requested_by=user_id,
+        ),
+        actor,
+    )
+    supported_run = service.start_training_run(
+        StartTrainingRunCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            experiment_id=experiment_id,
+            run_name="fraud-xgb-depth-6",
+            dataset_version_id=dataset_version_id,
+            feature_set_id=None,
+            algorithm="xgboost",
+            model_type="xgboost",
+            objective_metric_name="auc",
+            hyperparameters={"max_depth": 6},
+            requested_by=user_id,
+        ),
+        actor,
+    )
+
+    summary = service.execute_next_training_runs(
+        ExecuteNextTrainingRunsCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            max_runs=1,
+            worker_id="worker-a",
+        ),
+        actor,
+    )
+
+    assert summary.scanned == 2
+    assert summary.executed == 1
+    assert summary.succeeded == 1
+    assert summary.failed == 0
+    assert summary.skipped == 1
+    assert summary.training_run_ids == [supported_run.id]
+    assert repository.training_runs[unsupported_run.id].status == TrainingRunStatus.QUEUED
+    assert repository.training_runs[supported_run.id].status == TrainingRunStatus.SUCCEEDED
+    running_events = [event for event in repository.events if event.event_type == "running"]
+    assert running_events[0].metadata["worker_id"] == "worker-a"
+
+
+def test_training_service_worker_validates_batch_size() -> None:
+    service = TrainingRunService(
+        training_runs=FakeTrainingRunRepository(),
+        experiment_runs=FakeExperimentRunRecorder(),
+        orchestrator=FakeOrchestrator(),
+        artifact_bucket="forgeml-artifacts",
+        runner=FakeRunner(),
+    )
+    organization_id = uuid4()
+
+    with pytest.raises(DomainValidationError):
+        service.execute_next_training_runs(
+            ExecuteNextTrainingRunsCommand(organization_id=organization_id, max_runs=0),
+            principal(organization_id, uuid4(), {"training_runs:write"}),
+        )
 
 
 def test_training_service_rejects_unknown_experiment() -> None:

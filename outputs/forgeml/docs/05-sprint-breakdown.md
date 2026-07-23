@@ -351,3 +351,34 @@ Implemented scope:
 - Bootstrap now starts training through public APIs, runs the matching local trainer, and records generated metrics plus artifact metadata.
 - Backend Docker images include the `ml` package on `PYTHONPATH` so local example execution is available in demo containers.
 - Unit tests cover service execution transitions, local runner behavior, bootstrap metadata, and readiness contracts.
+
+## Sprint 15: Training Worker Polling
+
+Goal: Add a local worker loop that discovers queued training runs, claims supported work, executes through the runner contract, and records terminal results.
+
+Deliverables:
+
+- Runnable training run query
+- Training run claim operation
+- Worker batch execution command
+- Worker execution summary contract
+- Local worker CLI
+- SQLAlchemy claim integration tests
+- Readiness checks for worker wiring
+
+Acceptance criteria:
+
+- Workers scan requested and queued runs within an organization.
+- Unsupported queued runs are skipped instead of being misrouted.
+- Supported runs are claimed before execution and cannot be claimed twice.
+- Running events record the worker id.
+- Worker summaries report scanned, executed, succeeded, failed, skipped, and executed run ids.
+- The local worker CLI can run a single polling cycle from the command line.
+
+Implemented scope:
+
+- `TrainingRunRepository` now exposes runnable listing and claim operations.
+- `SqlAlchemyTrainingRunRepository` implements queue discovery and row-level claim semantics.
+- `TrainingRunService.execute_next_training_runs` processes supported queued work through the configured runner.
+- `scripts/workers/run_training_worker.py` runs one local worker polling cycle for an organization.
+- Unit and integration tests cover worker summaries, queue skipping, claiming, and terminal persistence.

@@ -19,6 +19,17 @@ class TrainingRunRepository(Protocol):
     def list_training_runs(self, organization_id: UUID, project_id: UUID) -> list[TrainingRun]:
         raise NotImplementedError
 
+    def list_runnable_training_runs(
+        self,
+        organization_id: UUID,
+        project_id: UUID | None,
+        limit: int,
+    ) -> list[TrainingRun]:
+        raise NotImplementedError
+
+    def claim_training_run(self, training_run_id: UUID) -> TrainingRun | None:
+        raise NotImplementedError
+
     def update_training_run(self, training_run: TrainingRun) -> TrainingRun:
         raise NotImplementedError
 

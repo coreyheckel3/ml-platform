@@ -65,6 +65,12 @@ The script logs in as `admin@forgeml.dev`, then creates or reuses:
 
 Training runs are queued through the ForgeML API. The bootstrapper then executes the matching local example trainer outside the API request path and records generated metrics, evaluation data, and artifact metadata back through the training result API.
 
+For a worker-style local polling cycle, run:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/workers/run_training_worker.py --organization-id <organization-id>
+```
+
 Run a single workload by slug:
 
 ```bash

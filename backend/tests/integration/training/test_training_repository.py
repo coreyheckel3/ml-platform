@@ -50,6 +50,7 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
     experiment_id = uuid4()
     experiment_run_id = uuid4()
     training_run_id = uuid4()
+    queued_training_run_id = uuid4()
 
     with Session(engine) as session:
         session.add(OrganizationModel(id=organization_id, name="ForgeML", slug="forgeml"))
@@ -162,6 +163,27 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
                 error_message=None,
             )
         )
+        queued_training_run = repository.add_training_run(
+            TrainingRun(
+                id=queued_training_run_id,
+                organization_id=organization_id,
+                project_id=project_id,
+                experiment_id=experiment_id,
+                experiment_run_id=experiment_run.id,
+                dataset_version_id=dataset_version_id,
+                feature_set_id=feature_set_id,
+                algorithm="xgboost",
+                model_type="xgboost",
+                objective_metric_name="auc",
+                hyperparameters={"max_depth": 4},
+                status=TrainingRunStatus.QUEUED,
+                requested_by=user_id,
+                artifact_uri="s3://forgeml/training-runs/run-2",
+                orchestrator_run_id="workflow-2",
+                metrics={},
+                error_message=None,
+            )
+        )
         repository.update_training_run(
             TrainingRun(
                 id=training_run.id,
@@ -198,6 +220,13 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
         repository = SqlAlchemyTrainingRunRepository(session)
 
         training_runs = repository.list_training_runs(organization_id, project_id)
+        runnable_runs = repository.list_runnable_training_runs(
+            organization_id,
+            project_id,
+            limit=10,
+        )
+        claimed_run = repository.claim_training_run(queued_training_run_id)
+        second_claim = repository.claim_training_run(queued_training_run_id)
         events = repository.list_events(training_run_id)
         experiment_exists = repository.experiment_belongs_to_project(
             organization_id,
@@ -210,8 +239,11 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
         )
         feature_set_exists = repository.feature_set_belongs_to_project(project_id, feature_set_id)
 
-    assert training_runs[0].status == TrainingRunStatus.SUCCEEDED
-    assert training_runs[0].metrics["auc"] == 0.94
+    assert {run.id for run in runnable_runs} == {queued_training_run.id}
+    assert claimed_run is not None
+    assert claimed_run.status == TrainingRunStatus.RUNNING
+    assert second_claim is None
+    assert any(run.metrics.get("auc") == 0.94 for run in training_runs)
     assert events[0].event_type == "queued"
     assert experiment_exists
     assert dataset_exists
