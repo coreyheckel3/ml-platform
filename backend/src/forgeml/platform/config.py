@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,6 +24,10 @@ class Settings(BaseSettings):
     mlflow_tracking_uri: str = Field(
         default="http://localhost:5000",
         alias="FORGEML_MLFLOW_TRACKING_URI",
+    )
+    local_training_artifact_root: Path = Field(
+        default=Path("artifacts/training-runs"),
+        alias="FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT",
     )
     airflow_base_url: str = Field(
         default="http://localhost:8080",

@@ -319,3 +319,35 @@ Implemented scope:
 - Semantic Search builds a TF-IDF cosine retrieval index over the fixture corpus.
 - Unit tests verify artifact schema versions, objective metrics, and orchestrator output.
 - CI linting now covers `ml` example code and runs a local example training smoke command.
+
+## Sprint 14: Training Execution Layer
+
+Goal: Move from standalone example scripts toward a platform execution contract that workers can use to run jobs and persist generated artifacts.
+
+Deliverables:
+
+- Training runner port
+- Training execution result contract
+- Artifact metadata contract
+- Local example runner adapter
+- Worker-oriented execution method
+- Bootstrap integration with generated metrics
+- Production-readiness execution checks
+
+Acceptance criteria:
+
+- Training execution is modeled behind a runner interface.
+- Queued runs can transition through running to terminal status through the application layer.
+- Generated metrics update the linked experiment run and training run.
+- Evaluation reports include a versioned execution manifest with artifact metadata.
+- Example execution requires an explicit adapter selector and does not infer workload from generic algorithms alone.
+- Bootstrap uses generated local artifacts instead of static report values for new example training runs.
+
+Implemented scope:
+
+- `TrainingJobRunner` and `TrainingExecutionResult` define the execution boundary.
+- `TrainingRunService.execute_training_run` is available for worker processes and records running and terminal events.
+- `LocalExampleTrainingRunner` executes the three deterministic reference workloads when `forgeml.example_project_slug` selects a supported adapter.
+- Bootstrap now starts training through public APIs, runs the matching local trainer, and records generated metrics plus artifact metadata.
+- Backend Docker images include the `ml` package on `PYTHONPATH` so local example execution is available in demo containers.
+- Unit tests cover service execution transitions, local runner behavior, bootstrap metadata, and readiness contracts.

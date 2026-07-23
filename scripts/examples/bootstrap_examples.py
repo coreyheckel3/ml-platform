@@ -10,6 +10,9 @@ from typing import Any
 
 from ml.libraries.forgeml_sdk.client import ForgeMLClient
 from ml.libraries.forgeml_sdk.examples import ExampleProjectManifest, load_example_manifest
+from scripts.examples.run_local_training import TRAINERS
+
+EXAMPLE_PROJECT_SLUG_PARAMETER = "forgeml.example_project_slug"
 
 
 @dataclass(frozen=True)
@@ -307,6 +310,7 @@ def ensure_succeeded_training_run(
     feature_set_id: str,
     manifest: ExampleProjectManifest,
     project_root: Path,
+    artifact_root: Path | None = None,
 ) -> dict[str, Any]:
     existing = next(
         (
@@ -314,8 +318,8 @@ def ensure_succeeded_training_run(
             for item in client.list_training_runs(project_id).get("items", [])
             if item.get("algorithm") == manifest.training_run.algorithm
             and item.get("status") == "succeeded"
-            and item.get("metrics", {}).get(manifest.training_run.objective_metric_name)
-            == manifest.training_run.metrics[manifest.training_run.objective_metric_name]
+            and item.get("hyperparameters", {}).get(EXAMPLE_PROJECT_SLUG_PARAMETER)
+            == manifest.slug
         ),
         None,
     )
@@ -331,20 +335,65 @@ def ensure_succeeded_training_run(
             "algorithm": manifest.training_run.algorithm,
             "model_type": manifest.training_run.model_type,
             "objective_metric_name": manifest.training_run.objective_metric_name,
-            "hyperparameters": manifest.training_run.hyperparameters,
+            "hyperparameters": example_training_hyperparameters(manifest),
         },
     )
-    evaluation_report = json.loads(
-        (project_root / manifest.training_run.evaluation_report_path).read_text(encoding="utf-8")
+    resolved_artifact_root = artifact_root or Path("artifacts/examples")
+    summary = TRAINERS[manifest.slug](
+        output_dir=resolved_artifact_root / manifest.slug / str(training_run["id"])
     )
+    evaluation_report = build_training_execution_report(summary, manifest)
     return client.record_training_result(
         str(training_run["id"]),
         {
             "status": "succeeded",
-            "metrics": manifest.training_run.metrics,
+            "metrics": summary["metrics"],
             "evaluation_report": evaluation_report,
         },
     )
+
+
+def example_training_hyperparameters(manifest: ExampleProjectManifest) -> dict[str, object]:
+    return {
+        **manifest.training_run.hyperparameters,
+        EXAMPLE_PROJECT_SLUG_PARAMETER: manifest.slug,
+    }
+
+
+def build_training_execution_report(
+    summary: dict[str, Any],
+    manifest: ExampleProjectManifest,
+) -> dict[str, object]:
+    evaluation_report = json.loads(
+        Path(summary["artifact_paths"]["evaluation"]).read_text(encoding="utf-8")
+    )
+    artifacts = [
+        {
+            "name": name,
+            "artifact_type": {
+                "model": "model",
+                "evaluation": "evaluation_report",
+                "summary": "execution_summary",
+            }[name],
+            "uri": Path(path).resolve().as_uri(),
+            "media_type": "application/json",
+            "metadata": {
+                "local_path": str(Path(path).resolve()),
+                "example_project_slug": manifest.slug,
+            },
+        }
+        for name, path in summary["artifact_paths"].items()
+    ]
+    return {
+        **evaluation_report,
+        "example_project_slug": manifest.slug,
+        "training_execution": {
+            "schema_version": "forgeml.training_execution_result.v1",
+            "runner_name": "local-example-training-runner",
+            "external_run_id": f"bootstrap-example:{manifest.slug}",
+            "artifacts": artifacts,
+        },
+    }
 
 
 def ensure_model_version(
@@ -475,6 +524,10 @@ def build_retraining_policy_payload(
         "experiment_id": experiment_id,
         "dataset_version_id": dataset_version_id,
         "feature_set_id": feature_set_id,
+    }
+    training_template["hyperparameters"] = {
+        **dict(training_template["hyperparameters"]),
+        EXAMPLE_PROJECT_SLUG_PARAMETER: manifest.slug,
     }
     return {
         "deployment_id": deployment_id,

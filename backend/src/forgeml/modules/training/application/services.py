@@ -1,8 +1,9 @@
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 from uuid import UUID, uuid4
 
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.domain.entities import (
+    TrainingExecutionResult,
     TrainingRun,
     TrainingRunEvent,
     TrainingRunStatus,
@@ -15,10 +16,15 @@ from forgeml.modules.training.domain.policies import (
 )
 from forgeml.modules.training.repositories.interfaces import (
     ExperimentRunRecorder,
+    TrainingJobRunner,
     TrainingRunRepository,
     TrainingWorkflowOrchestrator,
 )
-from forgeml.platform.domain.errors import PermissionDeniedError, ResourceNotFoundError
+from forgeml.platform.domain.errors import (
+    DomainValidationError,
+    PermissionDeniedError,
+    ResourceNotFoundError,
+)
 from forgeml.platform.security.rbac import Principal
 
 
@@ -46,6 +52,11 @@ class RecordTrainingResultCommand:
     error_message: str | None = None
 
 
+@dataclass(frozen=True)
+class ExecuteTrainingRunCommand:
+    training_run_id: UUID
+
+
 class TrainingRunService:
     def __init__(
         self,
@@ -54,11 +65,13 @@ class TrainingRunService:
         experiment_runs: ExperimentRunRecorder,
         orchestrator: TrainingWorkflowOrchestrator,
         artifact_bucket: str,
+        runner: TrainingJobRunner | None = None,
     ) -> None:
         self._training_runs = training_runs
         self._experiment_runs = experiment_runs
         self._orchestrator = orchestrator
         self._artifact_bucket = artifact_bucket
+        self._runner = runner
 
     def start_training_run(
         self,
@@ -168,32 +181,60 @@ class TrainingRunService:
     ) -> TrainingRun:
         self._require(principal, "training_runs:write")
         training_run = self._get_scoped_training_run(command.training_run_id, principal)
-        validate_terminal_status(command.status)
-        validate_metrics(command.metrics)
-        updated = replace(
+        return self._record_terminal_result(
             training_run,
             status=command.status,
-            metrics={**training_run.metrics, **command.metrics},
+            metrics=command.metrics,
+            evaluation_report=command.evaluation_report,
             error_message=command.error_message,
         )
-        saved = self._training_runs.update_training_run(updated)
-        self._experiment_runs.update_experiment_run(
-            saved.experiment_run_id,
-            _to_experiment_status(command.status),
-            saved.metrics,
-            command.evaluation_report,
-            command.error_message,
-        )
+
+    def execute_training_run(
+        self,
+        command: ExecuteTrainingRunCommand,
+        principal: Principal,
+    ) -> TrainingRun:
+        self._require(principal, "training_runs:write")
+        training_run = self._get_scoped_training_run(command.training_run_id, principal)
+        if training_run.status not in {
+            TrainingRunStatus.REQUESTED,
+            TrainingRunStatus.QUEUED,
+        }:
+            raise DomainValidationError("Only requested or queued training runs can execute.")
+        if self._runner is None or not self._runner.can_run(training_run):
+            raise DomainValidationError("No training runner is configured for this run.")
+
+        running = replace(training_run, status=TrainingRunStatus.RUNNING)
+        saved_running = self._training_runs.update_training_run(running)
         self._training_runs.add_event(
             TrainingRunEvent(
                 id=uuid4(),
-                training_run_id=saved.id,
-                event_type=command.status.value,
-                message=f"Training run finished with status {command.status.value}.",
-                metadata={"metrics": saved.metrics},
+                training_run_id=saved_running.id,
+                event_type="running",
+                message="Training run execution started.",
+                metadata={"orchestrator_run_id": saved_running.orchestrator_run_id},
             )
         )
-        return saved
+
+        try:
+            execution_result = self._runner.run(saved_running)
+        except Exception as exc:  # noqa: BLE001
+            execution_result = TrainingExecutionResult(
+                status=TrainingRunStatus.FAILED,
+                metrics={},
+                evaluation_report={},
+                artifacts=[],
+                runner_name=self._runner.__class__.__name__,
+                external_run_id=saved_running.orchestrator_run_id,
+                error_message=str(exc),
+            )
+        return self._record_terminal_result(
+            saved_running,
+            status=execution_result.status,
+            metrics=execution_result.metrics,
+            evaluation_report=_with_execution_metadata(execution_result),
+            error_message=execution_result.error_message,
+        )
 
     def cancel_training_run(self, training_run_id: UUID, principal: Principal) -> TrainingRun:
         self._require(principal, "training_runs:cancel")
@@ -246,6 +287,42 @@ class TrainingRunService:
         if str(organization_id) != principal.organization_id:
             raise PermissionDeniedError("You cannot manage training runs in another organization.")
 
+    def _record_terminal_result(
+        self,
+        training_run: TrainingRun,
+        *,
+        status: TrainingRunStatus,
+        metrics: dict[str, float],
+        evaluation_report: dict[str, object],
+        error_message: str | None,
+    ) -> TrainingRun:
+        validate_terminal_status(status)
+        validate_metrics(metrics)
+        updated = replace(
+            training_run,
+            status=status,
+            metrics={**training_run.metrics, **metrics},
+            error_message=error_message,
+        )
+        saved = self._training_runs.update_training_run(updated)
+        self._experiment_runs.update_experiment_run(
+            saved.experiment_run_id,
+            _to_experiment_status(status),
+            saved.metrics,
+            evaluation_report,
+            error_message,
+        )
+        self._training_runs.add_event(
+            TrainingRunEvent(
+                id=uuid4(),
+                training_run_id=saved.id,
+                event_type=status.value,
+                message=f"Training run finished with status {status.value}.",
+                metadata={"metrics": saved.metrics},
+            )
+        )
+        return saved
+
 
 def _to_experiment_status(status: TrainingRunStatus) -> ExperimentRunStatus:
     if status == TrainingRunStatus.SUCCEEDED:
@@ -265,3 +342,15 @@ def _has_dataset_version_reference(
         command.project_id,
         command.dataset_version_id,
     )
+
+
+def _with_execution_metadata(result: TrainingExecutionResult) -> dict[str, object]:
+    return {
+        **result.evaluation_report,
+        "training_execution": {
+            "schema_version": "forgeml.training_execution_result.v1",
+            "runner_name": result.runner_name,
+            "external_run_id": result.external_run_id,
+            "artifacts": [asdict(artifact) for artifact in result.artifacts],
+        },
+    }

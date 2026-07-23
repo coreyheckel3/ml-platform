@@ -4,16 +4,23 @@ import pytest
 
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.application.services import (
+    ExecuteTrainingRunCommand,
     RecordTrainingResultCommand,
     StartTrainingRunCommand,
     TrainingRunService,
 )
 from forgeml.modules.training.domain.entities import (
+    TrainingArtifact,
+    TrainingExecutionResult,
     TrainingRun,
     TrainingRunEvent,
     TrainingRunStatus,
 )
-from forgeml.platform.domain.errors import PermissionDeniedError, ResourceNotFoundError
+from forgeml.platform.domain.errors import (
+    DomainValidationError,
+    PermissionDeniedError,
+    ResourceNotFoundError,
+)
 from forgeml.platform.security.rbac import Principal
 
 
@@ -110,6 +117,37 @@ class FakeOrchestrator:
         return f"cancel:{training_run.id}"
 
 
+class FakeRunner:
+    def __init__(self, *, can_run: bool = True, should_fail: bool = False) -> None:
+        self._can_run = can_run
+        self._should_fail = should_fail
+
+    def can_run(self, training_run: TrainingRun) -> bool:
+        return self._can_run and training_run.algorithm == "xgboost"
+
+    def run(self, training_run: TrainingRun) -> TrainingExecutionResult:
+        if self._should_fail:
+            raise RuntimeError("runner failed")
+        artifact_uri = "file:///training-artifacts/model.json"
+        artifact_path = "/training-artifacts/model.json"
+        return TrainingExecutionResult(
+            status=TrainingRunStatus.SUCCEEDED,
+            metrics={"auc": 0.95},
+            evaluation_report={"model_card": {"training_rows": 8}},
+            artifacts=[
+                TrainingArtifact(
+                    name="model",
+                    artifact_type="model",
+                    uri=artifact_uri,
+                    media_type="application/json",
+                    metadata={"local_path": artifact_path},
+                )
+            ],
+            runner_name="fake-runner",
+            external_run_id=f"fake:{training_run.id}",
+        )
+
+
 def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Principal:
     return Principal(
         user_id=str(user_id),
@@ -173,6 +211,112 @@ def test_training_service_creates_linked_experiment_run_and_records_result() -> 
     assert completed.metrics["auc"] == 0.94
     assert recorder.runs[training_run.experiment_run_id].status == ExperimentRunStatus.SUCCEEDED
     assert repository.events[0].event_type == "queued"
+
+
+def test_training_service_executes_queued_run_with_runner() -> None:
+    repository = FakeTrainingRunRepository()
+    recorder = FakeExperimentRunRecorder()
+    service = TrainingRunService(
+        training_runs=repository,
+        experiment_runs=recorder,
+        orchestrator=FakeOrchestrator(),
+        artifact_bucket="forgeml-artifacts",
+        runner=FakeRunner(),
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    actor = principal(
+        organization_id,
+        user_id,
+        {"training_runs:create", "training_runs:read", "training_runs:write"},
+    )
+    training_run = service.start_training_run(
+        StartTrainingRunCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            experiment_id=experiment_id,
+            run_name="fraud-xgb-depth-6",
+            dataset_version_id=dataset_version_id,
+            feature_set_id=None,
+            algorithm="xgboost",
+            model_type="xgboost",
+            objective_metric_name="auc",
+            hyperparameters={"max_depth": 6},
+            requested_by=user_id,
+        ),
+        actor,
+    )
+
+    completed = service.execute_training_run(
+        ExecuteTrainingRunCommand(training_run_id=training_run.id),
+        actor,
+    )
+
+    evaluation_report = recorder.runs[training_run.experiment_run_id].evaluation_report
+    assert completed.status == TrainingRunStatus.SUCCEEDED
+    assert completed.metrics["auc"] == 0.95
+    assert evaluation_report["training_execution"]["schema_version"] == (
+        "forgeml.training_execution_result.v1"
+    )
+    assert evaluation_report["training_execution"]["artifacts"][0]["name"] == "model"
+    assert [event.event_type for event in repository.events] == [
+        "queued",
+        "running",
+        "succeeded",
+    ]
+
+
+def test_training_service_rejects_execution_without_matching_runner() -> None:
+    repository = FakeTrainingRunRepository()
+    recorder = FakeExperimentRunRecorder()
+    service = TrainingRunService(
+        training_runs=repository,
+        experiment_runs=recorder,
+        orchestrator=FakeOrchestrator(),
+        artifact_bucket="forgeml-artifacts",
+        runner=FakeRunner(can_run=False),
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    actor = principal(
+        organization_id,
+        user_id,
+        {"training_runs:create", "training_runs:write"},
+    )
+    training_run = service.start_training_run(
+        StartTrainingRunCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            experiment_id=experiment_id,
+            run_name="fraud-xgb-depth-6",
+            dataset_version_id=dataset_version_id,
+            feature_set_id=None,
+            algorithm="xgboost",
+            model_type="xgboost",
+            objective_metric_name="auc",
+            hyperparameters={},
+            requested_by=user_id,
+        ),
+        actor,
+    )
+
+    with pytest.raises(DomainValidationError):
+        service.execute_training_run(
+            ExecuteTrainingRunCommand(training_run_id=training_run.id),
+            actor,
+        )
+
+    assert repository.training_runs[training_run.id].status == TrainingRunStatus.QUEUED
 
 
 def test_training_service_rejects_unknown_experiment() -> None:

@@ -2,7 +2,11 @@ from typing import Protocol
 from uuid import UUID
 
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
-from forgeml.modules.training.domain.entities import TrainingRun, TrainingRunEvent
+from forgeml.modules.training.domain.entities import (
+    TrainingExecutionResult,
+    TrainingRun,
+    TrainingRunEvent,
+)
 
 
 class TrainingRunRepository(Protocol):
@@ -59,4 +63,12 @@ class TrainingWorkflowOrchestrator(Protocol):
         raise NotImplementedError
 
     def cancel_training(self, training_run: TrainingRun) -> str:
+        raise NotImplementedError
+
+
+class TrainingJobRunner(Protocol):
+    def can_run(self, training_run: TrainingRun) -> bool:
+        raise NotImplementedError
+
+    def run(self, training_run: TrainingRun) -> TrainingExecutionResult:
         raise NotImplementedError

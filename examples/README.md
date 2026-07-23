@@ -63,6 +63,8 @@ The script logs in as `admin@forgeml.dev`, then creates or reuses:
 - alert rule and evaluated alert signal
 - retraining policy and evaluated retraining run
 
+Training runs are queued through the ForgeML API. The bootstrapper then executes the matching local example trainer outside the API request path and records generated metrics, evaluation data, and artifact metadata back through the training result API.
+
 Run a single workload by slug:
 
 ```bash

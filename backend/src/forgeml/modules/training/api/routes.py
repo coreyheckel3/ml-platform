@@ -21,6 +21,7 @@ from forgeml.modules.training.domain.entities import (
     TrainingRunEvent,
     TrainingRunStatus,
 )
+from forgeml.modules.training.infrastructure.execution import LocalExampleTrainingRunner
 from forgeml.modules.training.infrastructure.orchestrator import LocalTrainingWorkflowOrchestrator
 from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyExperimentRunRecorder,
@@ -42,6 +43,7 @@ def get_training_run_service(
         experiment_runs=SqlAlchemyExperimentRunRecorder(session),
         orchestrator=LocalTrainingWorkflowOrchestrator(),
         artifact_bucket=settings.object_storage_bucket,
+        runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
     )
 
 

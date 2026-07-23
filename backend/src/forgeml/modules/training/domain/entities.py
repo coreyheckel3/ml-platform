@@ -40,3 +40,23 @@ class TrainingRunEvent:
     event_type: str
     message: str
     metadata: dict[str, object]
+
+
+@dataclass(frozen=True)
+class TrainingArtifact:
+    name: str
+    artifact_type: str
+    uri: str
+    media_type: str
+    metadata: dict[str, object]
+
+
+@dataclass(frozen=True)
+class TrainingExecutionResult:
+    status: TrainingRunStatus
+    metrics: dict[str, float]
+    evaluation_report: dict[str, object]
+    artifacts: list[TrainingArtifact]
+    runner_name: str
+    external_run_id: str
+    error_message: str | None = None

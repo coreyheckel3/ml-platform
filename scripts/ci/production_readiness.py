@@ -37,6 +37,8 @@ REQUIRED_FILES = (
     "infra/terraform/environments/staging/variables.tf",
     "infra/terraform/environments/staging/versions.tf",
     "load/k6/api_smoke.js",
+    "backend/src/forgeml/modules/training/infrastructure/execution.py",
+    "backend/tests/unit/training/test_training_execution.py",
     "ml/examples/fraud_detection/train.py",
     "ml/examples/movie_recommendation/train.py",
     "ml/examples/semantic_search/build_index.py",
@@ -64,6 +66,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_load_test_contract(repo_root),
         check_staging_terraform(repo_root),
         check_example_training_contract(repo_root),
+        check_training_execution_contract(repo_root),
     ]
 
 
@@ -232,6 +235,46 @@ def check_example_training_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_manifest_output={has_manifest_output}, "
                 f"has_project_summary_output={has_project_summary_output}"
             )
+        ),
+    )
+
+
+def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/training/application/services.py"
+    ).read_text(encoding="utf-8")
+    config_source = (repo_root / "backend/src/forgeml/platform/config.py").read_text(
+        encoding="utf-8"
+    )
+    routes_source = (
+        repo_root / "backend/src/forgeml/modules/training/api/routes.py"
+    ).read_text(encoding="utf-8")
+    runner_source = (
+        repo_root / "backend/src/forgeml/modules/training/infrastructure/execution.py"
+    ).read_text(encoding="utf-8")
+    bootstrap_source = (repo_root / "scripts/examples/bootstrap_examples.py").read_text(
+        encoding="utf-8"
+    )
+    required_fragments = {
+        "execute_training_run": service_source,
+        "TrainingJobRunner": service_source,
+        "forgeml.training_execution_result.v1": service_source,
+        "EXAMPLE_PROJECT_SLUG_PARAMETER": runner_source,
+        "LocalExampleTrainingRunner": runner_source,
+        "FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT": config_source,
+        "runner=LocalExampleTrainingRunner": routes_source,
+        "build_training_execution_report": bootstrap_source,
+    }
+    missing = [
+        fragment for fragment, source in required_fragments.items() if fragment not in source
+    ]
+    return ReadinessCheck(
+        name="training execution contract",
+        passed=not missing,
+        detail=(
+            "training execution runner is wired behind application contracts"
+            if not missing
+            else f"missing: {missing}"
         ),
     )
 
