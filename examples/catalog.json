@@ -1,0 +1,8 @@
+{
+  "schema_version": "forgeml.example_catalog.v1",
+  "projects": [
+    "projects/movie_recommendation/project.json",
+    "projects/semantic_search/project.json",
+    "projects/fraud_detection/project.json"
+  ]
+}

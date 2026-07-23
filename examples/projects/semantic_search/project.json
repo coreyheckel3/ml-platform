@@ -1,0 +1,121 @@
+{
+  "schema_version": "forgeml.example_project.v1",
+  "slug": "semantic-search",
+  "name": "Semantic Search",
+  "description": "Retrieval platform example for searchable ML platform documentation.",
+  "owner_persona": "Search and retrieval ML engineer",
+  "dataset": {
+    "name": "Knowledge Base Documents",
+    "description": "Document chunks used to train and evaluate a semantic retrieval model.",
+    "source_type": "upload",
+    "data_path": "data/documents.jsonl",
+    "content_type": "application/x-ndjson",
+    "schema_fields": [
+      {"name": "doc_id", "dtype": "string", "nullable": false},
+      {"name": "title", "dtype": "string", "nullable": false},
+      {"name": "body", "dtype": "string", "nullable": false},
+      {"name": "category", "dtype": "string", "nullable": false},
+      {"name": "updated_at", "dtype": "timestamp", "nullable": false},
+      {"name": "language", "dtype": "string", "nullable": false}
+    ]
+  },
+  "feature_set": {
+    "name": "Document Retrieval Features",
+    "description": "Text normalization, chunk metadata, and embedding lookup features.",
+    "entity_key": "doc_id",
+    "definitions": [
+      {"name": "token_count", "dtype": "integer", "description": "Number of normalized tokens in the indexed chunk.", "nullable": false, "constraints": {"minimum": 1}},
+      {"name": "category_id", "dtype": "string", "description": "Stable category label for filtering retrieval candidates.", "nullable": false, "constraints": {}},
+      {"name": "embedding_norm", "dtype": "float", "description": "L2 norm of the generated embedding vector.", "nullable": false, "constraints": {"minimum": 0}}
+    ],
+    "pipeline": {
+      "name": "Build Document Embeddings",
+      "code_ref": "examples/projects/semantic_search/pipelines/build_embeddings.py",
+      "schedule_cron": "30 2 * * *"
+    }
+  },
+  "experiment": {
+    "name": "Semantic Retrieval Baselines",
+    "description": "Dense embedding retrieval experiments for internal documentation search."
+  },
+  "training_run": {
+    "run_name": "semantic-search-minilm-baseline",
+    "algorithm": "sentence-transformer",
+    "model_type": "embedding",
+    "objective_metric_name": "recall_at_5",
+    "hyperparameters": {"encoder": "mini-lm", "embedding_dim": 384, "batch_size": 64},
+    "metrics": {"recall_at_5": 0.872, "mrr_at_10": 0.641, "embedding_coverage": 1.0},
+    "evaluation_report_path": "reports/evaluation.json",
+    "artifact_uri": "s3://forgeml-artifacts/examples/semantic-search/training-runs/semantic-search-minilm-baseline"
+  },
+  "model": {
+    "name": "Knowledge Base Retriever",
+    "description": "Embeds queries and retrieves relevant platform documentation chunks.",
+    "task_type": "retrieval",
+    "model_format": "onnx",
+    "signature": {
+      "inputs": [
+        {"name": "query", "dtype": "string"},
+        {"name": "top_k", "dtype": "integer"},
+        {"name": "category_filter", "dtype": "string"}
+      ],
+      "outputs": [{"name": "documents", "dtype": "array"}]
+    },
+    "approval_comment": "Approved for local semantic search demo after recall review."
+  },
+  "deployment": {
+    "name": "Semantic Search Production",
+    "description": "Online retrieval endpoint for platform documentation queries.",
+    "environment": "production",
+    "serving_image": "ghcr.io/forgeml/examples/semantic-search:0.1.0",
+    "runtime_config": {"replicas": 2, "cpu": "1000m", "memory": "3Gi", "index_ref": "local-demo-index"},
+    "health_check": {"status": "healthy", "latency_ms": 35.0, "error_rate": 0.001, "details": {"index_loaded": true}},
+    "inference_endpoint": {
+      "name": "Semantic Search Online",
+      "description": "Retrieves documentation for support queries.",
+      "route_path": "/inference/semantic-search"
+    },
+    "sample_requests": [
+      {"request_id": "semantic-search-001", "payload": {"query": "how do I investigate feature freshness", "top_k": 5, "category_filter": "runbook", "token_count": 7, "embedding_norm": 1.02}},
+      {"request_id": "semantic-search-002", "payload": {"query": "model approval requirements", "top_k": 3, "category_filter": "governance", "token_count": 4, "embedding_norm": 0.98}}
+    ],
+    "metric_snapshot": {"window_seconds": 300, "prediction_count": 840, "error_count": 1, "p50_latency_ms": 31.0, "p95_latency_ms": 72.0}
+  },
+  "drift": {
+    "profile_name": "Semantic Search Query Baseline",
+    "description": "Baseline feature profile for retrieval queries.",
+    "baseline_profile": {
+      "token_count": {"type": "numeric", "mean": 6.0, "std": 2.0, "threshold": 0.3},
+      "embedding_norm": {"type": "numeric", "mean": 1.0, "std": 0.1, "threshold": 0.2},
+      "category_filter": {"type": "categorical", "distribution": {"runbook": 0.45, "governance": 0.25, "data-quality": 0.2, "deployment": 0.1}, "threshold": 0.35}
+    },
+    "report": {"window_seconds": 3600, "drift_threshold": 0.25, "sample_limit": 200}
+  },
+  "alert": {
+    "name": "Semantic Search Error Rate",
+    "description": "Alert when retrieval request errors exceed the support SLO.",
+    "severity": "critical",
+    "metric": "inference_error_rate",
+    "operator": "gt",
+    "threshold": 0.02,
+    "window_seconds": 300,
+    "enabled": true
+  },
+  "retraining": {
+    "name": "Semantic Search Drift Retraining",
+    "description": "Queue embedding retraining when query distribution changes materially.",
+    "trigger_type": "drift",
+    "trigger_config": {"min_drift_score": 0.25, "min_drifted_features": 1},
+    "training_template": {
+      "run_name_prefix": "semantic-search-retrain",
+      "algorithm": "sentence-transformer",
+      "model_type": "embedding",
+      "objective_metric_name": "recall_at_5",
+      "hyperparameters": {"encoder": "mini-lm", "embedding_dim": 384, "batch_size": 64}
+    },
+    "cooldown_seconds": 7200,
+    "max_runs_per_day": 2,
+    "approval_required": true,
+    "enabled": true
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": "forgeml.example_project.v1",
+  "slug": "fraud-detection",
+  "name": "Fraud Detection",
+  "description": "Risk platform example for online card transaction fraud scoring.",
+  "owner_persona": "Risk ML engineer",
+  "dataset": {
+    "name": "Card Transaction Events",
+    "description": "Labeled card transaction events for fraud classification.",
+    "source_type": "upload",
+    "data_path": "data/transactions.csv",
+    "content_type": "text/csv",
+    "schema_fields": [
+      {"name": "transaction_id", "dtype": "string", "nullable": false},
+      {"name": "account_id", "dtype": "string", "nullable": false},
+      {"name": "amount", "dtype": "float", "nullable": false},
+      {"name": "merchant_category", "dtype": "string", "nullable": false},
+      {"name": "country", "dtype": "string", "nullable": false},
+      {"name": "event_timestamp", "dtype": "timestamp", "nullable": false},
+      {"name": "is_fraud", "dtype": "integer", "nullable": false}
+    ]
+  },
+  "feature_set": {
+    "name": "Transaction Risk Features",
+    "description": "Transaction velocity, merchant, and account risk features.",
+    "entity_key": "transaction_id",
+    "definitions": [
+      {"name": "amount_zscore", "dtype": "float", "description": "Transaction amount standardized by account history.", "nullable": false, "constraints": {}},
+      {"name": "merchant_risk_score", "dtype": "float", "description": "Smoothed historical risk score for merchant category.", "nullable": false, "constraints": {"minimum": 0, "maximum": 1}},
+      {"name": "account_velocity_1h", "dtype": "integer", "description": "Number of account transactions in the previous hour.", "nullable": false, "constraints": {"minimum": 0}},
+      {"name": "cross_border", "dtype": "boolean", "description": "Whether the transaction country differs from account home country.", "nullable": false, "constraints": {}}
+    ],
+    "pipeline": {
+      "name": "Build Transaction Risk Features",
+      "code_ref": "examples/projects/fraud_detection/pipelines/build_features.py",
+      "schedule_cron": "*/15 * * * *"
+    }
+  },
+  "experiment": {
+    "name": "Fraud Risk Baselines",
+    "description": "Gradient-boosted fraud classification experiments for online authorization."
+  },
+  "training_run": {
+    "run_name": "fraud-xgboost-baseline",
+    "algorithm": "xgboost",
+    "model_type": "xgboost",
+    "objective_metric_name": "auc",
+    "hyperparameters": {"max_depth": 6, "eta": 0.08, "subsample": 0.9},
+    "metrics": {"auc": 0.947, "precision_at_1_percent": 0.412, "recall_at_5_percent": 0.781},
+    "evaluation_report_path": "reports/evaluation.json",
+    "artifact_uri": "s3://forgeml-artifacts/examples/fraud-detection/training-runs/fraud-xgboost-baseline"
+  },
+  "model": {
+    "name": "Transaction Fraud Scorer",
+    "description": "Scores transaction authorization requests for fraud risk.",
+    "task_type": "classification",
+    "model_format": "xgboost-booster",
+    "signature": {
+      "inputs": [
+        {"name": "amount", "dtype": "float"},
+        {"name": "merchant_category", "dtype": "string"},
+        {"name": "amount_zscore", "dtype": "float"},
+        {"name": "merchant_risk_score", "dtype": "float"},
+        {"name": "account_velocity_1h", "dtype": "integer"},
+        {"name": "cross_border", "dtype": "boolean"}
+      ],
+      "outputs": [{"name": "fraud_probability", "dtype": "float"}]
+    },
+    "approval_comment": "Approved for local fraud detection demo after risk metric review."
+  },
+  "deployment": {
+    "name": "Fraud Scoring Production",
+    "description": "Online fraud scoring endpoint for authorization requests.",
+    "environment": "production",
+    "serving_image": "ghcr.io/forgeml/examples/fraud-scorer:0.1.0",
+    "runtime_config": {"replicas": 3, "cpu": "1500m", "memory": "2Gi", "timeout_ms": 75},
+    "health_check": {"status": "healthy", "latency_ms": 18.0, "error_rate": 0.001, "details": {"model_loaded": true}},
+    "inference_endpoint": {
+      "name": "Fraud Scoring Online",
+      "description": "Scores card transactions for fraud risk.",
+      "route_path": "/inference/fraud-scoring"
+    },
+    "sample_requests": [
+      {"request_id": "fraud-001", "payload": {"transaction_id": "t009", "amount": 1290.0, "merchant_category": "electronics", "amount_zscore": 3.2, "merchant_risk_score": 0.72, "account_velocity_1h": 4, "cross_border": true}},
+      {"request_id": "fraud-002", "payload": {"transaction_id": "t010", "amount": 28.5, "merchant_category": "grocery", "amount_zscore": -0.4, "merchant_risk_score": 0.08, "account_velocity_1h": 1, "cross_border": false}}
+    ],
+    "metric_snapshot": {"window_seconds": 300, "prediction_count": 5000, "error_count": 5, "p50_latency_ms": 14.0, "p95_latency_ms": 39.0}
+  },
+  "drift": {
+    "profile_name": "Fraud Scoring Baseline",
+    "description": "Baseline feature profile for transaction risk scoring.",
+    "baseline_profile": {
+      "amount_zscore": {"type": "numeric", "mean": 0.0, "std": 1.0, "threshold": 0.3},
+      "merchant_risk_score": {"type": "numeric", "mean": 0.22, "std": 0.16, "threshold": 0.25},
+      "merchant_category": {"type": "categorical", "distribution": {"grocery": 0.35, "restaurant": 0.25, "electronics": 0.15, "travel": 0.15, "jewelry": 0.1}, "threshold": 0.35}
+    },
+    "report": {"window_seconds": 1800, "drift_threshold": 0.25, "sample_limit": 200}
+  },
+  "alert": {
+    "name": "Fraud Scoring Error Rate",
+    "description": "Alert when fraud scoring errors threaten authorization reliability.",
+    "severity": "critical",
+    "metric": "inference_error_rate",
+    "operator": "gt",
+    "threshold": 0.01,
+    "window_seconds": 300,
+    "enabled": true
+  },
+  "retraining": {
+    "name": "Fraud Drift Retraining",
+    "description": "Queue fraud model retraining when production risk features drift.",
+    "trigger_type": "drift",
+    "trigger_config": {"min_drift_score": 0.25, "min_drifted_features": 1},
+    "training_template": {
+      "run_name_prefix": "fraud-retrain",
+      "algorithm": "xgboost",
+      "model_type": "xgboost",
+      "objective_metric_name": "auc",
+      "hyperparameters": {"max_depth": 6, "eta": 0.07, "subsample": 0.9}
+    },
+    "cooldown_seconds": 1800,
+    "max_runs_per_day": 4,
+    "approval_required": true,
+    "enabled": true
+  }
+}

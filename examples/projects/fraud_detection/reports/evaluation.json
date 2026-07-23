@@ -1,0 +1,24 @@
+{
+  "model_card": {
+    "intended_use": "Score card transactions for fraud risk before authorization.",
+    "training_window": "2026-07-01 through 2026-07-05",
+    "serving_mode": "online classification"
+  },
+  "metrics": {
+    "auc": 0.947,
+    "precision_at_1_percent": 0.412,
+    "recall_at_5_percent": 0.781
+  },
+  "segments": {
+    "domestic": {
+      "auc": 0.952
+    },
+    "cross_border": {
+      "auc": 0.931
+    }
+  },
+  "approval_notes": [
+    "Candidate clears fraud detection launch threshold.",
+    "Cross-border segment remains within fairness review tolerance."
+  ]
+}

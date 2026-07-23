@@ -1,0 +1,122 @@
+{
+  "schema_version": "forgeml.example_project.v1",
+  "slug": "movie-recommendation",
+  "name": "Movie Recommendation",
+  "description": "Ranking platform example for personalized movie recommendations.",
+  "owner_persona": "Personalization ML engineer",
+  "dataset": {
+    "name": "Movie Ratings Interactions",
+    "description": "User-movie interaction events with watch-time and genre context.",
+    "source_type": "upload",
+    "data_path": "data/ratings.csv",
+    "content_type": "text/csv",
+    "schema_fields": [
+      {"name": "user_id", "dtype": "string", "nullable": false},
+      {"name": "movie_id", "dtype": "string", "nullable": false},
+      {"name": "rating", "dtype": "integer", "nullable": false},
+      {"name": "event_timestamp", "dtype": "timestamp", "nullable": false},
+      {"name": "genre", "dtype": "string", "nullable": false},
+      {"name": "release_year", "dtype": "integer", "nullable": false},
+      {"name": "watch_seconds", "dtype": "integer", "nullable": false}
+    ]
+  },
+  "feature_set": {
+    "name": "Member Movie Ranking Features",
+    "description": "Member, title, and interaction aggregates for recommendation ranking.",
+    "entity_key": "user_id",
+    "definitions": [
+      {"name": "rating_history_count", "dtype": "integer", "description": "Number of historical movie ratings for the member.", "nullable": false, "constraints": {"minimum": 0}},
+      {"name": "genre_affinity", "dtype": "float", "description": "Smoothed affinity score between member and candidate genre.", "nullable": false, "constraints": {"minimum": 0, "maximum": 1}},
+      {"name": "title_recency_days", "dtype": "integer", "description": "Age of the title in days at request time.", "nullable": false, "constraints": {"minimum": 0}}
+    ],
+    "pipeline": {
+      "name": "Build Member Movie Ranking Features",
+      "code_ref": "examples/projects/movie_recommendation/pipelines/build_features.py",
+      "schedule_cron": "0 3 * * *"
+    }
+  },
+  "experiment": {
+    "name": "Movie Ranking Baselines",
+    "description": "Two-tower and gradient boosted ranker comparison for recommendation quality."
+  },
+  "training_run": {
+    "run_name": "movie-two-tower-baseline",
+    "algorithm": "pytorch-two-tower",
+    "model_type": "pytorch",
+    "objective_metric_name": "ndcg_at_10",
+    "hyperparameters": {"embedding_dim": 64, "negative_samples": 10, "learning_rate": 0.001},
+    "metrics": {"ndcg_at_10": 0.418, "map_at_10": 0.291, "coverage": 0.83},
+    "evaluation_report_path": "reports/evaluation.json",
+    "artifact_uri": "s3://forgeml-artifacts/examples/movie-recommendation/training-runs/movie-two-tower-baseline"
+  },
+  "model": {
+    "name": "Movie Candidate Ranker",
+    "description": "Ranks movies for a member from candidate title features.",
+    "task_type": "recommendation",
+    "model_format": "torchscript",
+    "signature": {
+      "inputs": [
+        {"name": "user_id", "dtype": "string"},
+        {"name": "movie_id", "dtype": "string"},
+        {"name": "rating_history_count", "dtype": "integer"},
+        {"name": "genre_affinity", "dtype": "float"}
+      ],
+      "outputs": [{"name": "ranking_score", "dtype": "float"}]
+    },
+    "approval_comment": "Approved for local recommendation demo after offline metric review."
+  },
+  "deployment": {
+    "name": "Movie Ranking Production",
+    "description": "Online recommendation ranking endpoint.",
+    "environment": "production",
+    "serving_image": "ghcr.io/forgeml/examples/movie-ranker:0.1.0",
+    "runtime_config": {"replicas": 2, "cpu": "1000m", "memory": "2Gi"},
+    "health_check": {"status": "healthy", "latency_ms": 42.0, "error_rate": 0.002, "details": {"model_loaded": true}},
+    "inference_endpoint": {
+      "name": "Movie Ranking Online",
+      "description": "Scores candidate movies for a user.",
+      "route_path": "/inference/movie-ranking"
+    },
+    "sample_requests": [
+      {"request_id": "movie-rec-001", "payload": {"user_id": "u001", "movie_id": "m203", "rating_history_count": 24, "genre_affinity": 0.78, "title_recency_days": 3650}},
+      {"request_id": "movie-rec-002", "payload": {"user_id": "u004", "movie_id": "m409", "rating_history_count": 12, "genre_affinity": 0.66, "title_recency_days": 5480}}
+    ],
+    "metric_snapshot": {"window_seconds": 300, "prediction_count": 1200, "error_count": 3, "p50_latency_ms": 38.0, "p95_latency_ms": 94.0}
+  },
+  "drift": {
+    "profile_name": "Movie Ranking Baseline",
+    "description": "Baseline feature profile for recommendation requests.",
+    "baseline_profile": {
+      "rating_history_count": {"type": "numeric", "mean": 18.0, "std": 6.0, "threshold": 0.25},
+      "genre_affinity": {"type": "numeric", "mean": 0.62, "std": 0.18, "threshold": 0.2}
+    },
+    "report": {"window_seconds": 3600, "drift_threshold": 0.2, "sample_limit": 200}
+  },
+  "alert": {
+    "name": "Movie Ranking P95 Latency",
+    "description": "Warn when recommendation latency threatens page rendering budgets.",
+    "severity": "warning",
+    "metric": "inference_p95_latency_ms",
+    "operator": "gt",
+    "threshold": 150.0,
+    "window_seconds": 300,
+    "enabled": true
+  },
+  "retraining": {
+    "name": "Movie Drift Retraining",
+    "description": "Queue recommendation retraining when feature drift exceeds guardrails.",
+    "trigger_type": "drift",
+    "trigger_config": {"min_drift_score": 0.2, "min_drifted_features": 1},
+    "training_template": {
+      "run_name_prefix": "movie-retrain",
+      "algorithm": "pytorch-two-tower",
+      "model_type": "pytorch",
+      "objective_metric_name": "ndcg_at_10",
+      "hyperparameters": {"embedding_dim": 64, "negative_samples": 12, "learning_rate": 0.0008}
+    },
+    "cooldown_seconds": 3600,
+    "max_runs_per_day": 2,
+    "approval_required": true,
+    "enabled": true
+  }
+}

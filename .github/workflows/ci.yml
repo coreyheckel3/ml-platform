@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: forgeml
+          POSTGRES_PASSWORD: forgeml
+          POSTGRES_DB: forgeml_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U forgeml"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend
+        run: python -m pip install -e ".[dev]"
+      - name: Lint backend
+        run: ruff check backend/src backend/tests
+      - name: Test backend
+        env:
+          FORGEML_DATABASE_URL: postgresql+psycopg://forgeml:forgeml@localhost:5432/forgeml_test
+        run: pytest backend/tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend
+        run: npm --prefix frontend ci
+      - name: Lint frontend
+        run: npm --prefix frontend run lint
+      - name: Test frontend
+        run: npm --prefix frontend run test -- --run
+      - name: Build frontend
+        run: npm --prefix frontend run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -f infra/docker/backend.Dockerfile .
+      - name: Build frontend image
+        run: docker build -f infra/docker/frontend.Dockerfile .

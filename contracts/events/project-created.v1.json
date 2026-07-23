@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forgeml.dev/contracts/events/project-created.v1.json",
+  "title": "ProjectCreated",
+  "type": "object",
+  "required": ["event_id", "event_type", "occurred_at", "organization_id", "project_id", "name", "slug"],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "const": "ProjectCreated" },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "organization_id": { "type": "string", "format": "uuid" },
+    "project_id": { "type": "string", "format": "uuid" },
+    "name": { "type": "string" },
+    "slug": { "type": "string" }
+  },
+  "additionalProperties": false
+}
+

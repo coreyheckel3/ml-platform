@@ -1,0 +1,99 @@
+name: forgeml
+
+services:
+  postgres:
+    image: postgres:17
+    profiles: ["core", "full"]
+    environment:
+      POSTGRES_USER: forgeml
+      POSTGRES_PASSWORD: forgeml
+      POSTGRES_DB: forgeml
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forgeml"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["core", "full"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-01-20T14-49-07Z
+    profiles: ["core", "ml", "full"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: forgeml
+      MINIO_ROOT_PASSWORD: forgeml-local-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/backend.Dockerfile
+    profiles: ["core", "full"]
+    environment:
+      FORGEML_DATABASE_URL: postgresql+psycopg://forgeml:forgeml@postgres:5432/forgeml
+      FORGEML_REDIS_URL: redis://redis:6379/0
+      FORGEML_OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      FORGEML_JWT_SECRET: change-me-for-local-development
+      FORGEML_CORS_ORIGINS: '["http://localhost:5173"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/frontend.Dockerfile
+    profiles: ["core", "full"]
+    ports:
+      - "8088:80"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    profiles: ["ml", "full"]
+    command:
+      - mlflow
+      - server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5000"
+      - --backend-store-uri
+      - postgresql+psycopg://forgeml:forgeml@postgres:5432/forgeml
+      - --default-artifact-root
+      - s3://forgeml-artifacts/mlflow
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    profiles: ["observability", "full"]
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    profiles: ["observability", "full"]
+    ports:
+      - "3000:3000"
+

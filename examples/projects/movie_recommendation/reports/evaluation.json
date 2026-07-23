@@ -1,0 +1,24 @@
+{
+  "model_card": {
+    "intended_use": "Rank candidate movies for signed-in members using interaction and content features.",
+    "training_window": "2026-07-01 through 2026-07-09",
+    "serving_mode": "online ranking"
+  },
+  "metrics": {
+    "ndcg_at_10": 0.418,
+    "map_at_10": 0.291,
+    "coverage": 0.83
+  },
+  "segments": {
+    "new_members": {
+      "ndcg_at_10": 0.337
+    },
+    "returning_members": {
+      "ndcg_at_10": 0.451
+    }
+  },
+  "approval_notes": [
+    "Candidate improves ranking quality against popularity baseline.",
+    "Coverage remains above the launch guardrail."
+  ]
+}

@@ -1,0 +1,6 @@
+{"doc_id":"d001","title":"Feature Freshness Runbook","body":"How to investigate delayed feature materialization and stale online features.","category":"runbook","updated_at":"2026-07-01T09:15:00Z","language":"en"}
+{"doc_id":"d002","title":"Model Approval Policy","body":"Requirements for approving candidate model versions before production deployment.","category":"governance","updated_at":"2026-07-02T12:00:00Z","language":"en"}
+{"doc_id":"d003","title":"Inference Error Rate Triage","body":"Steps for diagnosing request validation failures and serving runtime exceptions.","category":"runbook","updated_at":"2026-07-03T08:30:00Z","language":"en"}
+{"doc_id":"d004","title":"Dataset Schema Compatibility","body":"Rules for comparing incoming dataset versions against expected schema contracts.","category":"data-quality","updated_at":"2026-07-04T14:45:00Z","language":"en"}
+{"doc_id":"d005","title":"Canary Deployment Checklist","body":"Operational checklist for promoting or rolling back a canary deployment revision.","category":"deployment","updated_at":"2026-07-05T16:20:00Z","language":"en"}
+{"doc_id":"d006","title":"Drift Detection Overview","body":"Reference profiles and production windows used to detect feature drift.","category":"ml-quality","updated_at":"2026-07-06T11:10:00Z","language":"en"}

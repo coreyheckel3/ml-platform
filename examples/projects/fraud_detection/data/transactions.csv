@@ -1,0 +1,9 @@
+transaction_id,account_id,amount,merchant_category,country,event_timestamp,is_fraud
+t001,a101,42.10,grocery,US,2026-07-01T08:12:00Z,0
+t002,a102,984.33,electronics,US,2026-07-01T09:25:00Z,1
+t003,a103,18.45,transit,US,2026-07-01T12:03:00Z,0
+t004,a101,125.00,travel,CA,2026-07-02T10:41:00Z,0
+t005,a104,1305.20,jewelry,GB,2026-07-02T22:10:00Z,1
+t006,a105,73.19,restaurant,US,2026-07-03T18:35:00Z,0
+t007,a106,220.40,grocery,US,2026-07-04T16:20:00Z,0
+t008,a107,875.00,electronics,DE,2026-07-05T02:14:00Z,1
