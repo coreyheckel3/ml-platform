@@ -134,11 +134,12 @@ class FakeModelRegistryClient:
     def list_model_versions(self, _model_id: str) -> dict[str, object]:
         return {"items": []}
 
-    def register_model_version(
+    def promote_training_run_to_model_version(
         self,
         _model_id: str,
-        _payload: dict[str, object],
+        payload: dict[str, object],
     ) -> dict[str, object]:
+        assert payload["training_run_id"] == "training-run-1"
         return {"id": "model-version-1", "status": "candidate"}
 
     def request_model_approval(

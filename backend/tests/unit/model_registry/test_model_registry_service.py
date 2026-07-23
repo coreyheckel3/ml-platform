@@ -5,6 +5,7 @@ import pytest
 from forgeml.modules.model_registry.application.services import (
     CreateRegisteredModelCommand,
     ModelRegistryService,
+    PromoteTrainingRunCommand,
     RegisterModelVersionCommand,
     RequestModelApprovalCommand,
     ReviewModelVersionCommand,
@@ -16,6 +17,7 @@ from forgeml.modules.model_registry.domain.entities import (
     ModelVersion,
     ModelVersionStatus,
     RegisteredModel,
+    TrainingRunPromotionCandidate,
     TrainingRunReference,
 )
 from forgeml.platform.domain.errors import ConflictError, DomainValidationError
@@ -26,6 +28,7 @@ class FakeModelRegistryRepository:
     def __init__(self) -> None:
         self.models: dict[UUID, RegisteredModel] = {}
         self.training_refs: dict[UUID, TrainingRunReference] = {}
+        self.promotion_candidates: dict[UUID, TrainingRunPromotionCandidate] = {}
         self.versions: dict[UUID, ModelVersion] = {}
         self.approvals: list[ModelApproval] = []
         self.lineage: list[ModelLineage] = []
@@ -64,6 +67,12 @@ class FakeModelRegistryRepository:
     def get_training_run_reference(self, training_run_id: UUID) -> TrainingRunReference | None:
         return self.training_refs.get(training_run_id)
 
+    def get_training_run_promotion_candidate(
+        self,
+        training_run_id: UUID,
+    ) -> TrainingRunPromotionCandidate | None:
+        return self.promotion_candidates.get(training_run_id)
+
     def training_run_already_registered(
         self,
         registered_model_id: UUID,
@@ -73,6 +82,21 @@ class FakeModelRegistryRepository:
             version.registered_model_id == registered_model_id
             and version.training_run_id == training_run_id
             for version in self.versions.values()
+        )
+
+    def get_model_version_by_training_run(
+        self,
+        registered_model_id: UUID,
+        training_run_id: UUID,
+    ) -> ModelVersion | None:
+        return next(
+            (
+                version
+                for version in self.versions.values()
+                if version.registered_model_id == registered_model_id
+                and version.training_run_id == training_run_id
+            ),
+            None,
         )
 
     def latest_model_version_number(self, registered_model_id: UUID) -> int:
@@ -280,3 +304,209 @@ def test_model_registry_service_rejects_failed_training_run_registration() -> No
             ),
             actor,
         )
+
+
+def test_model_registry_service_promotes_training_run_from_execution_manifest() -> None:
+    repository = FakeModelRegistryRepository()
+    service = ModelRegistryService(repository=repository)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    training_run_id = uuid4()
+    repository.promotion_candidates[training_run_id] = promotion_candidate(
+        organization_id=organization_id,
+        project_id=project_id,
+        training_run_id=training_run_id,
+    )
+    actor = principal(
+        organization_id,
+        user_id,
+        {"models:create", "model_versions:create"},
+    )
+    model = service.create_registered_model(
+        CreateRegisteredModelCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            owner_user_id=user_id,
+            name="Fraud Risk XGB",
+            description="",
+            task_type="classification",
+        ),
+        actor,
+    )
+
+    version = service.promote_training_run_to_model_version(
+        PromoteTrainingRunCommand(
+            registered_model_id=model.id,
+            training_run_id=training_run_id,
+            model_format="xgboost-booster",
+            signature={"inputs": [{"name": "amount"}], "outputs": [{"name": "risk_score"}]},
+            promoted_by=user_id,
+        ),
+        actor,
+    )
+
+    assert version.status == ModelVersionStatus.CANDIDATE
+    assert version.artifact_uri == "s3://forgeml/training-runs/run-1/model.json"
+    assert version.metrics["auc"] == 0.94
+    assert {lineage.source_type for lineage in repository.lineage} == {
+        "dataset_version",
+        "experiment_run",
+        "feature_set",
+        "training_run",
+    }
+
+
+def test_model_registry_service_promotes_training_run_idempotently() -> None:
+    repository = FakeModelRegistryRepository()
+    service = ModelRegistryService(repository=repository)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    training_run_id = uuid4()
+    repository.promotion_candidates[training_run_id] = promotion_candidate(
+        organization_id=organization_id,
+        project_id=project_id,
+        training_run_id=training_run_id,
+    )
+    actor = principal(
+        organization_id,
+        user_id,
+        {"models:create", "model_versions:create"},
+    )
+    model = service.create_registered_model(
+        CreateRegisteredModelCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            owner_user_id=user_id,
+            name="Fraud Risk XGB",
+            description="",
+            task_type="classification",
+        ),
+        actor,
+    )
+    command = PromoteTrainingRunCommand(
+        registered_model_id=model.id,
+        training_run_id=training_run_id,
+        model_format="xgboost-booster",
+        signature={"inputs": [{"name": "amount"}], "outputs": [{"name": "risk_score"}]},
+        promoted_by=user_id,
+    )
+
+    first_version = service.promote_training_run_to_model_version(command, actor)
+    second_version = service.promote_training_run_to_model_version(command, actor)
+
+    assert second_version.id == first_version.id
+    assert len(repository.versions) == 1
+    assert len(repository.lineage) == 4
+
+
+def test_model_registry_service_rejects_promotion_without_model_artifact() -> None:
+    repository = FakeModelRegistryRepository()
+    service = ModelRegistryService(repository=repository)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    training_run_id = uuid4()
+    candidate = promotion_candidate(
+        organization_id=organization_id,
+        project_id=project_id,
+        training_run_id=training_run_id,
+    )
+    repository.promotion_candidates[training_run_id] = TrainingRunPromotionCandidate(
+        id=candidate.id,
+        organization_id=candidate.organization_id,
+        project_id=candidate.project_id,
+        experiment_id=candidate.experiment_id,
+        experiment_run_id=candidate.experiment_run_id,
+        dataset_version_id=candidate.dataset_version_id,
+        feature_set_id=candidate.feature_set_id,
+        status=candidate.status,
+        artifact_uri=candidate.artifact_uri,
+        model_type=candidate.model_type,
+        metrics=candidate.metrics,
+        evaluation_report={
+            "training_execution": {
+                "schema_version": "forgeml.training_execution_result.v1",
+                "artifacts": [
+                    {
+                        "name": "evaluation",
+                        "artifact_type": "evaluation_report",
+                        "uri": "file:///tmp/evaluation.json",
+                    }
+                ],
+            }
+        },
+    )
+    actor = principal(
+        organization_id,
+        user_id,
+        {"models:create", "model_versions:create"},
+    )
+    model = service.create_registered_model(
+        CreateRegisteredModelCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            owner_user_id=user_id,
+            name="Fraud Risk XGB",
+            description="",
+            task_type="classification",
+        ),
+        actor,
+    )
+
+    with pytest.raises(DomainValidationError):
+        service.promote_training_run_to_model_version(
+            PromoteTrainingRunCommand(
+                registered_model_id=model.id,
+                training_run_id=training_run_id,
+                model_format="xgboost-booster",
+                signature={"inputs": [{"name": "amount"}], "outputs": [{"name": "risk_score"}]},
+                promoted_by=user_id,
+            ),
+            actor,
+        )
+
+
+def promotion_candidate(
+    *,
+    organization_id: UUID,
+    project_id: UUID,
+    training_run_id: UUID,
+) -> TrainingRunPromotionCandidate:
+    return TrainingRunPromotionCandidate(
+        id=training_run_id,
+        organization_id=organization_id,
+        project_id=project_id,
+        experiment_id=uuid4(),
+        experiment_run_id=uuid4(),
+        dataset_version_id=uuid4(),
+        feature_set_id=uuid4(),
+        status="succeeded",
+        artifact_uri="s3://forgeml/training-runs/run-1",
+        model_type="xgboost",
+        metrics={"auc": 0.94},
+        evaluation_report={
+            "model_card": {"training_rows": 100},
+            "training_execution": {
+                "schema_version": "forgeml.training_execution_result.v1",
+                "runner_name": "local-example-training-runner",
+                "external_run_id": "local-example:run-1",
+                "artifacts": [
+                    {
+                        "name": "model",
+                        "artifact_type": "model",
+                        "uri": "file:///tmp/model.json",
+                        "metadata": {
+                            "control_plane_uri": "s3://forgeml/training-runs/run-1/model.json"
+                        },
+                    },
+                    {
+                        "name": "evaluation",
+                        "artifact_type": "evaluation_report",
+                        "uri": "file:///tmp/evaluation.json",
+                    },
+                ],
+            },
+        },
+    )

@@ -15,7 +15,7 @@ Implemented foundation:
 - Feature store metadata with feature sets, definitions, pipeline registration, lineage, materialization records, and orchestration adapter boundary.
 - Experiment tracking with experiment groups, linked run records, parameters, metrics, evaluation reports, and artifact metadata.
 - Training run workflow lifecycle with orchestration adapter boundary, dataset or feature-set lineage, result recording, cancellation, and experiment-run synchronization.
-- Model registry with registered models, versioning from succeeded training runs, signatures, metrics, approval workflow, and lineage.
+- Model registry with registered models, validated and idempotent promotion from succeeded training execution manifests, signatures, metrics, approval workflow, and lineage.
 - Deployments with approved-model-version gating, immutable revisions, canary traffic allocation, health checks, rollback, events, and serving orchestrator boundary.
 - Inference endpoints with deployment-revision attribution, request logs, deterministic runtime adapter, prediction response contracts, and metric snapshots.
 - Monitoring read APIs for project inference summaries, endpoint latency, prediction counts, error rates, and active alert counts.

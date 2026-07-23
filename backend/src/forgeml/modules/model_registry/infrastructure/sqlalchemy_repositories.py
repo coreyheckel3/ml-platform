@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from forgeml.modules.experiments.infrastructure.sqlalchemy_models import ExperimentRunModel
 from forgeml.modules.model_registry.domain.entities import (
     ModelApproval,
     ModelApprovalStatus,
@@ -11,6 +12,7 @@ from forgeml.modules.model_registry.domain.entities import (
     ModelVersionStatus,
     RegisteredModel,
     RegisteredModelStatus,
+    TrainingRunPromotionCandidate,
     TrainingRunReference,
 )
 from forgeml.modules.model_registry.infrastructure.sqlalchemy_models import (
@@ -96,6 +98,37 @@ class SqlAlchemyModelRegistryRepository:
             metrics={key: float(value) for key, value in record.metrics_json.items()},
         )
 
+    def get_training_run_promotion_candidate(
+        self,
+        training_run_id: UUID,
+    ) -> TrainingRunPromotionCandidate | None:
+        row = self._session.execute(
+            select(TrainingRunModel, ExperimentRunModel)
+            .join(
+                ExperimentRunModel,
+                ExperimentRunModel.id == TrainingRunModel.experiment_run_id,
+            )
+            .where(TrainingRunModel.id == training_run_id)
+        ).one_or_none()
+        if row is None:
+            return None
+
+        training_run, experiment_run = row
+        return TrainingRunPromotionCandidate(
+            id=training_run.id,
+            organization_id=training_run.organization_id,
+            project_id=training_run.project_id,
+            experiment_id=training_run.experiment_id,
+            experiment_run_id=training_run.experiment_run_id,
+            dataset_version_id=training_run.dataset_version_id,
+            feature_set_id=training_run.feature_set_id,
+            status=training_run.status,
+            artifact_uri=training_run.artifact_uri,
+            model_type=training_run.model_type,
+            metrics={key: float(value) for key, value in training_run.metrics_json.items()},
+            evaluation_report=experiment_run.evaluation_report_json,
+        )
+
     def training_run_already_registered(
         self,
         registered_model_id: UUID,
@@ -110,6 +143,19 @@ class SqlAlchemyModelRegistryRepository:
             )
             is not None
         )
+
+    def get_model_version_by_training_run(
+        self,
+        registered_model_id: UUID,
+        training_run_id: UUID,
+    ) -> ModelVersion | None:
+        record = self._session.scalars(
+            select(ModelVersionModel).where(
+                ModelVersionModel.registered_model_id == registered_model_id,
+                ModelVersionModel.training_run_id == training_run_id,
+            )
+        ).one_or_none()
+        return _model_version_to_domain(record) if record else None
 
     def latest_model_version_number(self, registered_model_id: UUID) -> int:
         versions = self._session.scalars(

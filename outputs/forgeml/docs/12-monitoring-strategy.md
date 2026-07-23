@@ -93,6 +93,7 @@ Metric names should be stable and low-cardinality:
 | `forgeml_api_request_duration_seconds` | Histogram | `route`, `method`, `status_code` |
 | `forgeml_api_requests_total` | Counter | `route`, `method`, `status_code` |
 | `forgeml_training_job_duration_seconds` | Histogram | `project_id`, `algorithm`, `status` |
+| `forgeml_model_promotions_total` | Counter | `status` |
 | `forgeml_pipeline_failures_total` | Counter | `pipeline_type`, `project_id` |
 | `forgeml_inference_predictions_total` | Counter | `deployment_id`, `model_version_id` |
 | `forgeml_inference_request_duration_seconds` | Histogram | `deployment_id`, `model_version_id` |

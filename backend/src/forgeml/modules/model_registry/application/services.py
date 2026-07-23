@@ -9,9 +9,12 @@ from forgeml.modules.model_registry.domain.entities import (
     ModelVersionStatus,
     RegisteredModel,
     RegisteredModelStatus,
+    TrainingRunPromotionCandidate,
+    TrainingRunReference,
 )
 from forgeml.modules.model_registry.domain.policies import (
     build_registered_model_slug,
+    model_artifact_uri_from_training_execution,
     normalize_model_format,
     normalize_task_type,
     validate_approval_decision,
@@ -19,6 +22,7 @@ from forgeml.modules.model_registry.domain.policies import (
     validate_model_signature,
     validate_registered_model_name,
     validate_reviewable_status,
+    validate_training_run_promotion_candidate,
     validate_training_run_reference,
 )
 from forgeml.modules.model_registry.repositories.interfaces import ModelRegistryRepository
@@ -27,6 +31,7 @@ from forgeml.platform.domain.errors import (
     PermissionDeniedError,
     ResourceNotFoundError,
 )
+from forgeml.platform.observability.metrics import model_promotions_total
 from forgeml.platform.security.rbac import Principal
 
 
@@ -47,6 +52,15 @@ class RegisterModelVersionCommand:
     model_format: str
     signature: dict[str, object]
     created_by: UUID
+
+
+@dataclass(frozen=True)
+class PromoteTrainingRunCommand:
+    registered_model_id: UUID
+    training_run_id: UUID
+    model_format: str
+    signature: dict[str, object]
+    promoted_by: UUID
 
 
 @dataclass(frozen=True)
@@ -128,6 +142,57 @@ class ModelRegistryService:
         if self._repository.training_run_already_registered(model.id, training_run.id):
             raise ConflictError("This training run is already registered for the model.")
 
+        return self._create_model_version(
+            model=model,
+            training_run=training_run,
+            model_format=model_format,
+            signature=command.signature,
+            artifact_uri=training_run.artifact_uri,
+            created_by=command.created_by,
+        )
+
+    def promote_training_run_to_model_version(
+        self,
+        command: PromoteTrainingRunCommand,
+        principal: Principal,
+    ) -> ModelVersion:
+        self._require(principal, "model_versions:create")
+        model = self._get_scoped_model(command.registered_model_id, principal)
+        candidate = self._repository.get_training_run_promotion_candidate(command.training_run_id)
+        if candidate is None or candidate.organization_id != model.organization_id:
+            raise ResourceNotFoundError("Training run was not found.")
+        if candidate.project_id != model.project_id:
+            raise ResourceNotFoundError("Training run was not found.")
+
+        validate_training_run_promotion_candidate(candidate)
+        validate_model_signature(command.signature)
+        model_format = normalize_model_format(command.model_format)
+        existing = self._repository.get_model_version_by_training_run(model.id, candidate.id)
+        if existing is not None:
+            model_promotions_total.labels(status="idempotent").inc()
+            return existing
+
+        version = self._create_model_version(
+            model=model,
+            training_run=candidate,
+            model_format=model_format,
+            signature=command.signature,
+            artifact_uri=model_artifact_uri_from_training_execution(candidate),
+            created_by=command.promoted_by,
+        )
+        model_promotions_total.labels(status="succeeded").inc()
+        return version
+
+    def _create_model_version(
+        self,
+        *,
+        model: RegisteredModel,
+        training_run: TrainingRunReference | TrainingRunPromotionCandidate,
+        model_format: str,
+        signature: dict[str, object],
+        artifact_uri: str,
+        created_by: UUID,
+    ) -> ModelVersion:
         version_number = self._repository.latest_model_version_number(model.id) + 1
         version = ModelVersion(
             id=uuid4(),
@@ -135,12 +200,12 @@ class ModelRegistryService:
             version=version_number,
             training_run_id=training_run.id,
             experiment_run_id=training_run.experiment_run_id,
-            artifact_uri=training_run.artifact_uri,
+            artifact_uri=artifact_uri,
             model_format=model_format,
-            signature=command.signature,
+            signature=signature,
             metrics=training_run.metrics,
             status=ModelVersionStatus.CANDIDATE,
-            created_by=command.created_by,
+            created_by=created_by,
         )
         saved = self._repository.add_model_version(version)
         self._record_training_lineage(saved, training_run)

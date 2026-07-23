@@ -410,7 +410,7 @@ def ensure_model_version(
         ),
         None,
     )
-    model_version = existing or client.register_model_version(
+    model_version = existing or client.promote_training_run_to_model_version(
         model_id,
         {
             "training_run_id": training_run_id,

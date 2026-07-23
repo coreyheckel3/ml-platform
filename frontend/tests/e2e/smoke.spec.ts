@@ -6,6 +6,12 @@ test("opens dashboard and navigates to projects", async ({ page }) => {
 
   await page.getByRole("link", { name: "Projects" }).click();
   await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
+  await page.getByRole("button", { name: "New" }).click();
+  await expect(page.getByRole("form", { name: "Create project" })).toBeVisible();
+  await page.getByLabel("Name").fill("Audience Forecasting");
+  await page.getByLabel("Description").fill("Demand planning models");
+  await page.getByRole("button", { name: "Create project" }).click();
+  await expect(page.getByRole("cell", { name: "Audience Forecasting" })).toBeVisible();
 
   await page.getByRole("link", { name: "Examples" }).click();
   await expect(page.getByRole("heading", { name: "Example Projects" })).toBeVisible();

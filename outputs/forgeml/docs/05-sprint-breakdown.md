@@ -382,3 +382,37 @@ Implemented scope:
 - `TrainingRunService.execute_next_training_runs` processes supported queued work through the configured runner.
 - `scripts/workers/run_training_worker.py` runs one local worker polling cycle for an organization.
 - Unit and integration tests cover worker summaries, queue skipping, claiming, and terminal persistence.
+
+## Sprint 16: Model Promotion Pipeline
+
+Goal: Promote completed training results into the registry through a validated, idempotent application workflow.
+
+Deliverables:
+
+- Promotion command in the model registry application layer
+- Training execution manifest validation
+- Model artifact URI extraction
+- Idempotent training-run to version mapping
+- Public promotion API endpoint
+- SDK and bootstrap integration
+- Promotion metrics
+- Projects page create action
+
+Acceptance criteria:
+
+- Only succeeded training runs can be promoted.
+- Promotion requires the versioned training execution manifest persisted on the linked experiment run.
+- The manifest must include a model artifact with a resolvable URI.
+- Repeating the same promotion for a model and training run returns the existing version.
+- Promoted versions retain metrics, signature, artifact URI, and lineage.
+- Example bootstrap uses the promotion endpoint.
+- The Projects page `New` action creates a project row instead of being inert.
+
+Implemented scope:
+
+- `ModelRegistryService.promote_training_run_to_model_version` validates training evidence before creating a candidate model version.
+- `SqlAlchemyModelRegistryRepository` joins training runs to experiment reports to load promotion evidence.
+- `/api/v1/models/{model_id}/versions/promote-training-run` exposes promotion through FastAPI.
+- The ForgeML SDK and example bootstrapper now promote training runs through the public API.
+- `forgeml_model_promotions_total` tracks successful and idempotent promotions.
+- Frontend project creation is covered by Vitest and Playwright smoke coverage.

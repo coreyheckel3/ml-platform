@@ -167,11 +167,13 @@ Training job request:
 | `POST` | `/projects/{project_id}/models` | Create registered model |
 | `GET` | `/projects/{project_id}/models` | List registered models |
 | `GET` | `/models/{model_id}` | Get registered model |
+| `POST` | `/models/{model_id}/versions` | Register model version from a succeeded training run reference |
+| `POST` | `/models/{model_id}/versions/promote-training-run` | Promote a succeeded training run after validating its execution manifest |
 | `GET` | `/models/{model_id}/versions` | List model versions |
 | `GET` | `/model-versions/{version_id}` | Get model version |
-| `POST` | `/model-versions/{version_id}/approval-requests` | Request approval |
-| `POST` | `/model-approvals/{approval_id}/approve` | Approve model version |
-| `POST` | `/model-approvals/{approval_id}/reject` | Reject model version |
+| `POST` | `/model-versions/{version_id}/approval-request` | Request approval |
+| `POST` | `/model-versions/{version_id}/review` | Approve or reject model version |
+| `GET` | `/model-versions/{version_id}/approvals` | List approval decisions |
 | `GET` | `/model-versions/{version_id}/lineage` | Get model lineage |
 
 ## Deployments

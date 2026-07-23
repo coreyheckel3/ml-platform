@@ -144,7 +144,23 @@ def test_model_registry_repository_round_trips_versions_approvals_and_lineage() 
                 parameters_json={"max_depth": 6},
                 metrics_json={"auc": 0.94},
                 artifact_uri="s3://forgeml/training-runs/run-1",
-                evaluation_report_json={},
+                evaluation_report_json={
+                    "training_execution": {
+                        "schema_version": "forgeml.training_execution_result.v1",
+                        "artifacts": [
+                            {
+                                "name": "model",
+                                "artifact_type": "model",
+                                "uri": "file:///tmp/model.json",
+                                "metadata": {
+                                    "control_plane_uri": (
+                                        "s3://forgeml/training-runs/run-1/model.json"
+                                    )
+                                },
+                            }
+                        ],
+                    }
+                },
                 error_message=None,
             )
         )
@@ -240,6 +256,8 @@ def test_model_registry_repository_round_trips_versions_approvals_and_lineage() 
         models = repository.list_registered_models(organization_id, project_id)
         versions = repository.list_model_versions(model_id)
         reference = repository.get_training_run_reference(training_run_id)
+        candidate = repository.get_training_run_promotion_candidate(training_run_id)
+        existing = repository.get_model_version_by_training_run(model_id, training_run_id)
         approvals = repository.list_approvals(version_id)
         lineage = repository.list_lineage(version_id)
 
@@ -248,5 +266,11 @@ def test_model_registry_repository_round_trips_versions_approvals_and_lineage() 
     assert versions[0].metrics["auc"] == 0.94
     assert reference is not None
     assert reference.status == "succeeded"
+    assert candidate is not None
+    assert candidate.evaluation_report["training_execution"]["schema_version"] == (
+        "forgeml.training_execution_result.v1"
+    )
+    assert existing is not None
+    assert existing.id == version_id
     assert approvals[0].status == ModelApprovalStatus.APPROVED
     assert lineage[0].source_type == "training_run"

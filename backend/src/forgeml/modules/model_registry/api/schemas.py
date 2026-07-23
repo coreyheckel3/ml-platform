@@ -30,6 +30,12 @@ class RegisterModelVersionRequest(BaseModel):
     signature: dict[str, object]
 
 
+class PromoteTrainingRunRequest(BaseModel):
+    training_run_id: str
+    model_format: str = Field(min_length=2, max_length=64)
+    signature: dict[str, object]
+
+
 class ModelVersionResponse(BaseModel):
     id: str
     registered_model_id: str

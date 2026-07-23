@@ -2,14 +2,17 @@ import pytest
 
 from forgeml.modules.model_registry.domain.entities import (
     ModelApprovalStatus,
+    TrainingRunPromotionCandidate,
     TrainingRunReference,
 )
 from forgeml.modules.model_registry.domain.policies import (
     build_registered_model_slug,
+    model_artifact_uri_from_training_execution,
     normalize_model_format,
     normalize_task_type,
     validate_approval_decision,
     validate_model_signature,
+    validate_training_run_promotion_candidate,
     validate_training_run_reference,
 )
 from forgeml.platform.domain.errors import DomainValidationError
@@ -48,6 +51,61 @@ def test_training_reference_requires_succeeded_run(training_reference) -> None:
 
     with pytest.raises(DomainValidationError):
         validate_training_run_reference(failed)
+
+
+def test_training_promotion_requires_execution_manifest(training_reference) -> None:
+    candidate = TrainingRunPromotionCandidate(
+        id=training_reference.id,
+        organization_id=training_reference.organization_id,
+        project_id=training_reference.project_id,
+        experiment_id=training_reference.experiment_id,
+        experiment_run_id=training_reference.experiment_run_id,
+        dataset_version_id=training_reference.dataset_version_id,
+        feature_set_id=training_reference.feature_set_id,
+        status=training_reference.status,
+        artifact_uri=training_reference.artifact_uri,
+        model_type=training_reference.model_type,
+        metrics=training_reference.metrics,
+        evaluation_report={},
+    )
+
+    with pytest.raises(DomainValidationError):
+        validate_training_run_promotion_candidate(candidate)
+
+
+def test_model_artifact_uri_prefers_control_plane_uri(training_reference) -> None:
+    candidate = TrainingRunPromotionCandidate(
+        id=training_reference.id,
+        organization_id=training_reference.organization_id,
+        project_id=training_reference.project_id,
+        experiment_id=training_reference.experiment_id,
+        experiment_run_id=training_reference.experiment_run_id,
+        dataset_version_id=training_reference.dataset_version_id,
+        feature_set_id=training_reference.feature_set_id,
+        status=training_reference.status,
+        artifact_uri=training_reference.artifact_uri,
+        model_type=training_reference.model_type,
+        metrics=training_reference.metrics,
+        evaluation_report={
+            "training_execution": {
+                "schema_version": "forgeml.training_execution_result.v1",
+                "artifacts": [
+                    {
+                        "name": "model",
+                        "artifact_type": "model",
+                        "uri": "file:///tmp/model.json",
+                        "metadata": {
+                            "control_plane_uri": "s3://forgeml/training-runs/run-1/model.json"
+                        },
+                    }
+                ],
+            }
+        },
+    )
+
+    assert model_artifact_uri_from_training_execution(candidate) == (
+        "s3://forgeml/training-runs/run-1/model.json"
+    )
 
 
 def test_approval_decision_rejects_request_state() -> None:

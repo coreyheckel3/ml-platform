@@ -11,6 +11,7 @@ from forgeml.modules.model_registry.api.schemas import (
     ModelLineageResponse,
     ModelVersionListResponse,
     ModelVersionResponse,
+    PromoteTrainingRunRequest,
     RegisteredModelListResponse,
     RegisteredModelResponse,
     RegisterModelVersionRequest,
@@ -20,6 +21,7 @@ from forgeml.modules.model_registry.api.schemas import (
 from forgeml.modules.model_registry.application.services import (
     CreateRegisteredModelCommand,
     ModelRegistryService,
+    PromoteTrainingRunCommand,
     RegisterModelVersionCommand,
     RequestModelApprovalCommand,
     ReviewModelVersionCommand,
@@ -112,6 +114,30 @@ def register_model_version(
             model_format=request.model_format,
             signature=request.signature,
             created_by=UUID(principal.user_id),
+        ),
+        principal,
+    )
+    return _model_version_response(version)
+
+
+@router.post(
+    "/models/{model_id}/versions/promote-training-run",
+    response_model=ModelVersionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def promote_training_run_to_model_version(
+    model_id: UUID,
+    request: PromoteTrainingRunRequest,
+    principal: Principal = Depends(get_current_principal),
+    service: ModelRegistryService = Depends(get_model_registry_service),
+) -> ModelVersionResponse:
+    version = service.promote_training_run_to_model_version(
+        PromoteTrainingRunCommand(
+            registered_model_id=model_id,
+            training_run_id=UUID(request.training_run_id),
+            model_format=request.model_format,
+            signature=request.signature,
+            promoted_by=UUID(principal.user_id),
         ),
         principal,
     )

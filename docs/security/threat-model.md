@@ -30,7 +30,7 @@ ForgeML is a modular monolith ML platform that stores control-plane metadata, mo
 | Broken object-level authorization | RBAC checks in application services and project-scoped repositories |
 | Request floods | Configurable rate limiting with metrics and retry headers |
 | Browser exploitation | Secure response headers and strict CORS origins |
-| Unsafe model promotion | Approval gates before deployment revisions |
+| Unsafe model promotion | Training execution manifest validation, idempotent registry promotion, and approval gates before deployment revisions |
 | Data/schema corruption | Immutable dataset versions, validation runs, backups before migration |
 | Inference drift | Drift profiles, drift reports, alerting, and retraining policies |
 | Supply-chain compromise | CI lint/test/build gates and pinned runtime images where practical |

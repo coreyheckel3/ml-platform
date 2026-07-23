@@ -44,6 +44,10 @@ class FakeModelRegistryService:
         assert command.training_run_id == self.training_run_id
         return self._version(ModelVersionStatus.CANDIDATE)
 
+    def promote_training_run_to_model_version(self, command, principal):
+        assert command.training_run_id == self.training_run_id
+        return self._version(ModelVersionStatus.CANDIDATE)
+
     def list_model_versions(self, registered_model_id, principal):
         assert registered_model_id == self.model_id
         return [self._version(ModelVersionStatus.CANDIDATE)]
@@ -162,6 +166,17 @@ def test_model_registry_routes_expose_versioning_approval_and_lineage() -> None:
             },
         },
     )
+    promoted = client.post(
+        f"/api/v1/models/{service.model_id}/versions/promote-training-run",
+        json={
+            "training_run_id": str(service.training_run_id),
+            "model_format": "xgboost-booster",
+            "signature": {
+                "inputs": [{"name": "amount"}],
+                "outputs": [{"name": "risk_score"}],
+            },
+        },
+    )
     approval = client.post(
         f"/api/v1/model-versions/{service.version_id}/approval-request",
         json={"comment": "Ready for review."},
@@ -178,6 +193,8 @@ def test_model_registry_routes_expose_versioning_approval_and_lineage() -> None:
     assert listed.json()["items"][0]["id"] == str(service.model_id)
     assert version.status_code == 201
     assert version.json()["metrics"]["auc"] == 0.94
+    assert promoted.status_code == 201
+    assert promoted.json()["training_run_id"] == str(service.training_run_id)
     assert approval.status_code == 202
     assert approval.json()["status"] == "requested"
     assert review.status_code == 200

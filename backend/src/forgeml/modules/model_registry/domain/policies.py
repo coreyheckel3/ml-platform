@@ -3,11 +3,13 @@ import re
 from forgeml.modules.model_registry.domain.entities import (
     ModelApprovalStatus,
     ModelVersionStatus,
+    TrainingRunPromotionCandidate,
     TrainingRunReference,
 )
 from forgeml.platform.domain.errors import DomainValidationError
 
 _SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
+TRAINING_EXECUTION_SCHEMA_VERSION = "forgeml.training_execution_result.v1"
 _ALLOWED_TASK_TYPES = {
     "classification",
     "custom",
@@ -73,6 +75,43 @@ def validate_training_run_reference(reference: TrainingRunReference) -> None:
         raise DomainValidationError("Training run must expose a model artifact URI.")
 
 
+def validate_training_run_promotion_candidate(
+    candidate: TrainingRunPromotionCandidate,
+) -> None:
+    if candidate.status != "succeeded":
+        raise DomainValidationError("Only succeeded training runs can be promoted.")
+    if len(candidate.artifact_uri.strip()) < 3:
+        raise DomainValidationError("Training run must expose a model artifact URI.")
+    _training_execution_manifest(candidate)
+
+
+def model_artifact_uri_from_training_execution(
+    candidate: TrainingRunPromotionCandidate,
+) -> str:
+    manifest = _training_execution_manifest(candidate)
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise DomainValidationError("Training execution manifest must include artifact metadata.")
+
+    model_artifact = next(
+        (
+            artifact
+            for artifact in artifacts
+            if isinstance(artifact, dict) and artifact.get("artifact_type") == "model"
+        ),
+        None,
+    )
+    if model_artifact is None:
+        raise DomainValidationError("Training execution manifest must include a model artifact.")
+
+    metadata = model_artifact.get("metadata")
+    metadata_uri = metadata.get("control_plane_uri") if isinstance(metadata, dict) else None
+    artifact_uri = metadata_uri or model_artifact.get("uri")
+    if not isinstance(artifact_uri, str) or len(artifact_uri.strip()) < 3:
+        raise DomainValidationError("Model artifact metadata must include a resolvable URI.")
+    return artifact_uri.strip()
+
+
 def validate_approval_request(version_status: ModelVersionStatus) -> None:
     if version_status != ModelVersionStatus.CANDIDATE:
         raise DomainValidationError("Only candidate model versions can request approval.")
@@ -86,3 +125,16 @@ def validate_approval_decision(status: ModelApprovalStatus) -> None:
 def validate_reviewable_status(version_status: ModelVersionStatus) -> None:
     if version_status != ModelVersionStatus.PENDING_APPROVAL:
         raise DomainValidationError("Model version must be pending approval before review.")
+
+
+def _training_execution_manifest(candidate: TrainingRunPromotionCandidate) -> dict[str, object]:
+    manifest = candidate.evaluation_report.get("training_execution")
+    if not isinstance(manifest, dict):
+        raise DomainValidationError(
+            "Training run evaluation report must include a training execution manifest."
+        )
+    if manifest.get("schema_version") != TRAINING_EXECUTION_SCHEMA_VERSION:
+        raise DomainValidationError(
+            "Training execution manifest schema version is not supported."
+        )
+    return manifest

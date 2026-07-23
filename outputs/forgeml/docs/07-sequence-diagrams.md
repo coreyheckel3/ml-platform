@@ -108,9 +108,11 @@ sequenceDiagram
   Trainer->>MLflow: Log metrics and artifacts
   Trainer->>Obj: Write evaluation report
   Trainer->>DB: Mark training completed
-  User->>UI: Register model from run
-  UI->>API: POST /model-versions/from-training-run
-  API->>Registry: register_model_version(command)
+  User->>UI: Promote model from run
+  UI->>API: POST /models/{id}/versions/promote-training-run
+  API->>Registry: promote_training_run_to_model_version(command)
+  Registry->>DB: Load training run and experiment execution manifest
+  Registry->>Registry: Validate succeeded run, artifact metadata, signature
   Registry->>DB: Create model_version and lineage
 ```
 

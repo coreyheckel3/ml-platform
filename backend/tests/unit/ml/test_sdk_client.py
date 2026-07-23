@@ -96,3 +96,32 @@ def test_sdk_client_gets_model_version(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert client.get_model_version("model-version-1") == {"id": "model-version-1"}
     assert captured_paths == ["/api/v1/model-versions/model-version-1"]
+
+
+def test_sdk_client_promotes_training_run_to_model_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_posts = []
+
+    def fake_post(
+        _client: ForgeMLClient,
+        path: str,
+        payload: dict[str, object],
+    ) -> dict[str, object]:
+        captured_posts.append((path, payload))
+        return {"id": "model-version-1"}
+
+    monkeypatch.setattr(ForgeMLClient, "post", fake_post)
+    client = ForgeMLClient(base_url="http://api.test")
+    payload = {
+        "training_run_id": "training-run-1",
+        "model_format": "xgboost-booster",
+        "signature": {"inputs": [], "outputs": []},
+    }
+
+    assert client.promote_training_run_to_model_version("model-1", payload) == {
+        "id": "model-version-1"
+    }
+    assert captured_posts == [
+        ("/api/v1/models/model-1/versions/promote-training-run", payload)
+    ]

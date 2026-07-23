@@ -82,3 +82,19 @@ class TrainingRunReference:
     artifact_uri: str
     model_type: str
     metrics: dict[str, float]
+
+
+@dataclass(frozen=True)
+class TrainingRunPromotionCandidate:
+    id: UUID
+    organization_id: UUID
+    project_id: UUID
+    experiment_id: UUID
+    experiment_run_id: UUID
+    dataset_version_id: UUID | None
+    feature_set_id: UUID | None
+    status: str
+    artifact_uri: str
+    model_type: str
+    metrics: dict[str, float]
+    evaluation_report: dict[str, object]

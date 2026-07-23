@@ -19,6 +19,11 @@ rate_limited_requests_total = Counter(
     "Total API requests rejected by rate limiting.",
     ["route", "method"],
 )
+model_promotions_total = Counter(
+    "forgeml_model_promotions_total",
+    "Total model version promotions from training runs.",
+    ["status"],
+)
 
 
 @metrics_router.get("/metrics", include_in_schema=False)

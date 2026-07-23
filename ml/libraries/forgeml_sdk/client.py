@@ -123,6 +123,13 @@ class ForgeMLClient:
     def register_model_version(self, model_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         return self.post(f"/api/v1/models/{model_id}/versions", payload)
 
+    def promote_training_run_to_model_version(
+        self,
+        model_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        return self.post(f"/api/v1/models/{model_id}/versions/promote-training-run", payload)
+
     def request_model_approval(self, version_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         return self.post(f"/api/v1/model-versions/{version_id}/approval-request", payload)
 

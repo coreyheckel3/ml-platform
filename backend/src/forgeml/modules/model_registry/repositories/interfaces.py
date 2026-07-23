@@ -6,6 +6,7 @@ from forgeml.modules.model_registry.domain.entities import (
     ModelLineage,
     ModelVersion,
     RegisteredModel,
+    TrainingRunPromotionCandidate,
     TrainingRunReference,
 )
 
@@ -35,11 +36,24 @@ class ModelRegistryRepository(Protocol):
     def get_training_run_reference(self, training_run_id: UUID) -> TrainingRunReference | None:
         raise NotImplementedError
 
+    def get_training_run_promotion_candidate(
+        self,
+        training_run_id: UUID,
+    ) -> TrainingRunPromotionCandidate | None:
+        raise NotImplementedError
+
     def training_run_already_registered(
         self,
         registered_model_id: UUID,
         training_run_id: UUID,
     ) -> bool:
+        raise NotImplementedError
+
+    def get_model_version_by_training_run(
+        self,
+        registered_model_id: UUID,
+        training_run_id: UUID,
+    ) -> ModelVersion | None:
         raise NotImplementedError
 
     def latest_model_version_number(self, registered_model_id: UUID) -> int:

@@ -89,6 +89,7 @@ Scope:
 
 - Registered models
 - Model versions
+- Validated promotion from training execution manifests
 - Model signatures
 - Metrics snapshots
 - Approval workflow
