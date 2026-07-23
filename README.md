@@ -23,6 +23,7 @@ Implemented foundation:
 - Drift detection with reference profiles, production-window reports over inference request logs, feature-level drift scores, and analyzer adapter boundary.
 - Automatic retraining with deployment-scoped policies, drift and alert trigger evaluation, cooldowns, daily run limits, approval gates, idempotent source handling, and Training module handoff.
 - Example project manifests for Movie Recommendation, Semantic Search, and Fraud Detection, including fixture datasets, evaluation reports, SDK validation, and idempotent bootstrap automation through public APIs.
+- Deterministic local example training jobs that generate versioned model and evaluation artifacts for the three reference workloads.
 - Production hardening with secure response headers, configurable API rate limiting, Prometheus metrics for throttling, production-readiness CI checks, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
@@ -76,6 +77,12 @@ Bootstrap reference projects into a running local API:
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/examples/bootstrap_examples.py
+```
+
+Run deterministic local example training:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/examples/run_local_training.py
 ```
 
 ## Architecture

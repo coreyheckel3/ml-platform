@@ -3,7 +3,7 @@ RUFF ?= .venv/bin/ruff
 UVICORN ?= .venv/bin/uvicorn
 NPM ?= npm
 
-.PHONY: backend-dev frontend-dev test backend-test frontend-test lint format production-readiness docker-up docker-down docker-full
+.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness docker-up docker-down docker-full
 
 backend-dev:
 	$(UVICORN) forgeml.main:create_app --factory --host 0.0.0.0 --port 8000 --reload --app-dir backend/src
@@ -19,12 +19,15 @@ backend-test:
 frontend-test:
 	$(NPM) --prefix frontend run test -- --run
 
+example-training:
+	PYTHONPATH=. $(PYTHON) scripts/examples/run_local_training.py
+
 lint:
-	$(RUFF) check backend/src backend/tests scripts/ci scripts/dev scripts/examples
+	$(RUFF) check backend/src backend/tests scripts/ci scripts/dev scripts/examples ml/libraries ml/examples
 	$(NPM) --prefix frontend run lint
 
 format:
-	$(RUFF) format backend/src backend/tests scripts/ci scripts/dev scripts/examples
+	$(RUFF) format backend/src backend/tests scripts/ci scripts/dev scripts/examples ml/libraries ml/examples
 	$(NPM) --prefix frontend run format
 
 production-readiness:

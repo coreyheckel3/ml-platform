@@ -18,8 +18,9 @@ def test_jwt_signer_rejects_tampered_token() -> None:
     signer = JwtSigner(secret="a-secret-long-enough-for-tests", issuer="forgeml-test")
 
     token = signer.encode({"sub": "user-1", "typ": "access"}, ttl_seconds=60)
-    tampered = f"{token[:-1]}x"
+    header, payload, signature = token.split(".", 2)
+    replacement = "A" if signature[0] != "A" else "B"
+    tampered = f"{header}.{payload}.{replacement}{signature[1:]}"
 
     with pytest.raises(TokenError):
         signer.decode(tampered)
-

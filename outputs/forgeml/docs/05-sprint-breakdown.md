@@ -287,3 +287,35 @@ Implemented scope:
 - k6 smoke load test covers readiness, metrics, authentication rejection, latency, and error-rate gates.
 - Backup and restore scripts support Compose-managed PostgreSQL.
 - Runbooks and threat model live under `docs/runbooks` and `docs/security`.
+
+## Sprint 13: Demo Hardening and Real ML Execution
+
+Goal: Make the reference workloads executable as deterministic local ML jobs with artifacts that mirror platform registry contracts.
+
+Deliverables:
+
+- Local trainer for Movie Recommendation
+- Local trainer for Semantic Search
+- Local trainer for Fraud Detection
+- Combined training orchestrator
+- Versioned model artifacts
+- Evaluation artifacts
+- CI smoke execution
+- Unit tests for artifact contracts
+
+Acceptance criteria:
+
+- All three examples can be trained from one command.
+- Each trainer writes a versioned `model.json` artifact and `evaluation.json` report.
+- The combined manifest records every executed workload and artifact path.
+- CI runs an example training smoke job without external ML services.
+- Production-readiness checks validate the example training contract.
+
+Implemented scope:
+
+- `scripts/examples/run_local_training.py` executes all examples or a selected subset by slug.
+- Fraud Detection trains a deterministic logistic scoring baseline with engineered transaction features.
+- Movie Recommendation trains an aggregate ranking baseline with user and movie profiles.
+- Semantic Search builds a TF-IDF cosine retrieval index over the fixture corpus.
+- Unit tests verify artifact schema versions, objective metrics, and orchestrator output.
+- CI linting now covers `ml` example code and runs a local example training smoke command.

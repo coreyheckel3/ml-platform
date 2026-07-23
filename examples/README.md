@@ -21,6 +21,27 @@ examples/
 
 The catalog points at each `project.json` manifest. The SDK validates these manifests with `ml.libraries.forgeml_sdk.examples`.
 
+## Local Training Command
+
+Run the deterministic example training jobs:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/examples/run_local_training.py
+```
+
+Artifacts are written under `artifacts/examples`:
+
+- `model.json`
+- `evaluation.json`
+- `summary.json`
+- combined `training-summary.json`
+
+Run a single workload by slug:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/examples/run_local_training.py --project fraud-detection
+```
+
 ## Bootstrap Command
 
 Start the backend with seeded local auth data, then run:

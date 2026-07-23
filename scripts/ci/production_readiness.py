@@ -14,6 +14,8 @@ SCAN_ROOTS = (
     "frontend/tests",
     "infra",
     "load",
+    "ml",
+    "examples",
     "scripts",
     "docs",
     "README.md",
@@ -35,8 +37,13 @@ REQUIRED_FILES = (
     "infra/terraform/environments/staging/variables.tf",
     "infra/terraform/environments/staging/versions.tf",
     "load/k6/api_smoke.js",
+    "ml/examples/fraud_detection/train.py",
+    "ml/examples/movie_recommendation/train.py",
+    "ml/examples/semantic_search/build_index.py",
+    "scripts/examples/run_local_training.py",
     "scripts/ops/backup_postgres.sh",
     "scripts/ops/restore_postgres.sh",
+    "backend/tests/unit/ml/test_example_training_pipelines.py",
 )
 
 
@@ -56,6 +63,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_ops_scripts(repo_root),
         check_load_test_contract(repo_root),
         check_staging_terraform(repo_root),
+        check_example_training_contract(repo_root),
     ]
 
 
@@ -168,6 +176,62 @@ def check_staging_terraform(repo_root: Path) -> ReadinessCheck:
             "staging terraform is variable driven"
             if not missing and uses_variables
             else f"missing={missing}, uses_variables={uses_variables}"
+        ),
+    )
+
+
+def check_example_training_contract(repo_root: Path) -> ReadinessCheck:
+    trainer_paths = [
+        "ml/examples/fraud_detection/train.py",
+        "ml/examples/movie_recommendation/train.py",
+        "ml/examples/semantic_search/build_index.py",
+    ]
+    paths = [
+        *trainer_paths,
+        "scripts/examples/run_local_training.py",
+    ]
+    missing = [path for path in paths if not (repo_root / path).is_file()]
+    if missing:
+        return ReadinessCheck(
+            name="example training contract",
+            passed=False,
+            detail=f"missing: {', '.join(missing)}",
+        )
+
+    trainer_sources = [
+        (path, (repo_root / path).read_text(encoding="utf-8"))
+        for path in trainer_paths
+    ]
+    orchestrator = (repo_root / "scripts/examples/run_local_training.py").read_text(
+        encoding="utf-8"
+    )
+    required_slugs = {"fraud-detection", "movie-recommendation", "semantic-search"}
+    missing_slugs = sorted(slug for slug in required_slugs if slug not in orchestrator)
+    missing_schema = [
+        path
+        for path, source in trainer_sources
+        if "forgeml.example_model_artifact.v1" not in source
+    ]
+    has_manifest_output = "training-summary.json" in orchestrator
+    has_project_summary_output = all("summary.json" in source for _path, source in trainer_sources)
+    passed = (
+        not missing_slugs
+        and not missing_schema
+        and has_manifest_output
+        and has_project_summary_output
+    )
+    return ReadinessCheck(
+        name="example training contract",
+        passed=passed,
+        detail=(
+            "example trainers and orchestrator expose versioned artifacts"
+            if passed
+            else (
+                f"missing_slugs={missing_slugs}, "
+                f"missing_schema={missing_schema}, "
+                f"has_manifest_output={has_manifest_output}, "
+                f"has_project_summary_output={has_project_summary_output}"
+            )
         ),
     )
 
