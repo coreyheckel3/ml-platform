@@ -783,3 +783,46 @@ Implemented scope:
 - `DatasetsPage` includes dataset creation, version creation, upload instruction display, selected version details, finalization controls, schema inspection, and validation history.
 - Finalization validates size, optional row count, CSV sample text, and manual schema field JSON before submitting.
 - Vitest covers the full dataset operations workflow with mocked dataset lifecycle APIs.
+
+## Sprint 27: Feature Store Operations UI
+
+Goal: Turn feature store metadata into an operator workflow for creating feature sets, registering feature definitions, registering transformation pipelines, triggering materializations, and inspecting lineage from the Feature Store page.
+
+Deliverables:
+
+- Feature set creation client method
+- Feature definition registration client method
+- Feature definition listing client method
+- Feature pipeline registration client method
+- Feature pipeline listing client method
+- Feature materialization trigger client method
+- Feature materialization listing client method
+- Feature lineage listing client method
+- Feature set creation form
+- Feature definition JSON registration form
+- Pipeline registration form with source dataset lineage
+- Pipeline detail panel
+- Materialization history panel
+- Lineage browser
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create feature sets for the selected project.
+- Feature set creation sends name, description, and entity key to the public feature store API.
+- Users can register feature definitions for the selected feature set.
+- Feature definition registration sends name, dtype, description, nullability, and constraints to the public feature store API.
+- Users can register transformation pipelines against the selected feature set.
+- Pipeline registration sends name, optional source dataset, code reference, and optional cron schedule.
+- Registering a source dataset refreshes feature lineage state.
+- Users can trigger materialization for a selected pipeline.
+- Materialization history refreshes after a trigger.
+- Frontend tests cover feature set creation, definition registration, pipeline registration, lineage display, and materialization payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/feature_store/api/featureStore.ts` now exposes create, definition, pipeline, materialization, and lineage operations.
+- `FeatureStorePage` includes feature set creation, selected feature set state, definition registration, pipeline registration, pipeline detail, materialization triggering, materialization history, and lineage browsing.
+- Definition registration validates JSON array shape before submitting.
+- Pipeline registration validates name and code reference before submitting.
+- Vitest covers the full feature store operations workflow with mocked feature store and dataset APIs.

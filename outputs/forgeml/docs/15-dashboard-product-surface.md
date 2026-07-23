@@ -84,6 +84,27 @@ Capabilities:
 - Dataset lineage links
 - Operation feedback for ingestion actions
 
+## Feature Store
+
+Purpose: Manage reusable feature contracts, transformation pipelines, lineage, and materialized feature versions.
+
+Capabilities:
+
+- Feature set list
+- Feature set creation
+- Selected feature set state
+- Feature definition registration
+- Feature definition replacement workflow
+- Feature constraints inspection
+- Pipeline registration with code reference and schedule
+- Source dataset lineage selection
+- Pipeline detail view
+- Manual materialization trigger
+- Materialization history
+- Offline URI and online reference inspection
+- Lineage link browser
+- Operation feedback for feature store actions
+
 ## Experiments
 
 Purpose: Compare training experiments and inspect run quality.
