@@ -182,7 +182,10 @@ Capabilities:
 
 - Alert event list
 - Severity filters
+- Alert rule creation
+- Alert rule metric, threshold, window, and severity controls
 - Acknowledge and resolve actions
+- Incident lifecycle feedback
 - Linked runbook references
 - Alert rule management
 - Notification channel status

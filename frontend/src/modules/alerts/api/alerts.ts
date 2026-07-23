@@ -40,6 +40,17 @@ export type AlertEvaluation = {
   event: AlertEvent | null;
 };
 
+export type CreateAlertRulePayload = {
+  name: string;
+  description: string;
+  severity: string;
+  metric: string;
+  operator: string;
+  threshold: number;
+  window_seconds: number;
+  enabled: boolean;
+};
+
 export type AlertRuleListResponse = {
   items: AlertRule[];
   next_cursor: string | null;
@@ -59,6 +70,18 @@ export function listAlertRules(
     {
       token,
     },
+  );
+}
+
+export function createAlertRule(
+  projectId: string,
+  payload: CreateAlertRulePayload,
+  token: string,
+): Promise<AlertRule> {
+  return apiPost<CreateAlertRulePayload, AlertRule>(
+    `/api/v1/projects/${projectId}/alert-rules`,
+    payload,
+    { token },
   );
 }
 
@@ -82,6 +105,28 @@ export function evaluateAlertRule(
   return apiPost<{ endpoint_id: string }, AlertEvaluation>(
     `/api/v1/alert-rules/${ruleId}/evaluate`,
     { endpoint_id: endpointId },
+    { token },
+  );
+}
+
+export function acknowledgeAlertEvent(
+  eventId: string,
+  token: string,
+): Promise<AlertEvent> {
+  return apiPost<Record<string, never>, AlertEvent>(
+    `/api/v1/alert-events/${eventId}/acknowledge`,
+    {},
+    { token },
+  );
+}
+
+export function resolveAlertEvent(
+  eventId: string,
+  token: string,
+): Promise<AlertEvent> {
+  return apiPost<Record<string, never>, AlertEvent>(
+    `/api/v1/alert-events/${eventId}/resolve`,
+    {},
     { token },
   );
 }

@@ -560,3 +560,39 @@ Implemented scope:
 - Alert Evaluation lets operators select a rule and evaluate it against the selected endpoint.
 - Operational Focus highlights the endpoint with the highest latency/error risk score.
 - Vitest covers alert rule evaluation from monitoring with mocked monitoring and alerting APIs.
+
+## Sprint 21: Alert Operations UI
+
+Goal: Make alert rule creation and alert event lifecycle handling available from the Alerts page.
+
+Deliverables:
+
+- Alert rule creation client method
+- Alert event acknowledgement client method
+- Alert event resolution client method
+- Alert rule creation form
+- Rule metric, operator, threshold, window, severity, and enabled controls
+- Alert event action controls
+- Operation feedback for created, acknowledged, and resolved alerts
+- Alert and monitoring query refresh after lifecycle changes
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create alert rules for the selected project.
+- Rule creation sends name, description, severity, metric, operator, threshold, window, and enabled state to the public alerting API.
+- Open alert events can be acknowledged.
+- Open or acknowledged alert events can be resolved.
+- Resolved alert events do not expose lifecycle actions.
+- Alert events refresh after acknowledge and resolve actions.
+- Alert rules refresh after rule creation.
+- Monitoring summary state is invalidated after incident lifecycle changes.
+- Frontend tests cover rule creation, acknowledgement, and resolution payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/alerts/api/alerts.ts` now exposes create, acknowledge, and resolve operations.
+- `AlertsPage` includes a rule creation form with validated numeric threshold and window fields.
+- Alert event cards expose acknowledgement and resolution actions based on event status.
+- Page-level operation feedback reports rule creation and incident lifecycle results.
+- Vitest covers rule creation plus alert acknowledgement and resolution through mocked API calls.
