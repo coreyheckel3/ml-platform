@@ -634,3 +634,39 @@ Implemented scope:
 - JSON baseline input is parsed and validated before profile creation.
 - Numeric report controls validate API bounds before execution.
 - Vitest covers the full drift operations workflow with mocked drift, monitoring, and retraining APIs.
+
+## Sprint 23: Retraining Operations UI
+
+Goal: Make automatic retraining policy management and run approval workflows operable from the Retraining page.
+
+Deliverables:
+
+- Dataset version listing client method
+- Retraining policy creation client method
+- Manual retraining trigger client method
+- Retraining run approval client method
+- Retraining run rejection client method
+- Policy creation form with deployment, experiment, dataset version, feature set, trigger, guardrail, and training template controls
+- Manual trigger workflow for selected policies
+- Retraining run table with lifecycle actions
+- Selected policy and selected run detail panels
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create retraining policies for the selected project.
+- Policy creation sends deployment id, trigger config, training template, cooldown, daily run limit, approval requirement, and enabled state to the public retraining API.
+- Training templates are built from explicit experiment, dataset version or feature set, algorithm, model type, objective metric, run prefix, and hyperparameter controls.
+- Users can manually trigger a retraining run for the selected policy.
+- Pending approval runs can be approved.
+- Pending approval runs can be rejected.
+- Retraining runs and training run state refresh after lifecycle actions.
+- Frontend tests cover policy creation, manual trigger, approval, and rejection payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/datasets/api/datasets.ts` now exposes dataset version listing.
+- `frontend/src/modules/retraining/api/retraining.ts` now exposes policy creation, manual trigger, approval, and rejection operations.
+- `RetrainingPage` includes policy creation, policy detail, manual trigger, run table lifecycle actions, and run detail views.
+- Policy creation validates trigger thresholds, guardrail bounds, lineage source selection, and hyperparameter JSON before submitting.
+- Vitest covers the complete retraining operations workflow with mocked retraining, deployment, experiment, dataset, and feature store APIs.

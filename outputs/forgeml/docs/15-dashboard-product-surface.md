@@ -190,6 +190,23 @@ Capabilities:
 - Deployment-matched retraining policy handoff
 - Drift operation feedback
 
+## Retraining
+
+Purpose: Manage adaptive training loops that convert drift, alert, and operator signals into governed training handoffs.
+
+Capabilities:
+
+- Retraining policy creation
+- Deployment-scoped policy selection
+- Drift, alert, and manual trigger configuration
+- Experiment and training lineage controls
+- Dataset version and feature set training sources
+- Hyperparameter JSON validation
+- Cooldown and daily run guardrails
+- Manual retraining trigger
+- Pending run approval and rejection
+- Selected run decision detail
+
 ## Alerts
 
 Purpose: Manage operational incidents and ML quality signals.

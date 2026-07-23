@@ -52,9 +52,26 @@ export type RetrainingRunListResponse = {
   next_cursor: string | null;
 };
 
+export type CreateRetrainingPolicyPayload = {
+  deployment_id: string;
+  name: string;
+  description: string;
+  trigger_type: string;
+  trigger_config: Record<string, unknown>;
+  training_template: Record<string, unknown>;
+  cooldown_seconds: number;
+  max_runs_per_day: number;
+  approval_required: boolean;
+  enabled: boolean;
+};
+
 export type EvaluateRetrainingPolicyPayload = {
   drift_report_id: string | null;
   alert_event_id: string | null;
+  reason: string;
+};
+
+export type TriggerRetrainingRunPayload = {
   reason: string;
 };
 
@@ -75,6 +92,18 @@ export function listRetrainingPolicies(
   });
 }
 
+export function createRetrainingPolicy(
+  projectId: string,
+  payload: CreateRetrainingPolicyPayload,
+  token: string
+): Promise<RetrainingPolicy> {
+  return apiPost<CreateRetrainingPolicyPayload, RetrainingPolicy>(
+    `/api/v1/projects/${projectId}/retraining-policies`,
+    payload,
+    { token }
+  );
+}
+
 export function listRetrainingRuns(
   projectId: string,
   token: string
@@ -92,6 +121,34 @@ export function evaluateRetrainingPolicy(
   return apiPost<EvaluateRetrainingPolicyPayload, RetrainingEvaluation>(
     `/api/v1/retraining-policies/${policyId}/evaluate`,
     payload,
+    { token }
+  );
+}
+
+export function triggerRetrainingRun(
+  policyId: string,
+  payload: TriggerRetrainingRunPayload,
+  token: string
+): Promise<RetrainingEvaluation> {
+  return apiPost<TriggerRetrainingRunPayload, RetrainingEvaluation>(
+    `/api/v1/retraining-policies/${policyId}/trigger`,
+    payload,
+    { token }
+  );
+}
+
+export function approveRetrainingRun(runId: string, token: string): Promise<RetrainingRun> {
+  return apiPost<Record<string, never>, RetrainingRun>(
+    `/api/v1/retraining-runs/${runId}/approve`,
+    {},
+    { token }
+  );
+}
+
+export function rejectRetrainingRun(runId: string, token: string): Promise<RetrainingRun> {
+  return apiPost<Record<string, never>, RetrainingRun>(
+    `/api/v1/retraining-runs/${runId}/reject`,
+    {},
     { token }
   );
 }
