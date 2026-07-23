@@ -670,3 +670,38 @@ Implemented scope:
 - `RetrainingPage` includes policy creation, policy detail, manual trigger, run table lifecycle actions, and run detail views.
 - Policy creation validates trigger thresholds, guardrail bounds, lineage source selection, and hyperparameter JSON before submitting.
 - Vitest covers the complete retraining operations workflow with mocked retraining, deployment, experiment, dataset, and feature store APIs.
+
+## Sprint 24: Training Runs Operations UI
+
+Goal: Make manual training run submission, cancellation, terminal result recording, and event inspection operable from the Training Runs page.
+
+Deliverables:
+
+- Training run start client method
+- Training run detail client method
+- Training run event listing client method
+- Training run cancellation client method
+- Training result recording client method
+- Run creation form with experiment, dataset version, feature set, algorithm, model type, objective, and hyperparameter controls
+- Selected run detail panel
+- Training event timeline
+- Terminal result recording form
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can start training runs for the selected project.
+- Run creation sends experiment id, run name, dataset version or feature set id, algorithm, model type, objective metric, and hyperparameters to the public training API.
+- Users can cancel queued, requested, or running training runs.
+- Users can record terminal training results with status, metrics, evaluation report, and error message.
+- Selecting a run refreshes run detail and event history.
+- Training run, experiment, and event state refresh after lifecycle actions.
+- Frontend tests cover run creation, result recording, event loading, and cancellation payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/training_runs/api/trainingRuns.ts` now exposes start, detail, result, cancel, and event operations.
+- `TrainingRunsPage` includes run submission, dependency selection, queue lifecycle actions, detail view, result recording, and event history.
+- Training run creation validates lineage source selection and hyperparameter JSON before submitting.
+- Result recording validates metrics and evaluation report JSON before submitting.
+- Vitest covers the full training run operations workflow with mocked training, experiment, dataset, and feature store APIs.

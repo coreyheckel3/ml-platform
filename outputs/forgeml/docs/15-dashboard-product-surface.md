@@ -97,10 +97,17 @@ Purpose: Track active and historical training execution.
 Capabilities:
 
 - Run queue
+- Manual run submission
+- Experiment and training lineage selection
+- Dataset version and feature set training sources
+- Hyperparameter JSON validation
+- Selected run detail
+- Training event timeline
+- Terminal result recording
+- Run cancellation
 - Status filters
 - Runtime metrics
 - Failure details
-- Retry and cancel actions
 - Link to dataset, features, experiment, and model output
 
 ## Models
