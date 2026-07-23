@@ -596,3 +596,41 @@ Implemented scope:
 - Alert event cards expose acknowledgement and resolution actions based on event status.
 - Page-level operation feedback reports rule creation and incident lifecycle results.
 - Vitest covers rule creation plus alert acknowledgement and resolution through mocked API calls.
+
+## Sprint 22: Drift Operations UI
+
+Goal: Turn drift detection into an operator workflow for creating baselines, running reports, inspecting feature-level drift, and handing drift signals to retraining policies.
+
+Deliverables:
+
+- Drift profile creation client method
+- Drift report execution client method
+- Drift-triggered retraining evaluation client method
+- Drift profile creation form with JSON baseline validation
+- Endpoint and profile selection for report execution
+- Drift threshold, report window, sample limit, and report URI controls
+- Report selection and detail panel
+- Feature-level drift analysis cards
+- Retraining policy handoff from selected drift reports
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create drift reference profiles for the selected project.
+- Profile creation sends name, description, optional lineage ids, and baseline profile JSON to the public drift API.
+- Users can run a drift report against a selected reference profile and inference endpoint.
+- Report execution sends endpoint id, window, threshold, sample limit, and report URI to the public drift API.
+- The page refreshes project drift reports after report execution.
+- Selecting a report refreshes feature-level drift results.
+- Operators can evaluate an active drift retraining policy for the selected report when the policy matches the report deployment.
+- Retraining run state refreshes after handoff evaluation.
+- Frontend tests cover profile creation, report execution, feature results, and retraining evaluation payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/drift_detection/api/drift.ts` now exposes create profile and run report operations.
+- `frontend/src/modules/retraining/api/retraining.ts` now exposes policy evaluation.
+- `DriftDetectionPage` includes reference profile creation, report execution controls, endpoint context, report selection, report detail, feature drift cards, and drift-to-retraining handoff.
+- JSON baseline input is parsed and validated before profile creation.
+- Numeric report controls validate API bounds before execution.
+- Vitest covers the full drift operations workflow with mocked drift, monitoring, and retraining APIs.

@@ -1,4 +1,4 @@
-import { apiGet } from "../../../shared/api/client";
+import { apiGet, apiPost } from "../../../shared/api/client";
 
 export type RetrainingPolicy = {
   id: string;
@@ -52,6 +52,20 @@ export type RetrainingRunListResponse = {
   next_cursor: string | null;
 };
 
+export type EvaluateRetrainingPolicyPayload = {
+  drift_report_id: string | null;
+  alert_event_id: string | null;
+  reason: string;
+};
+
+export type RetrainingEvaluation = {
+  policy_id: string;
+  decision: string;
+  triggered: boolean;
+  reason: string;
+  run: RetrainingRun | null;
+};
+
 export function listRetrainingPolicies(
   projectId: string,
   token: string
@@ -68,4 +82,16 @@ export function listRetrainingRuns(
   return apiGet<RetrainingRunListResponse>(`/api/v1/projects/${projectId}/retraining-runs`, {
     token
   });
+}
+
+export function evaluateRetrainingPolicy(
+  policyId: string,
+  payload: EvaluateRetrainingPolicyPayload,
+  token: string
+): Promise<RetrainingEvaluation> {
+  return apiPost<EvaluateRetrainingPolicyPayload, RetrainingEvaluation>(
+    `/api/v1/retraining-policies/${policyId}/evaluate`,
+    payload,
+    { token }
+  );
 }

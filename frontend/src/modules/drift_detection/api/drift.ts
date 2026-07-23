@@ -1,4 +1,4 @@
-import { apiGet } from "../../../shared/api/client";
+import { apiGet, apiPost } from "../../../shared/api/client";
 
 export type DriftProfile = {
   id: string;
@@ -59,6 +59,34 @@ export type DriftFeatureResultListResponse = {
   next_cursor: string | null;
 };
 
+export type CreateDriftProfilePayload = {
+  name: string;
+  description: string;
+  model_version_id: string | null;
+  dataset_version_id: string | null;
+  baseline_profile: Record<string, unknown>;
+};
+
+export type RunDriftReportPayload = {
+  endpoint_id: string;
+  window_seconds: number;
+  drift_threshold: number;
+  sample_limit: number;
+  report_uri: string;
+};
+
+export function createDriftProfile(
+  projectId: string,
+  payload: CreateDriftProfilePayload,
+  token: string
+): Promise<DriftProfile> {
+  return apiPost<CreateDriftProfilePayload, DriftProfile>(
+    `/api/v1/projects/${projectId}/drift-profiles`,
+    payload,
+    { token }
+  );
+}
+
 export function listDriftProfiles(
   projectId: string,
   token: string
@@ -84,4 +112,16 @@ export function listDriftFeatureResults(
   return apiGet<DriftFeatureResultListResponse>(`/api/v1/drift-reports/${reportId}/features`, {
     token
   });
+}
+
+export function runDriftReport(
+  profileId: string,
+  payload: RunDriftReportPayload,
+  token: string
+): Promise<DriftReport> {
+  return apiPost<RunDriftReportPayload, DriftReport>(
+    `/api/v1/drift-profiles/${profileId}/reports`,
+    payload,
+    { token }
+  );
 }

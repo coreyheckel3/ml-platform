@@ -174,6 +174,22 @@ Capabilities:
 - Inference errors
 - Pipeline failures
 
+## Drift
+
+Purpose: Compare reference distributions against production inference traffic and convert drift signals into retraining decisions.
+
+Capabilities:
+
+- Reference profile creation
+- Baseline profile JSON validation
+- Profile and endpoint selection
+- Drift report execution
+- Threshold, report window, sample limit, and report URI controls
+- Report detail and drift risk badges
+- Feature-level drift score analysis
+- Deployment-matched retraining policy handoff
+- Drift operation feedback
+
 ## Alerts
 
 Purpose: Manage operational incidents and ML quality signals.
