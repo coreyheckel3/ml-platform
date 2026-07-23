@@ -137,6 +137,22 @@ Capabilities:
 - Deployment event history
 - Linked monitoring panels
 
+## Inference
+
+Purpose: Operate callable prediction endpoints and inspect request-level behavior.
+
+Capabilities:
+
+- Endpoint launchpad from servable deployment revisions
+- Inference endpoint list
+- Endpoint selection
+- Editable prediction probe payloads
+- Request trace review
+- Prediction output inspection
+- Metric snapshot recording
+- Latency and error summaries
+- Deployment revision attribution
+
 ## Monitoring
 
 Purpose: Observe platform and ML runtime health.

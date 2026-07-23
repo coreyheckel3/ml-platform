@@ -486,3 +486,40 @@ Implemented scope:
 - Rollout State rows expose health, traffic, and rollback controls while preserving immutable revision history.
 - Deployment Events shows the selected target's rollout and health activity.
 - Vitest covers the release workflow payloads and post-mutation state transitions.
+
+## Sprint 19: Inference Endpoint Operations
+
+Goal: Make healthy deployment revisions callable through managed inference endpoints and probeable from the web interface.
+
+Deliverables:
+
+- Inference mutation client methods
+- Endpoint launchpad from servable deployment revisions
+- Endpoint selection table
+- Editable prediction probe payload
+- Optional probe request id
+- Request trace refresh after probes
+- Metric snapshot recorder
+- Snapshot cards with prediction, error, and latency summaries
+- Frontend regression tests
+
+Acceptance criteria:
+
+- The Inference page loads deployment targets, selected deployment revisions, and project endpoints.
+- Endpoint candidates are limited to active deployments with healthy or degraded revisions that have active traffic.
+- Users can create an inference endpoint from a servable deployment revision.
+- Endpoint creation sends deployment, revision, name, description, and route data to the public inference API.
+- Users can probe a selected endpoint with editable JSON payloads.
+- Successful probes refresh request logs and show prediction latency.
+- Users can record aggregate metric snapshots with prediction count, error count, and latency percentiles.
+- Snapshot and request queries refresh after successful operations.
+- Frontend tests cover endpoint creation, probe payloads, and metric snapshot recording.
+
+Implemented scope:
+
+- `frontend/src/modules/inference/api/inference.ts` now exposes endpoint creation, prediction request ids, and metric snapshot recording.
+- `InferencePage` includes an endpoint launchpad backed by deployment revision serving rules.
+- Endpoint rows can be selected for probe, trace, and metric operations.
+- The probe console accepts JSON payloads and surfaces mutation feedback.
+- Metric snapshot recording is available from the Metric Snapshots panel.
+- Vitest covers the end-to-end inference operations workflow through mocked API calls.
