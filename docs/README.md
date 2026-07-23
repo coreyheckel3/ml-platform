@@ -4,5 +4,9 @@ The architecture package for the initial implementation gate is available at:
 
 - `outputs/forgeml/docs/index.md`
 
-As implementation stabilizes, operational runbooks, API snapshots, and developer guides should live under this `docs` tree.
+Operational production guides:
 
+- `docs/runbooks/production-readiness.md`
+- `docs/runbooks/incident-response.md`
+- `docs/runbooks/backup-restore.md`
+- `docs/security/threat-model.md`

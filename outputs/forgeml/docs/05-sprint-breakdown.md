@@ -276,3 +276,14 @@ Acceptance criteria:
 - Staging deploy runs from GitHub Actions through OIDC.
 - Runbooks cover failed training, failed deployment, high inference error rate, and database restore.
 - Load test results are documented.
+
+Implemented scope:
+
+- FastAPI now applies secure response headers and configurable fixed-window rate limiting.
+- Prometheus exposes route request, latency, and rate-limit metrics.
+- Docker Compose `full` profile provisions Prometheus and Grafana with a ForgeML platform dashboard.
+- Staging Terraform is variable-driven and validated by the Terraform workflow matrix.
+- CI includes a production-readiness job that validates runbooks, load tests, observability assets, and source hygiene.
+- k6 smoke load test covers readiness, metrics, authentication rejection, latency, and error-rate gates.
+- Backup and restore scripts support Compose-managed PostgreSQL.
+- Runbooks and threat model live under `docs/runbooks` and `docs/security`.

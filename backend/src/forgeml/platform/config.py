@@ -40,6 +40,24 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:5173"],
         alias="FORGEML_CORS_ORIGINS",
     )
+    rate_limit_enabled: bool = Field(default=True, alias="FORGEML_RATE_LIMIT_ENABLED")
+    rate_limit_requests: int = Field(default=120, ge=1, alias="FORGEML_RATE_LIMIT_REQUESTS")
+    rate_limit_window_seconds: int = Field(
+        default=60,
+        ge=1,
+        alias="FORGEML_RATE_LIMIT_WINDOW_SECONDS",
+    )
+    rate_limit_exempt_paths: list[str] = Field(
+        default_factory=lambda: [
+            "/health/live",
+            "/health/ready",
+            "/metrics",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+        ],
+        alias="FORGEML_RATE_LIMIT_EXEMPT_PATHS",
+    )
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
@@ -47,4 +65,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: forgeml
     ports:
       - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U forgeml"]
       interval: 5s
@@ -21,6 +23,8 @@ services:
     profiles: ["core", "full"]
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -37,6 +41,8 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    volumes:
+      - minio-data:/data
 
   backend:
     build:
@@ -88,12 +94,32 @@ services:
   prometheus:
     image: prom/prometheus:v3.0.1
     profiles: ["observability", "full"]
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
+    depends_on:
+      - backend
 
   grafana:
     image: grafana/grafana:11.4.0
     profiles: ["observability", "full"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_USER: forgeml
+      GF_SECURITY_ADMIN_PASSWORD: forgeml-local-grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "3000:3000"
+    depends_on:
+      - prometheus
 
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  grafana-data:

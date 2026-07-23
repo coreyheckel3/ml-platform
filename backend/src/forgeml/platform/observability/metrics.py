@@ -14,6 +14,11 @@ api_request_duration_seconds = Histogram(
     "API request duration.",
     ["route", "method"],
 )
+rate_limited_requests_total = Counter(
+    "forgeml_rate_limited_requests_total",
+    "Total API requests rejected by rate limiting.",
+    ["route", "method"],
+)
 
 
 @metrics_router.get("/metrics", include_in_schema=False)

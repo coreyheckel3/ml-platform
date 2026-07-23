@@ -27,6 +27,7 @@ Required checks:
 | Docker build | API, frontend, worker, Airflow, training, inference images |
 | Terraform validate | Changed Terraform modules and environments |
 | Security scan | Dependencies and container images |
+| Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
 
 ## Main Branch Workflow
 
@@ -37,7 +38,7 @@ After merge:
 3. Generate OpenAPI contract artifact.
 4. Run database migration dry-run against staging clone where available.
 5. Deploy to staging.
-6. Run smoke tests against staging.
+6. Run API smoke tests and k6 smoke load tests against staging.
 7. Publish build summary and artifact digests.
 
 ## Production Deployment Workflow
@@ -46,6 +47,7 @@ Production deployment should require:
 
 - Successful staging deployment.
 - Passing smoke tests.
+- Passing production-readiness checks.
 - Reviewed Terraform plan when infrastructure changes are included.
 - Manual approval.
 - Rollback instructions attached to the deployment record.
@@ -91,4 +93,3 @@ Each release should publish:
 | Tag or approved manual dispatch | Deploy production |
 | Infrastructure PR | Terraform plan |
 | Approved infrastructure workflow | Terraform apply |
-

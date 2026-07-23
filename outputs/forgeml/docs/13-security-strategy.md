@@ -82,7 +82,12 @@ Dataset and artifact handling should:
 
 ## Rate Limiting
 
-Redis-backed rate limits should protect:
+Implemented local rate limits protect API routes through a configurable fixed-window middleware.
+The middleware returns rate-limit headers, emits Prometheus metrics, and exempts health,
+metrics, and documentation routes by default. A Redis-backed adapter should replace the
+process-local store before horizontally scaling the API.
+
+Rate limits should protect:
 
 - Login attempts
 - API key creation
@@ -92,6 +97,17 @@ Redis-backed rate limits should protect:
 - Admin APIs
 
 Rate-limit decisions should emit metrics and structured security logs.
+
+## Secure Response Headers
+
+Implemented API responses include:
+
+- `x-content-type-options: nosniff`
+- `x-frame-options: DENY`
+- `referrer-policy: no-referrer`
+- `permissions-policy` denying camera, microphone, and geolocation
+- `cross-origin-opener-policy: same-origin`
+- HSTS outside local environments
 
 ## Secrets Management
 
@@ -136,3 +152,5 @@ Initial threat model should cover:
 - Inference endpoint abuse
 - Cross-tenant data exposure
 - Supply-chain risk in Docker images and dependencies
+
+The first committed threat model lives at `docs/security/threat-model.md`.

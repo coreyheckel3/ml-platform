@@ -16,7 +16,11 @@ from forgeml.modules.projects.api.routes import router as projects_router
 from forgeml.modules.retraining.api.routes import router as retraining_router
 from forgeml.modules.training.api.routes import router as training_router
 from forgeml.platform.api.errors import install_error_handlers
-from forgeml.platform.api.middleware import RequestContextMiddleware
+from forgeml.platform.api.middleware import (
+    RateLimitMiddleware,
+    RequestContextMiddleware,
+    SecurityHeadersMiddleware,
+)
 from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.database.session import configure_database
 from forgeml.platform.observability.metrics import metrics_router
@@ -34,6 +38,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = resolved_settings
 
+    app.add_middleware(
+        RateLimitMiddleware,
+        enabled=resolved_settings.rate_limit_enabled,
+        requests_per_window=resolved_settings.rate_limit_requests,
+        window_seconds=resolved_settings.rate_limit_window_seconds,
+        exempt_paths=resolved_settings.rate_limit_exempt_paths,
+    )
+    app.add_middleware(SecurityHeadersMiddleware, environment=resolved_settings.environment)
     app.add_middleware(RequestContextMiddleware)
     app.add_middleware(
         CORSMiddleware,

@@ -8,6 +8,9 @@ on:
 jobs:
   plan:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, staging]
     permissions:
       id-token: write
       contents: read
@@ -15,9 +18,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - name: Terraform fmt
-        run: terraform -chdir=infra/terraform/environments/dev fmt -check -recursive
+        run: terraform -chdir=infra/terraform/environments/${{ matrix.environment }} fmt -check -recursive
       - name: Terraform init
-        run: terraform -chdir=infra/terraform/environments/dev init -backend=false
+        run: terraform -chdir=infra/terraform/environments/${{ matrix.environment }} init -backend=false
       - name: Terraform validate
-        run: terraform -chdir=infra/terraform/environments/dev validate
-
+        run: terraform -chdir=infra/terraform/environments/${{ matrix.environment }} validate

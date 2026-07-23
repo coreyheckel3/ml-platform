@@ -177,6 +177,9 @@ Trace these flows:
 
 Implemented dashboard APIs provide project-level inference summaries and per-endpoint summaries
 from the control-plane database. Prometheus remains the source for low-level API route metrics.
+Sprint 12 adds Prometheus scrape configuration and Grafana provisioning under
+`infra/observability`. The local `full` Compose profile mounts the dashboard
+and datasource configuration automatically.
 
 ## Alerting
 
@@ -186,6 +189,7 @@ Initial alert rules:
 | --- | --- | --- |
 | API high error rate | 5xx rate exceeds threshold for 5 minutes | Critical |
 | API high latency | p95 exceeds SLO for 10 minutes | Warning |
+| API rate limiting spike | Rate-limited requests exceed baseline for 5 minutes | Warning |
 | Training failure spike | Failed jobs exceed threshold in 30 minutes | Warning |
 | Inference high error rate | Error rate exceeds threshold for deployment | Critical |
 | Inference high latency | p95 exceeds deployment SLO | Warning |
