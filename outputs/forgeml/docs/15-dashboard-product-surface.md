@@ -70,12 +70,19 @@ Purpose: Manage dataset assets and version history.
 Capabilities:
 
 - Dataset list
+- Dataset creation
+- Selected dataset state
 - Dataset version timeline
-- Upload flow using signed URLs
+- Dataset version upload instructions using signed URLs
+- Version finalization with content hash, size, row count, and schema metadata
+- CSV sample schema inference controls
+- Manual schema field controls
 - Schema view
-- Validation report
+- Validation run execution
+- Validation report history
 - Profile summary
 - Dataset lineage links
+- Operation feedback for ingestion actions
 
 ## Experiments
 

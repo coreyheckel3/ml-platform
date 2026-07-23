@@ -744,3 +744,42 @@ Implemented scope:
 - Experiment run creation validates lineage source selection and parameter JSON before submitting.
 - Tracking operations validate metric, evaluation report, and artifact metadata JSON before submitting.
 - Vitest covers the complete experiment operations workflow with mocked experiment, dataset, and feature store APIs.
+
+## Sprint 26: Datasets Operations UI
+
+Goal: Turn dataset management into an ingestion workflow for creating datasets, preparing object storage uploads, finalizing immutable versions, inspecting schemas, and running validation checks from the Datasets page.
+
+Deliverables:
+
+- Dataset creation client method
+- Dataset version upload-instruction client method
+- Dataset version finalization client method
+- Dataset schema read client method
+- Dataset validation execution client method
+- Dataset validation history client method
+- Dataset creation form
+- Dataset version upload request form
+- Signed upload instruction panel
+- Version finalization form with CSV sample or manual schema controls
+- Schema inspection panel
+- Validation run history panel
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can create datasets for the selected project.
+- Dataset creation sends name, description, and source type to the public dataset API.
+- Users can request upload instructions for a selected dataset.
+- Version creation sends filename and content type to the public dataset API and surfaces signed upload metadata.
+- Users can finalize pending versions with object URI, content hash, size, and either CSV sample or schema fields.
+- Finalization refreshes dataset versions, schema, and validation history.
+- Users can execute validation for a selected dataset version.
+- Validation history refreshes after validation execution.
+- Frontend tests cover dataset creation, version creation, finalization, schema display, and validation payloads.
+
+Implemented scope:
+
+- `frontend/src/modules/datasets/api/datasets.ts` now exposes create, version creation, finalization, schema read, validation execution, and validation history operations.
+- `DatasetsPage` includes dataset creation, version creation, upload instruction display, selected version details, finalization controls, schema inspection, and validation history.
+- Finalization validates size, optional row count, CSV sample text, and manual schema field JSON before submitting.
+- Vitest covers the full dataset operations workflow with mocked dataset lifecycle APIs.
