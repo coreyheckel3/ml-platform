@@ -12,6 +12,18 @@ export type TokenResponse = {
   expires_in: number;
 };
 
+export type RefreshTokenPayload = {
+  refresh_token: string;
+};
+
+export type LogoutPayload = {
+  refresh_token: string;
+};
+
+export type LogoutResponse = {
+  revoked: boolean;
+};
+
 export type CurrentUser = {
   id: string;
   email: string;
@@ -21,6 +33,14 @@ export type CurrentUser = {
 
 export function login(payload: LoginPayload): Promise<TokenResponse> {
   return apiPost<LoginPayload, TokenResponse>("/api/v1/auth/login", payload);
+}
+
+export function refreshSession(payload: RefreshTokenPayload): Promise<TokenResponse> {
+  return apiPost<RefreshTokenPayload, TokenResponse>("/api/v1/auth/refresh", payload);
+}
+
+export function logoutSession(payload: LogoutPayload): Promise<LogoutResponse> {
+  return apiPost<LogoutPayload, LogoutResponse>("/api/v1/auth/logout", payload);
 }
 
 export function getCurrentUser(token: string): Promise<CurrentUser> {

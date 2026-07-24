@@ -21,7 +21,7 @@ describe("Shell", () => {
   });
 
   it("loads the current principal and clears auth state on sign out", async () => {
-    const fetchMock = mockCurrentUser();
+    const fetchMock = mockAuthWorkflow();
     seedSession();
 
     render(
@@ -45,9 +45,36 @@ describe("Shell", () => {
     await waitFor(() => {
       expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
     });
+    const logoutCall = findFetchCall(fetchMock, "/api/v1/auth/logout", "POST");
+    expect(JSON.parse(String(logoutCall[1]?.body))).toMatchObject({
+      refresh_token: "refresh-token",
+    });
     expect(window.localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     expect(window.localStorage.getItem(PROJECT_CONTEXT_KEY)).toBeNull();
     expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("rotates an expired access token through the refresh endpoint", async () => {
+    const fetchMock = mockAuthWorkflow();
+    seedSession(new Date(Date.now() - 1_000).toISOString());
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter>
+          <Shell>
+            <h1>Workspace</h1>
+          </Shell>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBe("rotated-access-token");
+    });
+    const refreshCall = findFetchCall(fetchMock, "/api/v1/auth/refresh", "POST");
+    expect(JSON.parse(String(refreshCall[1]?.body))).toMatchObject({
+      refresh_token: "refresh-token",
+    });
   });
 });
 
@@ -57,18 +84,15 @@ function createQueryClient() {
   });
 }
 
-function seedSession() {
+function seedSession(expiresAt = new Date(Date.now() + 900_000).toISOString()) {
   window.localStorage.setItem(ACCESS_TOKEN_KEY, "access-token");
   window.localStorage.setItem(REFRESH_TOKEN_KEY, "refresh-token");
   window.localStorage.setItem(TOKEN_TYPE_KEY, "bearer");
-  window.localStorage.setItem(
-    TOKEN_EXPIRES_AT_KEY,
-    new Date(Date.now() + 900_000).toISOString(),
-  );
+  window.localStorage.setItem(TOKEN_EXPIRES_AT_KEY, expiresAt);
   window.localStorage.setItem(PROJECT_CONTEXT_KEY, "project-1");
 }
 
-function mockCurrentUser() {
+function mockAuthWorkflow() {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     const method = init?.method ?? "GET";
@@ -80,6 +104,19 @@ function mockCurrentUser() {
         organization_id: "org-1",
         permissions: ["projects:read"],
       });
+    }
+
+    if (method === "POST" && path === "/api/v1/auth/refresh") {
+      return jsonResponse({
+        access_token: "rotated-access-token",
+        refresh_token: "rotated-refresh-token",
+        token_type: "bearer",
+        expires_in: 900,
+      });
+    }
+
+    if (method === "POST" && path === "/api/v1/auth/logout") {
+      return jsonResponse({ revoked: true });
     }
 
     return jsonResponse({ detail: `unexpected request: ${method} ${path}` }, false);

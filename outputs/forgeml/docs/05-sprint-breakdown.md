@@ -899,3 +899,44 @@ Implemented scope:
 - `Shell` now renders account-aware sign-in and sign-out controls backed by `/auth/me`.
 - `SettingsPage` consumes the shared session storage contract.
 - Vitest and Playwright cover the new authentication surface.
+
+## Sprint 30: Refresh Token Rotation and Logout Revocation
+
+Goal: Back the browser session lifecycle with revocable refresh-token state so access renewal, sign-out, and refresh-token replay handling are enforced by the backend.
+
+Deliverables:
+
+- Refresh-session domain entity
+- Refresh-session repository interface
+- SQLAlchemy refresh-session model and repository
+- Alembic migration for `auth_refresh_sessions`
+- Refresh-token hashing before persistence
+- Login persistence for refresh sessions
+- `/auth/refresh` token rotation endpoint
+- `/auth/logout` refresh-session revocation endpoint
+- Shell automatic refresh for near-expired access tokens
+- Shell backend logout call
+- Backend unit, API, and repository integration tests
+- Frontend regression tests for refresh and logout
+
+Acceptance criteria:
+
+- Login stores only a hash of the issued refresh token.
+- Refresh tokens include a unique session identifier.
+- `/auth/refresh` validates the signed refresh token and stored session state.
+- Refresh succeeds only for active, unexpired, unrecalled sessions.
+- Refresh returns a new access token and a new refresh token.
+- The previous refresh session is revoked and linked to its replacement.
+- Reusing a revoked refresh token fails and revokes remaining active sessions for that user.
+- `/auth/logout` revokes the submitted refresh session without exposing token state.
+- The shell refreshes near-expired browser sessions through `/auth/refresh`.
+- The shell calls `/auth/logout` before clearing local auth and project context.
+
+Implemented scope:
+
+- `AuthenticationService` now persists refresh sessions, rotates them, detects replay, and revokes sessions on logout.
+- `SqlAlchemyRefreshSessionRepository` implements hashed token lookup, rotation revocation, and user-wide active-session revocation.
+- `202607190011_auth_refresh_sessions.py` adds the refresh-session table and indexes.
+- Auth API schemas and routes expose refresh and logout operations.
+- Frontend auth clients and shell lifecycle use backend refresh and logout.
+- Unit, API, integration, and frontend tests cover the new session lifecycle.

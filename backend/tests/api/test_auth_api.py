@@ -19,6 +19,19 @@ class FakeAuthService:
             expires_in=900,
         )
 
+    def refresh(self, command):
+        assert command.refresh_token == "refresh-token"  # noqa: S105 - test fixture token.
+        return AuthTokens(
+            access_token="rotated-access-token",
+            refresh_token="rotated-refresh-token",
+            token_type="bearer",
+            expires_in=900,
+        )
+
+    def logout(self, command):
+        assert command.refresh_token == "refresh-token"  # noqa: S105 - test fixture token.
+        return True
+
 
 def test_login_route_returns_tokens() -> None:
     app = create_app()
@@ -39,6 +52,39 @@ def test_login_route_returns_tokens() -> None:
     }
 
 
+def test_refresh_route_rotates_tokens() -> None:
+    app = create_app()
+    app.dependency_overrides[get_auth_service] = lambda: FakeAuthService()
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": "refresh-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "access_token": "rotated-access-token",
+        "refresh_token": "rotated-refresh-token",
+        "token_type": "bearer",
+        "expires_in": 900,
+    }
+
+
+def test_logout_route_revokes_refresh_session() -> None:
+    app = create_app()
+    app.dependency_overrides[get_auth_service] = lambda: FakeAuthService()
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/v1/auth/logout",
+        json={"refresh_token": "refresh-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"revoked": True}
+
+
 def test_me_route_returns_current_principal() -> None:
     user_id = uuid4()
     organization_id = uuid4()
@@ -56,4 +102,3 @@ def test_me_route_returns_current_principal() -> None:
     assert response.status_code == 200
     assert response.json()["id"] == str(user_id)
     assert response.json()["permissions"] == ["projects:read"]
-

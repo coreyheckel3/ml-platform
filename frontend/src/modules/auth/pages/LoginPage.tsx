@@ -150,7 +150,7 @@ export function LoginPage() {
               icon={<KeyRound className="h-4 w-4" />}
               label="Refresh Token"
               value={session?.refreshToken ? "stored" : "none"}
-              detail="reserved for backend rotation"
+              detail="rotated by backend refresh"
             />
             <SignalTile
               icon={<CheckCircle2 className="h-4 w-4" />}

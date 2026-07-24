@@ -9,7 +9,7 @@ The project is intentionally structured like an internal ML platform control pla
 Implemented foundation:
 
 - FastAPI backend package with modular architecture boundaries.
-- Authentication application service with secure password hashing and signed JWT-compatible tokens.
+- Authentication application service with secure password hashing, signed JWT-compatible access tokens, and revocable refresh-token rotation.
 - Project application service with RBAC checks and slug policy.
 - Dataset registry with dataset CRUD, immutable version records, upload instructions, schema inference, validation runs, and SQLAlchemy persistence.
 - Feature store metadata with feature sets, definitions, pipeline registration, lineage, materialization records, and orchestration adapter boundary.
@@ -27,7 +27,7 @@ Implemented foundation:
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
 - Production hardening with secure response headers, configurable API rate limiting, Prometheus metrics for throttling, production-readiness CI checks, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
-- Alembic migrations for organization, user, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
+- Alembic migrations for organization, user, refresh session, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
 - React/Vite frontend shell with SaaS-style navigation, core pages, login and session management, project context operations, account and security settings, dataset ingestion operations, feature store operations, experiment operations, training run operations, registry promotion workbench, model approval actions, deployment release console, inference endpoint operations, monitoring operations drilldowns, alert operations workflows, drift operations workflows, and retraining operations workflows.
 - Example Projects page showing cross-workload lifecycle coverage without coupling core platform modules to example names.
 - Docker Compose infrastructure for local platform services.

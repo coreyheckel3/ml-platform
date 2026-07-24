@@ -28,7 +28,7 @@ PostgreSQL is the system of record for ForgeML metadata, workflow state, authori
 | `role_permissions` | Role permission mapping | `role_id`, `permission_id` |
 | `user_roles` | User role assignments | `user_id`, `role_id`, `organization_id`, `project_id` |
 | `api_keys` | Hashed API keys | `id`, `principal_type`, `principal_id`, `key_hash`, `expires_at`, `last_used_at` |
-| `refresh_tokens` | JWT refresh state | `id`, `user_id`, `token_hash`, `expires_at`, `revoked_at` |
+| `auth_refresh_sessions` | Revocable refresh-token sessions | `id`, `user_id`, `organization_id`, `token_hash`, `expires_at`, `revoked_at`, `replaced_by_session_id` |
 
 ### Projects
 

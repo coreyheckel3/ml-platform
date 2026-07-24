@@ -4,12 +4,13 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { navigationItems } from "../../app/navigation";
-import { getCurrentUser } from "../../modules/auth/api/auth";
+import { getCurrentUser, logoutSession, refreshSession } from "../../modules/auth/api/auth";
 import {
   clearStoredSession,
   readStoredSession,
   subscribeToSessionChanges,
   type StoredSession,
+  writeStoredSession,
 } from "../../modules/auth/session/sessionStore";
 
 export function Shell({ children }: PropsWithChildren) {
@@ -33,7 +34,40 @@ export function Shell({ children }: PropsWithChildren) {
     [],
   );
 
-  function handleSignOut() {
+  useEffect(() => {
+    if (!session || !shouldRefresh(session)) {
+      return;
+    }
+
+    let active = true;
+    refreshSession({ refresh_token: session.refreshToken })
+      .then((tokens) => {
+        if (active) {
+          writeStoredSession(tokens);
+          queryClient.invalidateQueries({ queryKey: ["current-user"] });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          clearStoredSession({ clearProjectContext: true });
+          queryClient.removeQueries({ queryKey: ["current-user"] });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [queryClient, session]);
+
+  async function handleSignOut() {
+    const refreshToken = session?.refreshToken;
+    if (refreshToken) {
+      try {
+        await logoutSession({ refresh_token: refreshToken });
+      } catch {
+        // Local state still has to be cleared when the API is unavailable.
+      }
+    }
     clearStoredSession({ clearProjectContext: true });
     setSession(null);
     queryClient.removeQueries({ queryKey: ["current-user"] });
@@ -122,6 +156,14 @@ export function Shell({ children }: PropsWithChildren) {
       </div>
     </div>
   );
+}
+
+function shouldRefresh(session: StoredSession): boolean {
+  const expiresAtMs = Date.parse(session.expiresAt);
+  if (Number.isNaN(expiresAtMs)) {
+    return true;
+  }
+  return expiresAtMs - Date.now() <= 30_000;
 }
 
 function getAccountSummary(

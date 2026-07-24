@@ -60,8 +60,8 @@ Idempotency-Key: <client-generated-key>
 | Method | Path | Description |
 | --- | --- | --- |
 | `POST` | `/auth/login` | Exchange credentials for access and refresh tokens |
-| `POST` | `/auth/refresh` | Refresh access token |
-| `POST` | `/auth/logout` | Revoke refresh token |
+| `POST` | `/auth/refresh` | Rotate refresh session and issue a new access token |
+| `POST` | `/auth/logout` | Revoke the active refresh session |
 | `GET` | `/auth/me` | Return current user, organizations, roles, permissions |
 | `POST` | `/auth/api-keys` | Create API key |
 | `GET` | `/auth/api-keys` | List API keys for current principal |

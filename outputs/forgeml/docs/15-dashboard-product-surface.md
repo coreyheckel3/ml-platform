@@ -33,10 +33,11 @@ Capabilities:
 
 - Email and password credential exchange through `/auth/login`
 - Access and refresh token persistence in browser-local session storage
+- Backend refresh-token rotation for near-expired sessions
 - Access token expiry visibility
 - Redirect back to the requested workflow after login
 - Shell account state backed by `/auth/me`
-- Sign-out action that clears token and active project context
+- Sign-out action that revokes refresh state and clears active project context
 
 ## Dashboard
 
