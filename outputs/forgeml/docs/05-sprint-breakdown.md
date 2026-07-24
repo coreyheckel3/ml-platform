@@ -826,3 +826,40 @@ Implemented scope:
 - Definition registration validates JSON array shape before submitting.
 - Pipeline registration validates name and code reference before submitting.
 - Vitest covers the full feature store operations workflow with mocked feature store and dataset APIs.
+
+## Sprint 28: Projects and Administration Operations UI
+
+Goal: Turn project management and settings into operational control surfaces for selecting active workspace context and inspecting authenticated RBAC state.
+
+Deliverables:
+
+- Project inventory context selector
+- API-backed project creation workflow
+- Browser-local project creation fallback
+- Selected project detail panel
+- Local active project context persistence
+- Current-user API client
+- Account context settings panel
+- Permission grouping view
+- Local workspace context controls
+- Security defaults panel
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can load projects from the public project API when a token is present.
+- Users can create API-backed projects from the Projects page.
+- Project creation sends name and description to the public project API.
+- Users can create browser-scoped projects when running without a token.
+- Selecting a project writes the active project id to local workspace context.
+- Settings reads authenticated principal, organization, and permission grants from `/auth/me`.
+- Settings groups RBAC permissions by module scope.
+- Users can clear active project context from Settings without mutating server state.
+- Frontend tests cover project creation, project context selection, account context loading, permission display, and project context clearing.
+
+Implemented scope:
+
+- `ProjectsPage` now includes project inventory, creation, active context selection, and selected project detail.
+- `frontend/src/modules/auth/api/auth.ts` exposes the current-user client method.
+- `SettingsPage` now includes account context, permission groups, local workspace state, and security defaults.
+- Vitest covers browser-local and API-backed project workflows plus authenticated settings behavior.

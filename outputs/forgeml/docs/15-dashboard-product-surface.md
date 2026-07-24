@@ -48,6 +48,8 @@ Capabilities:
 - Project list with owner, status, recent activity, and health summary
 - Project creation
 - Project details
+- Active project context selection for downstream workflow pages
+- API-backed inventory mode with local browser fallback
 - Project members
 - Project settings
 - Project activity timeline
@@ -274,6 +276,10 @@ Capabilities:
 - Members and roles
 - API keys
 - Service accounts
+- Authenticated account context from `/auth/me`
+- Permission groups derived from RBAC grants
+- Local browser workspace keys for API token and active project context
+- Active project context clearing
 - Project defaults
 - Retraining policies
 - Notification channels
