@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -8,60 +9,56 @@ import {
   REFRESH_TOKEN_KEY,
   TOKEN_EXPIRES_AT_KEY,
   TOKEN_TYPE_KEY,
-} from "../../auth/session/sessionStore";
-import { SettingsPage } from "./SettingsPage";
+} from "../../modules/auth/session/sessionStore";
+import { Shell } from "./Shell";
 
 type FetchCall = [string, RequestInit | undefined];
 
-describe("SettingsPage", () => {
+describe("Shell", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     window.localStorage.clear();
   });
 
-  it("loads authenticated account context and clears project context", async () => {
+  it("loads the current principal and clears auth state on sign out", async () => {
     const fetchMock = mockCurrentUser();
     seedSession();
 
     render(
       <QueryClientProvider client={createQueryClient()}>
-        <SettingsPage />
+        <MemoryRouter>
+          <Shell>
+            <h1>Workspace</h1>
+          </Shell>
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("corey@example.com")).toBeInTheDocument();
-    expect(screen.getAllByText("org-1").length).toBeGreaterThan(0);
-    expect(screen.getByText("projects:read")).toBeInTheDocument();
-    expect(screen.getByText("model_versions:approve")).toBeInTheDocument();
-    expect(screen.getAllByText("project-1").length).toBeGreaterThan(0);
-    const authCall = findFetchCall(fetchMock, "/api/v1/auth/me");
-    expect(authCall[1]?.headers).toMatchObject({
-      authorization: "Bearer token-123",
+    expect(await screen.findByText("ml.engineer@example.com")).toBeInTheDocument();
+    const currentUserCall = findFetchCall(fetchMock, "/api/v1/auth/me");
+    expect(currentUserCall[1]?.headers).toMatchObject({
+      authorization: "Bearer access-token",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear project context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
 
-    expect(screen.getByText("Cleared active project context for this browser.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
+    });
+    expect(window.localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
     expect(window.localStorage.getItem(PROJECT_CONTEXT_KEY)).toBeNull();
-  });
-
-  it("does not request account context without an API token", () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(
-      <QueryClientProvider client={createQueryClient()}>
-        <SettingsPage />
-      </QueryClientProvider>,
-    );
-
-    expect(screen.getByText("No API token is configured for this browser.")).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
   });
 });
 
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+}
+
 function seedSession() {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, "token-123");
+  window.localStorage.setItem(ACCESS_TOKEN_KEY, "access-token");
   window.localStorage.setItem(REFRESH_TOKEN_KEY, "refresh-token");
   window.localStorage.setItem(TOKEN_TYPE_KEY, "bearer");
   window.localStorage.setItem(
@@ -69,12 +66,6 @@ function seedSession() {
     new Date(Date.now() + 900_000).toISOString(),
   );
   window.localStorage.setItem(PROJECT_CONTEXT_KEY, "project-1");
-}
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
 }
 
 function mockCurrentUser() {
@@ -85,14 +76,9 @@ function mockCurrentUser() {
     if (method === "GET" && path === "/api/v1/auth/me") {
       return jsonResponse({
         id: "user-1",
-        email: "corey@example.com",
+        email: "ml.engineer@example.com",
         organization_id: "org-1",
-        permissions: [
-          "projects:read",
-          "projects:create",
-          "model_versions:approve",
-          "deployments:release",
-        ],
+        permissions: ["projects:read"],
       });
     }
 

@@ -28,7 +28,7 @@ Implemented foundation:
 - Production hardening with secure response headers, configurable API rate limiting, Prometheus metrics for throttling, production-readiness CI checks, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
-- React/Vite frontend shell with SaaS-style navigation, core pages, project context operations, account and security settings, dataset ingestion operations, feature store operations, experiment operations, training run operations, registry promotion workbench, model approval actions, deployment release console, inference endpoint operations, monitoring operations drilldowns, alert operations workflows, drift operations workflows, and retraining operations workflows.
+- React/Vite frontend shell with SaaS-style navigation, core pages, login and session management, project context operations, account and security settings, dataset ingestion operations, feature store operations, experiment operations, training run operations, registry promotion workbench, model approval actions, deployment release console, inference endpoint operations, monitoring operations drilldowns, alert operations workflows, drift operations workflows, and retraining operations workflows.
 - Example Projects page showing cross-workload lifecycle coverage without coupling core platform modules to example names.
 - Docker Compose infrastructure for local platform services.
 - Docker Compose full profile with Prometheus and Grafana provisioning.
@@ -68,11 +68,19 @@ Run backend:
 make backend-dev
 ```
 
+Seed the local admin account:
+
+```bash
+PYTHONPATH=backend/src .venv/bin/python scripts/dev/seed_backend.py
+```
+
 Run frontend:
 
 ```bash
 make frontend-dev
 ```
+
+The seeded local console account is `admin@forgeml.dev` with password `forgeml-local-admin`.
 
 Bootstrap reference projects into a running local API:
 

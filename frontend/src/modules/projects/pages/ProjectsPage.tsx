@@ -13,6 +13,7 @@ import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "re
 import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
+import { ACCESS_TOKEN_KEY, PROJECT_CONTEXT_KEY } from "../../auth/session/sessionStore";
 import { createProject, listProjects, type Project } from "../api/projects";
 
 type ProjectRow = {
@@ -61,13 +62,13 @@ const exampleProjectRows: ProjectRow[] = [
 
 export function ProjectsPage() {
   const queryClient = useQueryClient();
-  const token = readLocalStorage("forgeml_access_token");
+  const token = readLocalStorage(ACCESS_TOKEN_KEY);
   const canLoadProjects = Boolean(token);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState(
-    () => readLocalStorage("forgeml_project_id") ?? "",
+    () => readLocalStorage(PROJECT_CONTEXT_KEY) ?? "",
   );
   const [sessionProjects, setSessionProjects] = useState<ProjectRow[]>([]);
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
@@ -425,7 +426,7 @@ function ProjectContextPanel({ project }: { project: ProjectRow }) {
         <SignalTile
           icon={<KeyRound className="h-4 w-4" />}
           label="Context Key"
-          value="forgeml_project_id"
+          value={PROJECT_CONTEXT_KEY}
           detail="saved locally"
         />
       </div>
@@ -526,6 +527,6 @@ function readLocalStorage(key: string): string | null {
 
 function setSelectedProjectContext(projectId: string): void {
   if (typeof window !== "undefined") {
-    window.localStorage.setItem("forgeml_project_id", projectId);
+    window.localStorage.setItem(PROJECT_CONTEXT_KEY, projectId);
   }
 }

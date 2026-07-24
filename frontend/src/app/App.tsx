@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AlertsPage } from "../modules/alerts/pages/AlertsPage";
+import { LoginPage } from "../modules/auth/pages/LoginPage";
 import { DashboardPage } from "../modules/dashboard/pages/DashboardPage";
 import { DatasetsPage } from "../modules/datasets/pages/DatasetsPage";
 import { DeploymentsPage } from "../modules/deployments/pages/DeploymentsPage";
@@ -34,6 +35,7 @@ export function App() {
         <Shell>
           <Routes>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/examples" element={<ExampleProjectsPage />} />
             <Route path="/datasets" element={<DatasetsPage />} />

@@ -3,6 +3,11 @@ import { KeyRound, LockKeyhole, ShieldCheck, UserRound, UsersRound } from "lucid
 import { type ReactNode, useMemo, useState } from "react";
 
 import { getCurrentUser, type CurrentUser } from "../../auth/api/auth";
+import {
+  ACCESS_TOKEN_KEY,
+  PROJECT_CONTEXT_KEY,
+  readStoredSession,
+} from "../../auth/session/sessionStore";
 import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
@@ -36,13 +41,14 @@ const securityDefaults = [
 ];
 
 export function SettingsPage() {
-  const token = readLocalStorage("forgeml_access_token");
+  const session = readStoredSession();
+  const token = session?.accessToken ?? null;
   const [selectedProjectId, setSelectedProjectId] = useState(
-    () => readLocalStorage("forgeml_project_id") ?? "",
+    () => readLocalStorage(PROJECT_CONTEXT_KEY) ?? "",
   );
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const userQuery = useQuery({
-    queryKey: ["current-user"],
+    queryKey: ["current-user", token],
     queryFn: () => getCurrentUser(token ?? ""),
     enabled: Boolean(token),
   });
@@ -55,7 +61,7 @@ export function SettingsPage() {
 
   function clearProjectContext() {
     if (typeof window !== "undefined") {
-      window.localStorage.removeItem("forgeml_project_id");
+      window.localStorage.removeItem(PROJECT_CONTEXT_KEY);
     }
     setSelectedProjectId("");
     setOperationMessage("Cleared active project context for this browser.");
@@ -131,13 +137,13 @@ export function SettingsPage() {
               <SignalTile
                 icon={<KeyRound className="h-4 w-4" />}
                 label="Token Key"
-                value="forgeml_access_token"
-                detail={authenticated ? "present in browser storage" : "not configured"}
+                value={ACCESS_TOKEN_KEY}
+                detail={session ? `expires ${formatDateTime(session.expiresAt)}` : "not configured"}
               />
               <SignalTile
                 icon={<ShieldCheck className="h-4 w-4" />}
                 label="Project Key"
-                value="forgeml_project_id"
+                value={PROJECT_CONTEXT_KEY}
                 detail={selectedProjectId || "no active project context"}
               />
             </div>
@@ -309,4 +315,15 @@ function readLocalStorage(key: string): string | null {
     return null;
   }
   return window.localStorage.getItem(key);
+}
+
+function formatDateTime(value: string): string {
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return "invalid expiry";
+  }
+  return new Intl.DateTimeFormat("en", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(timestamp));
 }

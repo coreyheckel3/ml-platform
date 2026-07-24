@@ -7,6 +7,7 @@ The ForgeML web application should feel like a commercial SaaS product for ML en
 Primary pages:
 
 - Dashboard
+- Sign In
 - Projects
 - Examples
 - Datasets
@@ -23,6 +24,19 @@ Primary pages:
 - Settings
 
 The navigation should support organization and project context switching without hiding operational state.
+
+## Sign In
+
+Purpose: Exchange human operator credentials for API access and make authenticated workflows discoverable.
+
+Capabilities:
+
+- Email and password credential exchange through `/auth/login`
+- Access and refresh token persistence in browser-local session storage
+- Access token expiry visibility
+- Redirect back to the requested workflow after login
+- Shell account state backed by `/auth/me`
+- Sign-out action that clears token and active project context
 
 ## Dashboard
 

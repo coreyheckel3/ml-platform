@@ -863,3 +863,39 @@ Implemented scope:
 - `frontend/src/modules/auth/api/auth.ts` exposes the current-user client method.
 - `SettingsPage` now includes account context, permission groups, local workspace state, and security defaults.
 - Vitest covers browser-local and API-backed project workflows plus authenticated settings behavior.
+
+## Sprint 29: Login and Session Management UI
+
+Goal: Add a real browser authentication workflow so platform operators can exchange credentials for API tokens, inspect session state, and sign out from the console.
+
+Deliverables:
+
+- Login API client method
+- Browser session storage abstraction
+- Sign-in page with credential exchange form
+- Redirect handling after successful login
+- Access token expiry metadata
+- Shell account summary from `/auth/me`
+- Shell sign-out action
+- Settings integration with centralized session storage keys
+- Playwright route coverage
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Users can submit email and password to `/auth/login` from the web console.
+- Successful login stores access token, refresh token, token type, and expiry metadata under stable ForgeML storage keys.
+- Successful login redirects to the requested internal route or Projects by default.
+- Failed login displays an error and leaves token storage empty.
+- The shell displays the authenticated principal from `/auth/me` when a token is present.
+- Signing out clears access token, refresh token, expiry metadata, and active project context.
+- Settings reads token state through the centralized session store.
+- Frontend tests cover login success, login failure, shell account loading, and sign-out cleanup.
+
+Implemented scope:
+
+- `LoginPage` provides credential exchange, redirect handling, token persistence, and session policy visibility.
+- `sessionStore` centralizes auth and project-context browser storage keys.
+- `Shell` now renders account-aware sign-in and sign-out controls backed by `/auth/me`.
+- `SettingsPage` consumes the shared session storage contract.
+- Vitest and Playwright cover the new authentication surface.
