@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
-from forgeml.modules.administration.domain.entities import AuditLogEntry
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 
 
 @dataclass(frozen=True)
@@ -12,7 +12,12 @@ class AuditLogFilters:
     resource_type: str | None = None
 
 
-class AuditLogRepository(Protocol):
+class AuditEventRecorder(Protocol):
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        raise NotImplementedError
+
+
+class AuditLogRepository(AuditEventRecorder, Protocol):
     def list_entries(
         self,
         organization_id: UUID,

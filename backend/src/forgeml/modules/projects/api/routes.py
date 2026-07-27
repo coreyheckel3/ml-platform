@@ -3,6 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from forgeml.modules.administration.infrastructure.sqlalchemy_repositories import (
+    SqlAlchemyAuditLogRepository,
+)
 from forgeml.modules.projects.api.schemas import (
     CreateProjectRequest,
     ProjectListResponse,
@@ -20,7 +23,10 @@ router = APIRouter(tags=["projects"])
 
 
 def get_project_service(session: Session = Depends(get_db_session)) -> ProjectService:
-    return ProjectService(projects=SqlAlchemyProjectRepository(session))
+    return ProjectService(
+        projects=SqlAlchemyProjectRepository(session),
+        audit_log=SqlAlchemyAuditLogRepository(session),
+    )
 
 
 def _project_response(project: Project) -> ProjectResponse:
@@ -74,4 +80,3 @@ def get_project(
     service: ProjectService = Depends(get_project_service),
 ) -> ProjectResponse:
     return _project_response(service.get_project(project_id, principal))
-

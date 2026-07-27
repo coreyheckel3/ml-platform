@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from forgeml.modules.administration.infrastructure.sqlalchemy_repositories import (
+    SqlAlchemyAuditLogRepository,
+)
 from forgeml.modules.auth.api.schemas import (
     CurrentUserResponse,
     LoginRequest,
@@ -44,6 +47,7 @@ def get_auth_service(
         token_signer=signer,
         access_token_ttl_seconds=settings.access_token_ttl_seconds,
         refresh_token_ttl_seconds=settings.refresh_token_ttl_seconds,
+        audit_log=SqlAlchemyAuditLogRepository(session),
     )
 
 

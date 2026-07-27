@@ -19,7 +19,7 @@ Implemented foundation:
 - Deployments with approved-model-version gating, immutable revisions, canary traffic allocation, health checks, rollback, events, and serving orchestrator boundary.
 - Inference endpoints with deployment-revision attribution, request logs, deterministic runtime adapter, prediction response contracts, and metric snapshots.
 - Monitoring read APIs for project inference summaries, endpoint latency, prediction counts, error rates, and active alert counts.
-- Administration audit log read APIs with organization-scoped RBAC filtering and SQLAlchemy persistence.
+- Administration audit log read and write paths with organization-scoped RBAC filtering, auth lifecycle instrumentation, project creation instrumentation, and SQLAlchemy persistence.
 - Alerting with rule definitions, threshold evaluation over inference snapshots, deduplicated alert events, acknowledgement, and resolution.
 - Drift detection with reference profiles, production-window reports over inference request logs, feature-level drift scores, and analyzer adapter boundary.
 - Automatic retraining with deployment-scoped policies, drift and alert trigger evaluation, cooldowns, daily run limits, approval gates, idempotent source handling, and Training module handoff.

@@ -1,10 +1,13 @@
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.auth.application.services import (
     AuthenticationService,
     LoginCommand,
+    LogoutCommand,
     RefreshCommand,
 )
 from forgeml.modules.auth.domain.entities import RefreshSession, User, UserStatus
@@ -78,6 +81,25 @@ class FakeRefreshSessionRepository:
         return revoked
 
 
+class FakeAuditLogRepository:
+    def __init__(self) -> None:
+        self.events: list[AuditLogEvent] = []
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        self.events.append(event)
+        return AuditLogEntry(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata=event.metadata,
+            created_at=datetime.now(UTC),
+        )
+
+
 def test_auth_service_issues_access_and_refresh_tokens() -> None:
     hasher = PasswordHasher()
     user = User(
@@ -91,6 +113,7 @@ def test_auth_service_issues_access_and_refresh_tokens() -> None:
     )
     repository = FakeUserRepository(user)
     refresh_sessions = FakeRefreshSessionRepository()
+    audit_log = FakeAuditLogRepository()
     signer = JwtSigner(secret="a-secret-long-enough-for-tests", issuer="forgeml-test")
     service = AuthenticationService(
         users=repository,
@@ -99,6 +122,7 @@ def test_auth_service_issues_access_and_refresh_tokens() -> None:
         token_signer=signer,
         access_token_ttl_seconds=900,
         refresh_token_ttl_seconds=3600,
+        audit_log=audit_log,
     )
 
     tokens = service.login(
@@ -116,6 +140,17 @@ def test_auth_service_issues_access_and_refresh_tokens() -> None:
     assert refresh_claims["jti"]
     assert len(refresh_sessions.sessions) == 1
     assert repository.recorded_login
+    assert audit_log.events == [
+        AuditLogEvent(
+            organization_id=user.organization_id,
+            actor_type="user",
+            actor_id=str(user.id),
+            action="auth.login",
+            resource_type="user",
+            resource_id=str(user.id),
+            metadata={"email": user.email},
+        )
+    ]
 
 
 def test_auth_service_rotates_refresh_tokens_and_rejects_replay() -> None:
@@ -131,6 +166,7 @@ def test_auth_service_rotates_refresh_tokens_and_rejects_replay() -> None:
     )
     users = FakeUserRepository(user)
     refresh_sessions = FakeRefreshSessionRepository()
+    audit_log = FakeAuditLogRepository()
     signer = JwtSigner(secret="a-secret-long-enough-for-tests", issuer="forgeml-test")
     service = AuthenticationService(
         users=users,
@@ -139,6 +175,7 @@ def test_auth_service_rotates_refresh_tokens_and_rejects_replay() -> None:
         token_signer=signer,
         access_token_ttl_seconds=900,
         refresh_token_ttl_seconds=3600,
+        audit_log=audit_log,
     )
     first = service.login(
         LoginCommand(email=user.email, password="correct horse battery staple")
@@ -153,10 +190,55 @@ def test_auth_service_rotates_refresh_tokens_and_rejects_replay() -> None:
         session.revoked_at is not None and session.replaced_by_session_id is not None
         for session in refresh_sessions.sessions.values()
     )
+    assert [event.action for event in audit_log.events] == ["auth.login", "auth.refresh"]
+    refresh_event = audit_log.events[-1]
+    assert refresh_event.organization_id == user.organization_id
+    assert refresh_event.resource_type == "user"
+    assert refresh_event.resource_id == str(user.id)
+    assert refresh_event.metadata["session_id"]
+    assert refresh_event.metadata["replacement_session_id"]
 
     with pytest.raises(AuthenticationFailedError):
         service.refresh(RefreshCommand(refresh_token=first.refresh_token))
     assert refresh_sessions.replay_revocations == 1
+
+
+def test_auth_service_records_logout_audit_event() -> None:
+    hasher = PasswordHasher()
+    user = User(
+        id=uuid4(),
+        organization_id=uuid4(),
+        email="ml.engineer@example.com",
+        display_name="ML Engineer",
+        password_hash=hasher.hash("correct horse battery staple"),
+        status=UserStatus.ACTIVE,
+        permissions=frozenset({"projects:read"}),
+    )
+    users = FakeUserRepository(user)
+    refresh_sessions = FakeRefreshSessionRepository()
+    audit_log = FakeAuditLogRepository()
+    service = AuthenticationService(
+        users=users,
+        refresh_sessions=refresh_sessions,
+        password_hasher=hasher,
+        token_signer=JwtSigner(secret="a-secret-long-enough-for-tests", issuer="forgeml-test"),
+        access_token_ttl_seconds=900,
+        refresh_token_ttl_seconds=3600,
+        audit_log=audit_log,
+    )
+    tokens = service.login(
+        LoginCommand(email=user.email, password="correct horse battery staple")
+    )
+
+    revoked = service.logout(LogoutCommand(refresh_token=tokens.refresh_token))
+
+    assert revoked
+    assert [event.action for event in audit_log.events] == ["auth.login", "auth.logout"]
+    logout_event = audit_log.events[-1]
+    assert logout_event.organization_id == user.organization_id
+    assert logout_event.actor_id == str(user.id)
+    assert logout_event.resource_id == str(user.id)
+    assert logout_event.metadata["session_id"]
 
 
 def test_auth_service_rejects_bad_password() -> None:

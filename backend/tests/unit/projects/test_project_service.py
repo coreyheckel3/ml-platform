@@ -1,7 +1,9 @@
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
 
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.projects.application.services import CreateProjectCommand, ProjectService
 from forgeml.modules.projects.domain.entities import Project
 from forgeml.platform.domain.errors import (
@@ -36,6 +38,25 @@ class FakeProjectRepository:
         return (organization_id, slug) in self.slugs
 
 
+class FakeAuditLogRepository:
+    def __init__(self) -> None:
+        self.events: list[AuditLogEvent] = []
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        self.events.append(event)
+        return AuditLogEntry(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata=event.metadata,
+            created_at=datetime.now(UTC),
+        )
+
+
 def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Principal:
     return Principal(
         user_id=str(user_id),
@@ -48,7 +69,8 @@ def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Pr
 def test_project_service_creates_project_with_stable_slug() -> None:
     organization_id = uuid4()
     user_id = uuid4()
-    service = ProjectService(projects=FakeProjectRepository())
+    audit_log = FakeAuditLogRepository()
+    service = ProjectService(projects=FakeProjectRepository(), audit_log=audit_log)
 
     project = service.create_project(
         CreateProjectCommand(
@@ -63,6 +85,20 @@ def test_project_service_creates_project_with_stable_slug() -> None:
     assert project.slug == "fraud-detection-platform"
     assert project.owner_user_id == user_id
     assert project.is_active()
+    assert audit_log.events == [
+        AuditLogEvent(
+            organization_id=organization_id,
+            actor_type="user",
+            actor_id=str(user_id),
+            action="projects.create",
+            resource_type="project",
+            resource_id=str(project.id),
+            metadata={
+                "slug": "fraud-detection-platform",
+                "name": "Fraud Detection Platform",
+            },
+        )
+    ]
 
 
 def test_project_service_rejects_missing_create_permission() -> None:

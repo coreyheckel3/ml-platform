@@ -4,6 +4,8 @@ from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.domain.entities import AuditLogEvent
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.auth.domain.entities import RefreshSession, User
 from forgeml.modules.auth.repositories.interfaces import RefreshSessionRepository, UserRepository
 from forgeml.platform.domain.errors import AuthenticationFailedError
@@ -45,6 +47,7 @@ class AuthenticationService:
         token_signer: JwtSigner,
         access_token_ttl_seconds: int,
         refresh_token_ttl_seconds: int,
+        audit_log: AuditEventRecorder | None = None,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._users = users
@@ -53,6 +56,7 @@ class AuthenticationService:
         self._token_signer = token_signer
         self._access_token_ttl_seconds = access_token_ttl_seconds
         self._refresh_token_ttl_seconds = refresh_token_ttl_seconds
+        self._audit_log = audit_log
         self._clock = clock or (lambda: datetime.now(UTC))
 
     def login(self, command: LoginCommand) -> AuthTokens:
@@ -69,6 +73,14 @@ class AuthenticationService:
         tokens, refresh_session = self._issue_token_pair(user, issued_at=issued_at)
         self._refresh_sessions.add(refresh_session)
         self._users.record_successful_login(user.id)
+        self._record_audit(
+            organization_id=user.organization_id,
+            actor_id=user.id,
+            action="auth.login",
+            resource_type="user",
+            resource_id=str(user.id),
+            metadata={"email": user.email},
+        )
         return tokens
 
     def refresh(self, command: RefreshCommand) -> AuthTokens:
@@ -102,6 +114,17 @@ class AuthenticationService:
             revoked_at=now,
             replaced_by_session_id=replacement.id,
         )
+        self._record_audit(
+            organization_id=user.organization_id,
+            actor_id=user.id,
+            action="auth.refresh",
+            resource_type="user",
+            resource_id=str(user.id),
+            metadata={
+                "session_id": str(stored_session.id),
+                "replacement_session_id": str(replacement.id),
+            },
+        )
         return tokens
 
     def logout(self, command: LogoutCommand) -> bool:
@@ -111,6 +134,14 @@ class AuthenticationService:
         if stored_session is None or stored_session.revoked_at is not None:
             return False
         self._refresh_sessions.revoke(stored_session.id, revoked_at=self._clock())
+        self._record_audit(
+            organization_id=stored_session.organization_id,
+            actor_id=stored_session.user_id,
+            action="auth.logout",
+            resource_type="user",
+            resource_id=str(stored_session.user_id),
+            metadata={"session_id": str(stored_session.id)},
+        )
         return True
 
     def get_user(self, user_id: UUID):
@@ -173,6 +204,30 @@ class AuthenticationService:
         if claims.get("typ") != "refresh":
             raise AuthenticationFailedError("Token is not a refresh token.")
         return claims
+
+    def _record_audit(
+        self,
+        *,
+        organization_id: UUID | None,
+        actor_id: UUID,
+        action: str,
+        resource_type: str,
+        resource_id: str,
+        metadata: dict[str, object],
+    ) -> None:
+        if self._audit_log is None:
+            return
+        self._audit_log.record(
+            AuditLogEvent(
+                organization_id=organization_id,
+                actor_type="user",
+                actor_id=str(actor_id),
+                action=action,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                metadata=metadata,
+            )
+        )
 
 
 def _hash_token(token: str) -> str:

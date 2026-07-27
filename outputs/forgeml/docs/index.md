@@ -1,11 +1,11 @@
 # ForgeML Architecture Documentation
 
-Status: proposed architecture baseline
-Date: 2026-07-18
+Status: living architecture baseline
+Date: 2026-07-26
 
-ForgeML is an end-to-end machine learning platform for teams that need to ingest datasets, build feature pipelines, train models, evaluate experiments, register and deploy models, monitor production behavior, detect drift, and trigger retraining. This documentation package defines the architecture before implementation begins.
+ForgeML is an end-to-end machine learning platform for teams that need to ingest datasets, build feature pipelines, train models, evaluate experiments, register and deploy models, monitor production behavior, detect drift, and trigger retraining. This documentation package defines the architecture and records the implementation plan as the platform evolves.
 
-No implementation code has been generated. These documents are the implementation gate for the project.
+Implementation is proceeding incrementally through sprint-sized, tested changes while preserving the modular monolith architecture described here.
 
 ## Document Map
 

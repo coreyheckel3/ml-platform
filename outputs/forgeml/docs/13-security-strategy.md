@@ -128,6 +128,8 @@ Production:
 Audit events should be written for:
 
 - Login success and failure
+- Refresh-token rotation and logout
+- Project creation
 - API key creation and revocation
 - Role changes
 - Dataset version finalization
@@ -138,6 +140,8 @@ Audit events should be written for:
 - Admin configuration changes
 
 Audit logs should include actor, action, resource, timestamp, trace ID, and safe metadata.
+
+Implemented audit writers currently cover successful login, refresh-token rotation, logout, and project creation. Event metadata intentionally excludes credentials, access tokens, refresh tokens, and bearer token claims that are not needed for operator review.
 
 ## Threat Model Focus Areas
 

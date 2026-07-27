@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.domain.entities import AuditLogEvent
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.projects.domain.entities import Project, ProjectStatus
 from forgeml.modules.projects.domain.policies import build_project_slug, validate_project_name
 from forgeml.modules.projects.repositories.interfaces import ProjectRepository
@@ -21,8 +23,14 @@ class CreateProjectCommand:
 
 
 class ProjectService:
-    def __init__(self, *, projects: ProjectRepository) -> None:
+    def __init__(
+        self,
+        *,
+        projects: ProjectRepository,
+        audit_log: AuditEventRecorder | None = None,
+    ) -> None:
         self._projects = projects
+        self._audit_log = audit_log
 
     def create_project(self, command: CreateProjectCommand, principal: Principal) -> Project:
         if not principal.has("projects:create"):
@@ -44,7 +52,9 @@ class ProjectService:
             status=ProjectStatus.ACTIVE,
             owner_user_id=command.owner_user_id,
         )
-        return self._projects.add(project)
+        created = self._projects.add(project)
+        self._record_project_created(created, principal)
+        return created
 
     def list_projects(self, principal: Principal) -> list[Project]:
         if not principal.has("projects:read"):
@@ -58,3 +68,21 @@ class ProjectService:
         if project is None or str(project.organization_id) != principal.organization_id:
             raise ResourceNotFoundError("Project was not found.")
         return project
+
+    def _record_project_created(self, project: Project, principal: Principal) -> None:
+        if self._audit_log is None:
+            return
+        self._audit_log.record(
+            AuditLogEvent(
+                organization_id=project.organization_id,
+                actor_type="user",
+                actor_id=principal.user_id,
+                action="projects.create",
+                resource_type="project",
+                resource_id=str(project.id),
+                metadata={
+                    "slug": project.slug,
+                    "name": project.name,
+                },
+            )
+        )

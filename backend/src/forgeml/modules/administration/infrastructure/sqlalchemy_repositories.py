@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from forgeml.modules.administration.domain.entities import AuditLogEntry
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.administration.infrastructure.sqlalchemy_models import AuditLogModel
 from forgeml.modules.administration.repositories.interfaces import AuditLogFilters
 
@@ -29,6 +29,22 @@ class SqlAlchemyAuditLogRepository:
         statement = _apply_filters(statement, filters)
         models = self._session.scalars(statement).all()
         return [_to_domain(model) for model in models]
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        model = AuditLogModel(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata_json=dict(event.metadata),
+            created_at=datetime.now(UTC),
+        )
+        self._session.add(model)
+        self._session.flush()
+        return _to_domain(model)
 
 
 def _apply_filters(

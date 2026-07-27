@@ -977,3 +977,42 @@ Implemented scope:
 - `/api/v1/admin/audit-log` exposes filtered audit events.
 - `SettingsPage` now includes an audit log browser with actor, action, and resource filters.
 - Unit, API, integration, and frontend tests cover the audit log capability.
+
+## Sprint 32: Audit Event Instrumentation
+
+Goal: Move the audit log from a read-only administration surface to an application-wide write contract for high-value lifecycle events.
+
+Deliverables:
+
+- Audit event domain command
+- Audit event recorder port
+- SQLAlchemy audit append implementation
+- Authentication login audit events
+- Authentication refresh rotation audit events
+- Authentication logout audit events
+- Project creation audit events
+- API dependency wiring for auth and project modules
+- Backend unit and repository integration tests
+- Security and implementation-state documentation updates
+
+Acceptance criteria:
+
+- Audit writes use the Administration module contract instead of writing SQLAlchemy models from feature modules.
+- Authentication login records `auth.login` without storing credentials or tokens.
+- Refresh-token rotation records `auth.refresh` with source and replacement session identifiers.
+- Logout records `auth.logout` only when a refresh session is actually revoked.
+- Project creation records `projects.create` with project id, slug, name, actor, and organization.
+- Audit writes participate in the request transaction when the API dependency provides the SQLAlchemy repository.
+- Existing audit log read API returns newly recorded events without a schema migration.
+- Unit tests cover auth and project audit emission.
+- Repository integration tests cover appending and reading recorded audit events.
+
+Implemented scope:
+
+- `AuditLogEvent` captures append requests separate from persisted `AuditLogEntry` records.
+- `AuditEventRecorder` lets application services depend on an audit-write port.
+- `SqlAlchemyAuditLogRepository.record` appends immutable events to the existing `audit_log` table.
+- `AuthenticationService` records successful login, refresh rotation, and logout events through optional dependency injection.
+- `ProjectService` records project creation events through optional dependency injection.
+- Auth and project API dependencies provide the shared SQLAlchemy audit repository.
+- Backend tests cover emitted audit payloads and repository persistence.
