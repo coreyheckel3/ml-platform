@@ -940,3 +940,40 @@ Implemented scope:
 - Auth API schemas and routes expose refresh and logout operations.
 - Frontend auth clients and shell lifecycle use backend refresh and logout.
 - Unit, API, integration, and frontend tests cover the new session lifecycle.
+
+## Sprint 31: Administration Audit Log
+
+Goal: Add the first backend-backed administration console capability by making organization audit events searchable from the API and visible in Settings.
+
+Deliverables:
+
+- Administration module boundary
+- Audit log domain entity
+- Audit log repository interface
+- SQLAlchemy audit log model and repository
+- Administration application service with RBAC checks
+- `/admin/audit-log` read API
+- Settings audit log API client
+- Settings audit log filter controls
+- Settings audit event table
+- Backend unit, API, and repository integration tests
+- Frontend regression tests
+
+Acceptance criteria:
+
+- Audit log reads require `admin:audit_log:read`.
+- Audit log reads are scoped to the authenticated principal organization.
+- Audit log results are ordered newest first.
+- Audit log results can be filtered by actor type, action, and resource type.
+- API responses include actor, action, resource, metadata, and event timestamp.
+- Settings displays audit events only for users with audit log permission.
+- Settings shows clear states for signed-out users, missing permission, loading, request failure, and empty results.
+- Frontend tests cover authenticated audit loading and filter query parameters.
+
+Implemented scope:
+
+- `AdministrationService` enforces RBAC and tenant scoping for audit reads.
+- `SqlAlchemyAuditLogRepository` reads the existing `audit_log` table through the administration module boundary.
+- `/api/v1/admin/audit-log` exposes filtered audit events.
+- `SettingsPage` now includes an audit log browser with actor, action, and resource filters.
+- Unit, API, integration, and frontend tests cover the audit log capability.

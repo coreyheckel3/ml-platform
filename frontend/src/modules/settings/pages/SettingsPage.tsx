@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { KeyRound, LockKeyhole, ShieldCheck, UserRound, UsersRound } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import {
+  ClipboardList,
+  KeyRound,
+  LockKeyhole,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
+import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 
 import { getCurrentUser, type CurrentUser } from "../../auth/api/auth";
 import {
@@ -8,6 +17,7 @@ import {
   PROJECT_CONTEXT_KEY,
   readStoredSession,
 } from "../../auth/session/sessionStore";
+import { listAuditLog, type AuditLogEntry, type AuditLogFilters } from "../api/auditLog";
 import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
@@ -15,6 +25,18 @@ import { PageHeader } from "../../../shared/ui/PageHeader";
 type PermissionGroup = {
   scope: string;
   permissions: string[];
+};
+
+type AuditFilterDraft = {
+  actorType: string;
+  action: string;
+  resourceType: string;
+};
+
+const initialAuditDraft: AuditFilterDraft = {
+  actorType: "",
+  action: "",
+  resourceType: "",
 };
 
 const securityDefaults = [
@@ -46,6 +68,8 @@ export function SettingsPage() {
   const [selectedProjectId, setSelectedProjectId] = useState(
     () => readLocalStorage(PROJECT_CONTEXT_KEY) ?? "",
   );
+  const [auditDraft, setAuditDraft] = useState<AuditFilterDraft>(initialAuditDraft);
+  const [auditFilters, setAuditFilters] = useState<AuditLogFilters>({ limit: 50 });
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const userQuery = useQuery({
     queryKey: ["current-user", token],
@@ -58,6 +82,13 @@ export function SettingsPage() {
     [user?.permissions],
   );
   const authenticated = Boolean(token);
+  const canReadAuditLog = hasPermission(user?.permissions ?? [], "admin:audit_log:read");
+  const auditQuery = useQuery({
+    queryKey: ["audit-log", token, auditFilters],
+    queryFn: () => listAuditLog(token ?? "", auditFilters),
+    enabled: Boolean(token && user && canReadAuditLog),
+  });
+  const auditEntries = auditQuery.data?.items ?? [];
 
   function clearProjectContext() {
     if (typeof window !== "undefined") {
@@ -65,6 +96,21 @@ export function SettingsPage() {
     }
     setSelectedProjectId("");
     setOperationMessage("Cleared active project context for this browser.");
+  }
+
+  function applyAuditFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuditFilters({
+      actorType: cleanDraftValue(auditDraft.actorType),
+      action: cleanDraftValue(auditDraft.action),
+      resourceType: cleanDraftValue(auditDraft.resourceType),
+      limit: 50,
+    });
+  }
+
+  function resetAuditFilters() {
+    setAuditDraft(initialAuditDraft);
+    setAuditFilters({ limit: 50 });
   }
 
   return (
@@ -177,6 +223,49 @@ export function SettingsPage() {
           </DataPanel>
         </div>
       </div>
+
+      <div className="mt-4">
+        <DataPanel
+          title="Audit Log"
+          action={
+            <button
+              type="button"
+              onClick={() => auditQuery.refetch()}
+              disabled={!canReadAuditLog}
+              className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-3 text-xs font-semibold text-steel transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </button>
+          }
+        >
+          {!authenticated ? (
+            <StateMessage message="Sign in to inspect organization audit events." />
+          ) : userQuery.isFetching && !user ? (
+            <StateMessage message="Loading account permissions." />
+          ) : !canReadAuditLog ? (
+            <StateMessage message="Current permissions do not include audit log access." />
+          ) : (
+            <div className="grid gap-4">
+              <AuditFiltersForm
+                draft={auditDraft}
+                onDraftChange={setAuditDraft}
+                onSubmit={applyAuditFilters}
+                onReset={resetAuditFilters}
+              />
+              {auditQuery.error ? (
+                <StateMessage message="Audit log request failed." tone="danger" />
+              ) : auditQuery.isFetching && auditEntries.length === 0 ? (
+                <StateMessage message="Loading audit events." />
+              ) : auditEntries.length === 0 ? (
+                <StateMessage message="No audit events matched the current filters." />
+              ) : (
+                <AuditLogTable entries={auditEntries} />
+              )}
+            </div>
+          )}
+        </DataPanel>
+      </div>
     </>
   );
 }
@@ -214,6 +303,114 @@ function AccountPanel({
         value={selectedProjectId || "none"}
         detail="used by workflow pages"
       />
+    </div>
+  );
+}
+
+function AuditFiltersForm({
+  draft,
+  onDraftChange,
+  onSubmit,
+  onReset,
+}: {
+  draft: AuditFilterDraft;
+  onDraftChange: (draft: AuditFilterDraft) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onReset: () => void;
+}) {
+  return (
+    <form
+      aria-label="Filter audit log"
+      onSubmit={onSubmit}
+      className="grid gap-3 border-b border-slate-200 pb-4 lg:grid-cols-[1fr_1fr_1fr_auto]"
+    >
+      <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
+        Actor
+        <input
+          value={draft.actorType}
+          onChange={(event) =>
+            onDraftChange({ ...draft, actorType: event.target.value })
+          }
+          className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
+        />
+      </label>
+      <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
+        Action
+        <input
+          value={draft.action}
+          onChange={(event) => onDraftChange({ ...draft, action: event.target.value })}
+          className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
+        />
+      </label>
+      <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
+        Resource
+        <input
+          value={draft.resourceType}
+          onChange={(event) =>
+            onDraftChange({ ...draft, resourceType: event.target.value })
+          }
+          className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
+        />
+      </label>
+      <div className="flex items-end gap-2">
+        <button
+          type="submit"
+          className="inline-flex h-10 items-center gap-2 rounded bg-ink px-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+        >
+          <Search className="h-4 w-4" />
+          Apply
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          className="inline-flex h-10 items-center rounded border border-slate-200 bg-white px-3 text-sm font-semibold text-steel transition hover:text-ink"
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[960px] text-left text-sm">
+        <thead className="text-xs uppercase text-steel">
+          <tr>
+            <th className="py-2">Time</th>
+            <th>Action</th>
+            <th>Resource</th>
+            <th>Actor</th>
+            <th>Metadata</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((entry) => (
+            <tr key={entry.id} className="border-t border-slate-100">
+              <td className="py-3 text-xs text-steel">{formatDateTime(entry.created_at)}</td>
+              <td>
+                <div className="flex items-center gap-2 font-medium">
+                  <ClipboardList className="h-4 w-4 text-signal" />
+                  {entry.action}
+                </div>
+                <div className="mt-1 text-xs text-steel">{entry.id}</div>
+              </td>
+              <td>
+                <div className="font-medium">{entry.resource_type}</div>
+                <div className="mt-1 text-xs text-steel">{entry.resource_id}</div>
+              </td>
+              <td>
+                <div className="font-medium">{entry.actor_type}</div>
+                <div className="mt-1 text-xs text-steel">{entry.actor_id}</div>
+              </td>
+              <td className="max-w-[360px] truncate text-xs text-steel">
+                {formatMetadata(entry.metadata)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -326,4 +523,24 @@ function formatDateTime(value: string): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(timestamp));
+}
+
+function hasPermission(permissions: string[], permission: string): boolean {
+  return permissions.includes("*") || permissions.includes(permission);
+}
+
+function cleanDraftValue(value: string): string | undefined {
+  const cleaned = value.trim();
+  return cleaned || undefined;
+}
+
+function formatMetadata(metadata: Record<string, unknown>): string {
+  const entries = Object.entries(metadata);
+  if (entries.length === 0) {
+    return "none";
+  }
+  return entries
+    .slice(0, 4)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(", ");
 }

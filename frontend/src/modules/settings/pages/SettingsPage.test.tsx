@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -33,10 +33,31 @@ describe("SettingsPage", () => {
     expect(screen.getAllByText("org-1").length).toBeGreaterThan(0);
     expect(screen.getByText("projects:read")).toBeInTheDocument();
     expect(screen.getByText("model_versions:approve")).toBeInTheDocument();
+    expect(screen.getByText("admin:audit_log:read")).toBeInTheDocument();
+    expect(await screen.findByText("model_versions.review")).toBeInTheDocument();
+    expect(screen.getByText("decision: approved")).toBeInTheDocument();
     expect(screen.getAllByText("project-1").length).toBeGreaterThan(0);
     const authCall = findFetchCall(fetchMock, "/api/v1/auth/me");
     expect(authCall[1]?.headers).toMatchObject({
       authorization: "Bearer token-123",
+    });
+    const auditCall = findFetchCall(fetchMock, "/api/v1/admin/audit-log");
+    expect(auditCall[1]?.headers).toMatchObject({
+      authorization: "Bearer token-123",
+    });
+
+    fireEvent.change(screen.getByLabelText("Action"), {
+      target: { value: "deployments.rollback" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(await screen.findByText("deployments.rollback")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).includes("action=deployments.rollback"),
+        ),
+      ).toBe(true);
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Clear project context" }));
@@ -92,7 +113,29 @@ function mockCurrentUser() {
           "projects:create",
           "model_versions:approve",
           "deployments:release",
+          "admin:audit_log:read",
         ],
+      });
+    }
+
+    if (method === "GET" && path.startsWith("/api/v1/admin/audit-log")) {
+      const query = new URL(`http://forgeml.local${path}`).searchParams;
+      const action = query.get("action") || "model_versions.review";
+      return jsonResponse({
+        items: [
+          {
+            id: `audit-${action}`,
+            organization_id: "org-1",
+            actor_type: "user",
+            actor_id: "user-1",
+            action,
+            resource_type: action === "deployments.rollback" ? "deployment" : "model_version",
+            resource_id: action === "deployments.rollback" ? "deployment-1" : "model-version-1",
+            metadata: action === "deployments.rollback" ? { revision: 2 } : { decision: "approved" },
+            created_at: "2026-07-26T12:30:00+00:00",
+          },
+        ],
+        next_cursor: null,
       });
     }
 

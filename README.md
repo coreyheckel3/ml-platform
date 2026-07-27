@@ -19,6 +19,7 @@ Implemented foundation:
 - Deployments with approved-model-version gating, immutable revisions, canary traffic allocation, health checks, rollback, events, and serving orchestrator boundary.
 - Inference endpoints with deployment-revision attribution, request logs, deterministic runtime adapter, prediction response contracts, and metric snapshots.
 - Monitoring read APIs for project inference summaries, endpoint latency, prediction counts, error rates, and active alert counts.
+- Administration audit log read APIs with organization-scoped RBAC filtering and SQLAlchemy persistence.
 - Alerting with rule definitions, threshold evaluation over inference snapshots, deduplicated alert events, acknowledgement, and resolution.
 - Drift detection with reference profiles, production-window reports over inference request logs, feature-level drift scores, and analyzer adapter boundary.
 - Automatic retraining with deployment-scoped policies, drift and alert trigger evaluation, cooldowns, daily run limits, approval gates, idempotent source handling, and Training module handoff.
@@ -26,9 +27,9 @@ Implemented foundation:
 - Deterministic local example training jobs that generate versioned model and evaluation artifacts for the three reference workloads.
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
 - Production hardening with secure response headers, configurable API rate limiting, Prometheus metrics for throttling, production-readiness CI checks, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
-- SQLAlchemy 2.x repository implementations for auth, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
+- SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
-- React/Vite frontend shell with SaaS-style navigation, core pages, login and session management, project context operations, account and security settings, dataset ingestion operations, feature store operations, experiment operations, training run operations, registry promotion workbench, model approval actions, deployment release console, inference endpoint operations, monitoring operations drilldowns, alert operations workflows, drift operations workflows, and retraining operations workflows.
+- React/Vite frontend shell with SaaS-style navigation, core pages, login and session management, project context operations, account and security settings, audit log browser, dataset ingestion operations, feature store operations, experiment operations, training run operations, registry promotion workbench, model approval actions, deployment release console, inference endpoint operations, monitoring operations drilldowns, alert operations workflows, drift operations workflows, and retraining operations workflows.
 - Example Projects page showing cross-workload lifecycle coverage without coupling core platform modules to example names.
 - Docker Compose infrastructure for local platform services.
 - Docker Compose full profile with Prometheus and Grafana provisioning.

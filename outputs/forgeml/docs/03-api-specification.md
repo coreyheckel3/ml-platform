@@ -267,7 +267,7 @@ Prediction response:
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/admin/audit-log` | Search audit events |
+| `GET` | `/admin/audit-log` | Search organization-scoped audit events |
 | `GET` | `/admin/users` | List users |
 | `POST` | `/admin/users` | Invite or create user |
 | `PATCH` | `/admin/users/{user_id}` | Update user |

@@ -299,6 +299,8 @@ Capabilities:
 - Retraining policies
 - Notification channels
 - Audit log access for authorized users
+- Audit log filters by actor type, action, and resource type
+- Audit event metadata inspection
 
 ## Frontend Architecture
 

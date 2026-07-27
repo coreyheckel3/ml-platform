@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from forgeml import __version__
+from forgeml.modules.administration.api.routes import router as administration_router
 from forgeml.modules.alerting.api.routes import router as alerting_router
 from forgeml.modules.auth.api.routes import router as auth_router
 from forgeml.modules.datasets.api.routes import router as datasets_router
@@ -66,6 +67,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ready", "service": resolved_settings.service_name}
 
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(administration_router, prefix="/api/v1")
     app.include_router(projects_router, prefix="/api/v1")
     app.include_router(datasets_router, prefix="/api/v1")
     app.include_router(feature_store_router, prefix="/api/v1")
