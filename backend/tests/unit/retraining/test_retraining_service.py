@@ -2,6 +2,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.retraining.application.services import (
     CreateRetrainingPolicyCommand,
     EvaluateRetrainingPolicyCommand,
@@ -159,6 +160,25 @@ class FakeTrainingLauncher:
         )
 
 
+class FakeAuditLogRepository:
+    def __init__(self) -> None:
+        self.events: list[AuditLogEvent] = []
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        self.events.append(event)
+        return AuditLogEntry(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata=event.metadata,
+            created_at=datetime.now(UTC),
+        )
+
+
 def principal(organization_id: UUID, user_id: UUID) -> Principal:
     return Principal(
         user_id=str(user_id),
@@ -171,7 +191,12 @@ def principal(organization_id: UUID, user_id: UUID) -> Principal:
 def test_retraining_service_queues_drift_triggered_training_run() -> None:
     repository = FakeRetrainingRepository()
     launcher = FakeTrainingLauncher()
-    service = RetrainingService(repository=repository, training_launcher=launcher)
+    audit_log = FakeAuditLogRepository()
+    service = RetrainingService(
+        repository=repository,
+        training_launcher=launcher,
+        audit_log=audit_log,
+    )
     organization_id = uuid4()
     project_id = uuid4()
     deployment_id = uuid4()
@@ -223,12 +248,21 @@ def test_retraining_service_queues_drift_triggered_training_run() -> None:
     assert evaluation.run.training_run_id is not None
     assert launcher.requests[0].experiment_id == experiment_id
     assert launcher.requests[0].run_name.startswith("fraud-retrain-drift-")
+    assert [event.action for event in audit_log.events] == ["retraining_runs.trigger"]
+    assert audit_log.events[0].resource_id == str(evaluation.run.id)
+    assert audit_log.events[0].metadata["decision"] == "triggered"
+    assert audit_log.events[0].metadata["training_run_id"] == str(evaluation.run.training_run_id)
 
 
 def test_retraining_service_holds_run_for_approval_then_launches() -> None:
     repository = FakeRetrainingRepository()
     launcher = FakeTrainingLauncher()
-    service = RetrainingService(repository=repository, training_launcher=launcher)
+    audit_log = FakeAuditLogRepository()
+    service = RetrainingService(
+        repository=repository,
+        training_launcher=launcher,
+        audit_log=audit_log,
+    )
     organization_id = uuid4()
     project_id = uuid4()
     deployment_id = uuid4()
@@ -260,6 +294,120 @@ def test_retraining_service_holds_run_for_approval_then_launches() -> None:
     assert approved.status == RetrainingRunStatus.QUEUED
     assert approved.approved_by == user_id
     assert len(launcher.requests) == 1
+    assert [event.action for event in audit_log.events] == [
+        "retraining_runs.pending_approval",
+        "retraining_runs.approve",
+    ]
+    assert audit_log.events[-1].metadata["approved_by"] == str(user_id)
+
+
+def test_retraining_service_records_rejection_audit_event() -> None:
+    repository = FakeRetrainingRepository()
+    launcher = FakeTrainingLauncher()
+    audit_log = FakeAuditLogRepository()
+    service = RetrainingService(
+        repository=repository,
+        training_launcher=launcher,
+        audit_log=audit_log,
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    deployment_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    repository.deployments.add((organization_id, project_id, deployment_id))
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    actor = principal(organization_id, user_id)
+    policy = service.create_policy(
+        _create_policy_command(
+            organization_id,
+            project_id,
+            deployment_id,
+            experiment_id,
+            dataset_version_id,
+            user_id,
+            approval_required=True,
+        ),
+        actor,
+    )
+    evaluation = service.trigger_run(command=_manual_command(policy.id), principal=actor)
+
+    rejected = service.reject_run(evaluation.run.id, actor) if evaluation.run else None
+
+    assert rejected is not None
+    assert rejected.status == RetrainingRunStatus.REJECTED
+    assert rejected.rejected_by == user_id
+    assert [event.action for event in audit_log.events] == [
+        "retraining_runs.pending_approval",
+        "retraining_runs.reject",
+    ]
+    assert audit_log.events[-1].metadata["rejected_by"] == str(user_id)
+
+
+def test_retraining_service_records_skipped_threshold_audit_event() -> None:
+    repository = FakeRetrainingRepository()
+    launcher = FakeTrainingLauncher()
+    audit_log = FakeAuditLogRepository()
+    service = RetrainingService(
+        repository=repository,
+        training_launcher=launcher,
+        audit_log=audit_log,
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    deployment_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    drift_report_id = uuid4()
+    repository.deployments.add((organization_id, project_id, deployment_id))
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    repository.drift_signals[drift_report_id] = DriftRetrainingSignal(
+        drift_report_id=drift_report_id,
+        organization_id=organization_id,
+        project_id=project_id,
+        deployment_id=deployment_id,
+        endpoint_id=uuid4(),
+        drift_score=0.1,
+        drifted_feature_count=3,
+        evaluated_feature_count=5,
+        status="completed",
+    )
+    actor = principal(organization_id, user_id)
+    policy = service.create_policy(
+        _create_policy_command(
+            organization_id,
+            project_id,
+            deployment_id,
+            experiment_id,
+            dataset_version_id,
+            user_id,
+            approval_required=False,
+        ),
+        actor,
+    )
+
+    evaluation = service.evaluate_policy(
+        EvaluateRetrainingPolicyCommand(
+            policy_id=policy.id,
+            drift_report_id=drift_report_id,
+            alert_event_id=None,
+            reason="Nightly drift evaluation.",
+        ),
+        actor,
+    )
+
+    assert evaluation.decision == RetrainingDecision.SKIPPED
+    assert evaluation.run is not None
+    assert launcher.requests == []
+    assert [event.action for event in audit_log.events] == ["retraining_runs.skip"]
+    assert audit_log.events[0].resource_id == str(evaluation.run.id)
+    assert audit_log.events[0].metadata["decision_reason"] == (
+        "Drift score is below the retraining threshold."
+    )
 
 
 def test_retraining_service_skips_duplicate_drift_trigger() -> None:

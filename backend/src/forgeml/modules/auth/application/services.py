@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from uuid import UUID, uuid4
 
-from forgeml.modules.administration.domain.entities import AuditLogEvent
+from forgeml.modules.administration.application.audit import record_user_audit_event
 from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.auth.domain.entities import RefreshSession, User
 from forgeml.modules.auth.repositories.interfaces import RefreshSessionRepository, UserRepository
@@ -73,7 +73,8 @@ class AuthenticationService:
         tokens, refresh_session = self._issue_token_pair(user, issued_at=issued_at)
         self._refresh_sessions.add(refresh_session)
         self._users.record_successful_login(user.id)
-        self._record_audit(
+        record_user_audit_event(
+            self._audit_log,
             organization_id=user.organization_id,
             actor_id=user.id,
             action="auth.login",
@@ -114,7 +115,8 @@ class AuthenticationService:
             revoked_at=now,
             replaced_by_session_id=replacement.id,
         )
-        self._record_audit(
+        record_user_audit_event(
+            self._audit_log,
             organization_id=user.organization_id,
             actor_id=user.id,
             action="auth.refresh",
@@ -134,7 +136,8 @@ class AuthenticationService:
         if stored_session is None or stored_session.revoked_at is not None:
             return False
         self._refresh_sessions.revoke(stored_session.id, revoked_at=self._clock())
-        self._record_audit(
+        record_user_audit_event(
+            self._audit_log,
             organization_id=stored_session.organization_id,
             actor_id=stored_session.user_id,
             action="auth.logout",
@@ -204,30 +207,6 @@ class AuthenticationService:
         if claims.get("typ") != "refresh":
             raise AuthenticationFailedError("Token is not a refresh token.")
         return claims
-
-    def _record_audit(
-        self,
-        *,
-        organization_id: UUID | None,
-        actor_id: UUID,
-        action: str,
-        resource_type: str,
-        resource_id: str,
-        metadata: dict[str, object],
-    ) -> None:
-        if self._audit_log is None:
-            return
-        self._audit_log.record(
-            AuditLogEvent(
-                organization_id=organization_id,
-                actor_type="user",
-                actor_id=str(actor_id),
-                action=action,
-                resource_type=resource_type,
-                resource_id=resource_id,
-                metadata=metadata,
-            )
-        )
 
 
 def _hash_token(token: str) -> str:

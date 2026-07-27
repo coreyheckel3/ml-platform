@@ -2,6 +2,8 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.application.audit import record_user_audit_event
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.retraining.domain.entities import (
     AlertRetrainingSignal,
     DriftRetrainingSignal,
@@ -76,9 +78,11 @@ class RetrainingService:
         *,
         repository: RetrainingRepository,
         training_launcher: TrainingRunLauncher,
+        audit_log: AuditEventRecorder | None = None,
     ) -> None:
         self._repository = repository
         self._training_launcher = training_launcher
+        self._audit_log = audit_log
 
     def create_policy(
         self,
@@ -196,7 +200,18 @@ class RetrainingService:
                 "orchestrator_run_id": launch.orchestrator_run_id,
             },
         )
-        return self._repository.update_run(updated)
+        saved = self._repository.update_run(updated)
+        self._record_run_audit(
+            saved,
+            principal,
+            action="retraining_runs.approve",
+            metadata={
+                "approved_by": principal.user_id,
+                "training_status": launch.status,
+                "orchestrator_run_id": launch.orchestrator_run_id,
+            },
+        )
+        return saved
 
     def reject_run(self, run_id: UUID, principal: Principal) -> RetrainingRun:
         self._require(principal, "retraining_runs:reject")
@@ -209,7 +224,14 @@ class RetrainingService:
             rejected_by=UUID(principal.user_id),
             decision_metadata={**run.decision_metadata, "rejected_by": principal.user_id},
         )
-        return self._repository.update_run(updated)
+        saved = self._repository.update_run(updated)
+        self._record_run_audit(
+            saved,
+            principal,
+            action="retraining_runs.reject",
+            metadata={"rejected_by": principal.user_id},
+        )
+        return saved
 
     def _evaluate_and_maybe_launch(
         self,
@@ -286,6 +308,12 @@ class RetrainingService:
         )
         saved = self._repository.add_run(pending)
         if policy.approval_required:
+            self._record_run_audit(
+                saved,
+                principal,
+                action="retraining_runs.pending_approval",
+                metadata={"decision": RetrainingDecision.PENDING_APPROVAL.value},
+            )
             return RetrainingEvaluation(
                 policy_id=policy.id,
                 decision=RetrainingDecision.PENDING_APPROVAL,
@@ -307,6 +335,16 @@ class RetrainingService:
             },
         )
         updated = self._repository.update_run(queued)
+        self._record_run_audit(
+            updated,
+            principal,
+            action="retraining_runs.trigger",
+            metadata={
+                "decision": RetrainingDecision.TRIGGERED.value,
+                "training_status": launch.status,
+                "orchestrator_run_id": launch.orchestrator_run_id,
+            },
+        )
         return RetrainingEvaluation(
             policy_id=policy.id,
             decision=RetrainingDecision.TRIGGERED,
@@ -344,6 +382,12 @@ class RetrainingService:
             rejected_by=None,
         )
         saved = self._repository.add_run(run)
+        self._record_run_audit(
+            saved,
+            principal,
+            action="retraining_runs.skip",
+            metadata={"decision": RetrainingDecision.SKIPPED.value},
+        )
         return RetrainingEvaluation(
             policy_id=policy.id,
             decision=RetrainingDecision.SKIPPED,
@@ -518,6 +562,36 @@ class RetrainingService:
                 }
             )
         return metadata
+
+    def _record_run_audit(
+        self,
+        run: RetrainingRun,
+        principal: Principal,
+        *,
+        action: str,
+        metadata: dict[str, object],
+    ) -> None:
+        event_metadata = {
+            "project_id": str(run.project_id),
+            "policy_id": str(run.policy_id),
+            "deployment_id": str(run.deployment_id),
+            "trigger_type": run.trigger_type.value,
+            "status": run.status.value,
+            "drift_report_id": str(run.drift_report_id) if run.drift_report_id else None,
+            "alert_event_id": str(run.alert_event_id) if run.alert_event_id else None,
+            "training_run_id": str(run.training_run_id) if run.training_run_id else None,
+            "decision_reason": str(run.decision_metadata.get("reason", "")),
+            **metadata,
+        }
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=run.organization_id,
+            actor_id=principal.user_id,
+            action=action,
+            resource_type="retraining_run",
+            resource_id=run.id,
+            metadata=event_metadata,
+        )
 
     def _get_scoped_policy(self, policy_id: UUID, principal: Principal) -> RetrainingPolicy:
         policy = self._repository.get_policy(policy_id)

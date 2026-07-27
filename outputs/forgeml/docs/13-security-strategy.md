@@ -141,7 +141,7 @@ Audit events should be written for:
 
 Audit logs should include actor, action, resource, timestamp, trace ID, and safe metadata.
 
-Implemented audit writers currently cover successful login, refresh-token rotation, logout, and project creation. Event metadata intentionally excludes credentials, access tokens, refresh tokens, and bearer token claims that are not needed for operator review.
+Implemented audit writers currently cover successful login, refresh-token rotation, logout, project creation, training queue and cancellation, model approval workflows, deployment rollout and rollback workflows, alert lifecycle transitions, and retraining decisions. Event metadata intentionally excludes credentials, access tokens, refresh tokens, bearer token claims that are not needed for operator review, free-form approval comments, and raw operator notes.
 
 ## Threat Model Focus Areas
 

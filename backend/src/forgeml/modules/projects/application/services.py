@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
-from forgeml.modules.administration.domain.entities import AuditLogEvent
+from forgeml.modules.administration.application.audit import record_user_audit_event
 from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.projects.domain.entities import Project, ProjectStatus
 from forgeml.modules.projects.domain.policies import build_project_slug, validate_project_name
@@ -70,19 +70,15 @@ class ProjectService:
         return project
 
     def _record_project_created(self, project: Project, principal: Principal) -> None:
-        if self._audit_log is None:
-            return
-        self._audit_log.record(
-            AuditLogEvent(
-                organization_id=project.organization_id,
-                actor_type="user",
-                actor_id=principal.user_id,
-                action="projects.create",
-                resource_type="project",
-                resource_id=str(project.id),
-                metadata={
-                    "slug": project.slug,
-                    "name": project.name,
-                },
-            )
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=project.organization_id,
+            actor_id=principal.user_id,
+            action="projects.create",
+            resource_type="project",
+            resource_id=project.id,
+            metadata={
+                "slug": project.slug,
+                "name": project.name,
+            },
         )

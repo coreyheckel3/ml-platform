@@ -1,6 +1,8 @@
 from dataclasses import asdict, dataclass, replace
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.application.audit import record_user_audit_event
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.domain.entities import (
     TrainingExecutionResult,
@@ -85,12 +87,14 @@ class TrainingRunService:
         orchestrator: TrainingWorkflowOrchestrator,
         artifact_bucket: str,
         runner: TrainingJobRunner | None = None,
+        audit_log: AuditEventRecorder | None = None,
     ) -> None:
         self._training_runs = training_runs
         self._experiment_runs = experiment_runs
         self._orchestrator = orchestrator
         self._artifact_bucket = artifact_bucket
         self._runner = runner
+        self._audit_log = audit_log
 
     def start_training_run(
         self,
@@ -182,6 +186,27 @@ class TrainingRunService:
                 message="Training run was submitted to the workflow orchestrator.",
                 metadata={"orchestrator_run_id": saved.orchestrator_run_id},
             )
+        )
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=saved.organization_id,
+            actor_id=command.requested_by,
+            action="training_runs.queue",
+            resource_type="training_run",
+            resource_id=saved.id,
+            metadata={
+                "project_id": str(saved.project_id),
+                "experiment_id": str(saved.experiment_id),
+                "experiment_run_id": str(saved.experiment_run_id),
+                "dataset_version_id": (
+                    str(saved.dataset_version_id) if saved.dataset_version_id else None
+                ),
+                "feature_set_id": str(saved.feature_set_id) if saved.feature_set_id else None,
+                "algorithm": saved.algorithm,
+                "model_type": saved.model_type,
+                "objective_metric_name": saved.objective_metric_name,
+                "orchestrator_run_id": saved.orchestrator_run_id,
+            },
         )
         return saved
 
@@ -339,6 +364,22 @@ class TrainingRunService:
                 message="Training run was canceled.",
                 metadata={"orchestrator_run_id": saved.orchestrator_run_id},
             )
+        )
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=saved.organization_id,
+            actor_id=principal.user_id,
+            action="training_runs.cancel",
+            resource_type="training_run",
+            resource_id=saved.id,
+            metadata={
+                "project_id": str(saved.project_id),
+                "experiment_id": str(saved.experiment_id),
+                "experiment_run_id": str(saved.experiment_run_id),
+                "orchestrator_run_id": saved.orchestrator_run_id,
+                "previous_status": training_run.status.value,
+                "status": saved.status.value,
+            },
         )
         return saved
 

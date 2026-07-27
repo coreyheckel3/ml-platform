@@ -1,6 +1,8 @@
 from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.application.audit import record_user_audit_event
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.alerting.domain.entities import (
     AlertEvaluation,
     AlertEvent,
@@ -50,8 +52,14 @@ class EvaluateAlertRuleCommand:
 
 
 class AlertingService:
-    def __init__(self, *, repository: AlertingRepository) -> None:
+    def __init__(
+        self,
+        *,
+        repository: AlertingRepository,
+        audit_log: AuditEventRecorder | None = None,
+    ) -> None:
         self._repository = repository
+        self._audit_log = audit_log
 
     def create_rule(
         self,
@@ -146,6 +154,23 @@ class AlertingService:
             resolved_by=None,
         )
         saved = self._repository.add_event(event)
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=saved.organization_id,
+            actor_id=principal.user_id,
+            action="alert_events.open",
+            resource_type="alert_event",
+            resource_id=saved.id,
+            metadata={
+                "project_id": str(saved.project_id),
+                "alert_rule_id": str(saved.alert_rule_id),
+                "endpoint_id": str(saved.endpoint_id) if saved.endpoint_id else None,
+                "severity": saved.severity.value,
+                "observed_value": saved.observed_value,
+                "threshold": saved.threshold,
+                "metric": saved.metadata.get("metric", ""),
+            },
+        )
         return AlertEvaluation(
             rule_id=rule.id,
             endpoint_id=snapshot.endpoint_id,
@@ -166,7 +191,24 @@ class AlertingService:
             status=AlertEventStatus.ACKNOWLEDGED,
             acknowledged_by=UUID(principal.user_id),
         )
-        return self._repository.update_event(updated)
+        saved = self._repository.update_event(updated)
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=saved.organization_id,
+            actor_id=principal.user_id,
+            action="alert_events.acknowledge",
+            resource_type="alert_event",
+            resource_id=saved.id,
+            metadata={
+                "project_id": str(saved.project_id),
+                "alert_rule_id": str(saved.alert_rule_id),
+                "endpoint_id": str(saved.endpoint_id) if saved.endpoint_id else None,
+                "previous_status": event.status.value,
+                "status": saved.status.value,
+                "severity": saved.severity.value,
+            },
+        )
+        return saved
 
     def resolve_event(self, event_id: UUID, principal: Principal) -> AlertEvent:
         self._require(principal, "alert_events:resolve")
@@ -176,7 +218,24 @@ class AlertingService:
             status=AlertEventStatus.RESOLVED,
             resolved_by=UUID(principal.user_id),
         )
-        return self._repository.update_event(updated)
+        saved = self._repository.update_event(updated)
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=saved.organization_id,
+            actor_id=principal.user_id,
+            action="alert_events.resolve",
+            resource_type="alert_event",
+            resource_id=saved.id,
+            metadata={
+                "project_id": str(saved.project_id),
+                "alert_rule_id": str(saved.alert_rule_id),
+                "endpoint_id": str(saved.endpoint_id) if saved.endpoint_id else None,
+                "previous_status": event.status.value,
+                "status": saved.status.value,
+                "severity": saved.severity.value,
+            },
+        )
+        return saved
 
     def _get_scoped_rule(self, rule_id: UUID, principal: Principal) -> AlertRule:
         rule = self._repository.get_rule(rule_id)

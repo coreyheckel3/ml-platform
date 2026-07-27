@@ -3,6 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from forgeml.modules.administration.infrastructure.sqlalchemy_repositories import (
+    SqlAlchemyAuditLogRepository,
+)
 from forgeml.modules.deployments.api.schemas import (
     CreateDeploymentRequest,
     CreateDeploymentRevisionRequest,
@@ -49,6 +52,7 @@ def get_deployment_service(
     return DeploymentService(
         repository=SqlAlchemyDeploymentRepository(session),
         orchestrator=LocalDeploymentOrchestrator(),
+        audit_log=SqlAlchemyAuditLogRepository(session),
     )
 
 

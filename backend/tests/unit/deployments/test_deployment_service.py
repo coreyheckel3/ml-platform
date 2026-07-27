@@ -1,7 +1,9 @@
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
 
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.deployments.application.services import (
     CreateDeploymentCommand,
     CreateDeploymentRevisionCommand,
@@ -136,6 +138,25 @@ class FakeDeploymentOrchestrator:
         return f"rollback:{deployment.id}:{previous}:{target_revision.id}"
 
 
+class FakeAuditLogRepository:
+    def __init__(self) -> None:
+        self.events: list[AuditLogEvent] = []
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        self.events.append(event)
+        return AuditLogEntry(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata=event.metadata,
+            created_at=datetime.now(UTC),
+        )
+
+
 def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Principal:
     return Principal(
         user_id=str(user_id),
@@ -147,9 +168,11 @@ def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Pr
 
 def test_deployment_service_creates_revision_health_and_rollback() -> None:
     repository = FakeDeploymentRepository()
+    audit_log = FakeAuditLogRepository()
     service = DeploymentService(
         repository=repository,
         orchestrator=FakeDeploymentOrchestrator(),
+        audit_log=audit_log,
     )
     organization_id = uuid4()
     project_id = uuid4()
@@ -235,6 +258,15 @@ def test_deployment_service_creates_revision_health_and_rollback() -> None:
         "traffic_updated",
         "rollback",
     }
+    assert [event.action for event in audit_log.events] == [
+        "deployments.rollout",
+        "deployments.update_traffic",
+        "deployments.rollback",
+    ]
+    assert audit_log.events[0].resource_id == str(revision.id)
+    assert audit_log.events[0].metadata["traffic_percentage"] == 10
+    assert audit_log.events[-1].resource_id == str(deployment.id)
+    assert audit_log.events[-1].metadata["target_revision_id"] == str(revision.id)
 
 
 def test_deployment_service_rejects_duplicate_deployment_slug() -> None:

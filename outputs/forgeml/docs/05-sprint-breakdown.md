@@ -1016,3 +1016,46 @@ Implemented scope:
 - `ProjectService` records project creation events through optional dependency injection.
 - Auth and project API dependencies provide the shared SQLAlchemy audit repository.
 - Backend tests cover emitted audit payloads and repository persistence.
+
+## Sprint 33: ML Lifecycle Audit Coverage
+
+Goal: Extend central audit logging to high-risk ML platform operations while preserving module-local lifecycle events.
+
+Deliverables:
+
+- Shared Administration application helper for user audit events
+- Training run queue audit events
+- Training cancellation audit events
+- Model approval request audit events
+- Model approval and rejection audit events
+- Deployment rollout audit events
+- Deployment traffic update audit events
+- Deployment rollback audit events
+- Alert open, acknowledgement, and resolution audit events
+- Retraining pending approval, trigger, skip, approval, and rejection audit events
+- API dependency wiring for Training, Model Registry, Deployment, Alerting, and Retraining modules
+- Backend unit coverage for each instrumented lifecycle family
+- Security and implementation-state documentation updates
+
+Acceptance criteria:
+
+- New audit writes use the `AuditEventRecorder` port and do not import SQLAlchemy models from application services.
+- API-created service instances share the request-scoped SQLAlchemy audit repository.
+- Audit metadata includes stable resource, project, decision, and lifecycle identifiers.
+- Audit metadata excludes credentials, bearer tokens, free-form approval comments, and raw operator notes.
+- Training queue and cancellation events include run, experiment, algorithm, model type, and orchestrator context.
+- Model governance events include model version, registered model, project, approval id, and decision context.
+- Deployment rollout, traffic update, and rollback events include revision and environment context.
+- Alert lifecycle events include rule, endpoint, severity, observed value, threshold, and status transition context.
+- Retraining decisions include policy, deployment, trigger source, status, training run, and guardrail reason context.
+- Unit tests cover emitted audit payloads for each instrumented lifecycle family.
+
+Implemented scope:
+
+- `record_user_audit_event` centralizes the append-call shape while keeping action names and metadata in owning services.
+- `TrainingRunService` records `training_runs.queue` and `training_runs.cancel`.
+- `ModelRegistryService` records `model_versions.request_approval`, `model_versions.approved`, and `model_versions.rejected`.
+- `DeploymentService` records `deployments.rollout`, `deployments.update_traffic`, and `deployments.rollback`.
+- `AlertingService` records `alert_events.open`, `alert_events.acknowledge`, and `alert_events.resolve`.
+- `RetrainingService` records `retraining_runs.pending_approval`, `retraining_runs.trigger`, `retraining_runs.skip`, `retraining_runs.approve`, and `retraining_runs.reject`.
+- Unit tests cover audit emission across training, registry, deployment, alerting, and retraining workflows.

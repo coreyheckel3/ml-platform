@@ -3,6 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from forgeml.modules.administration.infrastructure.sqlalchemy_repositories import (
+    SqlAlchemyAuditLogRepository,
+)
 from forgeml.modules.training.api.schemas import (
     RecordTrainingResultRequest,
     StartTrainingRunRequest,
@@ -44,6 +47,7 @@ def get_training_run_service(
         orchestrator=LocalTrainingWorkflowOrchestrator(),
         artifact_bucket=settings.object_storage_bucket,
         runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
+        audit_log=SqlAlchemyAuditLogRepository(session),
     )
 
 

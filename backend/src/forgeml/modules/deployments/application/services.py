@@ -1,6 +1,8 @@
 from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.application.audit import record_user_audit_event
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.deployments.domain.entities import (
     Deployment,
     DeploymentEvent,
@@ -80,9 +82,11 @@ class DeploymentService:
         *,
         repository: DeploymentRepository,
         orchestrator: DeploymentOrchestrator,
+        audit_log: AuditEventRecorder | None = None,
     ) -> None:
         self._repository = repository
         self._orchestrator = orchestrator
+        self._audit_log = audit_log
 
     def create_deployment(
         self,
@@ -171,6 +175,23 @@ class DeploymentService:
                 "traffic_percentage": saved.traffic_percentage,
             },
         )
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=deployment.organization_id,
+            actor_id=command.created_by,
+            action="deployments.rollout",
+            resource_type="deployment_revision",
+            resource_id=saved.id,
+            metadata={
+                "deployment_id": str(deployment.id),
+                "project_id": str(deployment.project_id),
+                "environment": deployment.environment.value,
+                "revision": saved.revision,
+                "model_version_id": str(saved.model_version_id),
+                "traffic_percentage": saved.traffic_percentage,
+                "orchestrator_deployment_id": saved.orchestrator_deployment_id,
+            },
+        )
         return saved
 
     def list_revisions(
@@ -200,6 +221,22 @@ class DeploymentService:
             "traffic_updated",
             "Deployment traffic allocation was updated.",
             {"traffic_percentage": saved.traffic_percentage},
+        )
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=deployment.organization_id,
+            actor_id=principal.user_id,
+            action="deployments.update_traffic",
+            resource_type="deployment_revision",
+            resource_id=saved.id,
+            metadata={
+                "deployment_id": str(deployment.id),
+                "project_id": str(deployment.project_id),
+                "environment": deployment.environment.value,
+                "revision": saved.revision,
+                "previous_traffic_percentage": revision.traffic_percentage,
+                "traffic_percentage": saved.traffic_percentage,
+            },
         )
         return saved
 
@@ -280,6 +317,21 @@ class DeploymentService:
             "rollback",
             "Deployment was rolled back to a healthy revision.",
             {
+                "target_revision": saved.revision,
+                "previous_revision_id": str(previous.id) if previous else None,
+            },
+        )
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=deployment.organization_id,
+            actor_id=principal.user_id,
+            action="deployments.rollback",
+            resource_type="deployment",
+            resource_id=deployment.id,
+            metadata={
+                "project_id": str(deployment.project_id),
+                "environment": deployment.environment.value,
+                "target_revision_id": str(saved.id),
                 "target_revision": saved.revision,
                 "previous_revision_id": str(previous.id) if previous else None,
             },

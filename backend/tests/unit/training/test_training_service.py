@@ -1,8 +1,10 @@
 from dataclasses import replace
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
 
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.application.services import (
     ExecuteNextTrainingRunsCommand,
@@ -176,6 +178,25 @@ class FakeRunner:
         )
 
 
+class FakeAuditLogRepository:
+    def __init__(self) -> None:
+        self.events: list[AuditLogEvent] = []
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        self.events.append(event)
+        return AuditLogEntry(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata=event.metadata,
+            created_at=datetime.now(UTC),
+        )
+
+
 def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Principal:
     return Principal(
         user_id=str(user_id),
@@ -188,11 +209,13 @@ def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Pr
 def test_training_service_creates_linked_experiment_run_and_records_result() -> None:
     repository = FakeTrainingRunRepository()
     recorder = FakeExperimentRunRecorder()
+    audit_log = FakeAuditLogRepository()
     service = TrainingRunService(
         training_runs=repository,
         experiment_runs=recorder,
         orchestrator=FakeOrchestrator(),
         artifact_bucket="forgeml-artifacts",
+        audit_log=audit_log,
     )
     organization_id = uuid4()
     project_id = uuid4()
@@ -239,6 +262,62 @@ def test_training_service_creates_linked_experiment_run_and_records_result() -> 
     assert completed.metrics["auc"] == 0.94
     assert recorder.runs[training_run.experiment_run_id].status == ExperimentRunStatus.SUCCEEDED
     assert repository.events[0].event_type == "queued"
+    assert [event.action for event in audit_log.events] == ["training_runs.queue"]
+    assert audit_log.events[0].resource_id == str(training_run.id)
+    assert audit_log.events[0].metadata["algorithm"] == "xgboost"
+
+
+def test_training_service_records_cancel_audit_event() -> None:
+    repository = FakeTrainingRunRepository()
+    recorder = FakeExperimentRunRecorder()
+    audit_log = FakeAuditLogRepository()
+    service = TrainingRunService(
+        training_runs=repository,
+        experiment_runs=recorder,
+        orchestrator=FakeOrchestrator(),
+        artifact_bucket="forgeml-artifacts",
+        audit_log=audit_log,
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    actor = principal(
+        organization_id,
+        user_id,
+        {"training_runs:create", "training_runs:cancel"},
+    )
+    training_run = service.start_training_run(
+        StartTrainingRunCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            experiment_id=experiment_id,
+            run_name="fraud-xgb-cancel",
+            dataset_version_id=dataset_version_id,
+            feature_set_id=None,
+            algorithm="xgboost",
+            model_type="xgboost",
+            objective_metric_name="auc",
+            hyperparameters={},
+            requested_by=user_id,
+        ),
+        actor,
+    )
+
+    canceled = service.cancel_training_run(training_run.id, actor)
+
+    assert canceled.status == TrainingRunStatus.CANCELED
+    assert [event.action for event in audit_log.events] == [
+        "training_runs.queue",
+        "training_runs.cancel",
+    ]
+    cancel_event = audit_log.events[-1]
+    assert cancel_event.resource_id == str(training_run.id)
+    assert cancel_event.metadata["previous_status"] == "queued"
+    assert cancel_event.metadata["status"] == "canceled"
 
 
 def test_training_service_executes_queued_run_with_runner() -> None:

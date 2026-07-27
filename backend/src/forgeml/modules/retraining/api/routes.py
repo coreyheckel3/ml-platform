@@ -4,6 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from forgeml.modules.administration.infrastructure.sqlalchemy_repositories import (
+    SqlAlchemyAuditLogRepository,
+)
 from forgeml.modules.retraining.api.schemas import (
     CreateRetrainingPolicyRequest,
     EvaluateRetrainingPolicyRequest,
@@ -46,15 +49,18 @@ def get_retraining_service(
     session: Session = Depends(get_db_session),
     settings: Settings = Depends(get_settings),
 ) -> RetrainingService:
+    audit_log = SqlAlchemyAuditLogRepository(session)
     training_service = TrainingRunService(
         training_runs=SqlAlchemyTrainingRunRepository(session),
         experiment_runs=SqlAlchemyExperimentRunRecorder(session),
         orchestrator=LocalTrainingWorkflowOrchestrator(),
         artifact_bucket=settings.object_storage_bucket,
+        audit_log=audit_log,
     )
     return RetrainingService(
         repository=SqlAlchemyRetrainingRepository(session),
         training_launcher=TrainingRunServiceLauncher(training_service),
+        audit_log=audit_log,
     )
 
 

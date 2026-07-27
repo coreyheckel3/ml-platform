@@ -1,7 +1,9 @@
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
 
+from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
 from forgeml.modules.model_registry.application.services import (
     CreateRegisteredModelCommand,
     ModelRegistryService,
@@ -144,6 +146,25 @@ class FakeModelRegistryRepository:
         return [lineage for lineage in self.lineage if lineage.model_version_id == model_version_id]
 
 
+class FakeAuditLogRepository:
+    def __init__(self) -> None:
+        self.events: list[AuditLogEvent] = []
+
+    def record(self, event: AuditLogEvent) -> AuditLogEntry:
+        self.events.append(event)
+        return AuditLogEntry(
+            id=uuid4(),
+            organization_id=event.organization_id,
+            actor_type=event.actor_type,
+            actor_id=event.actor_id,
+            action=event.action,
+            resource_type=event.resource_type,
+            resource_id=event.resource_id,
+            metadata=event.metadata,
+            created_at=datetime.now(UTC),
+        )
+
+
 def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Principal:
     return Principal(
         user_id=str(user_id),
@@ -155,7 +176,8 @@ def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Pr
 
 def test_model_registry_service_registers_version_and_approval_flow() -> None:
     repository = FakeModelRegistryRepository()
-    service = ModelRegistryService(repository=repository)
+    audit_log = FakeAuditLogRepository()
+    service = ModelRegistryService(repository=repository, audit_log=audit_log)
     organization_id = uuid4()
     project_id = uuid4()
     user_id = uuid4()
@@ -236,6 +258,13 @@ def test_model_registry_service_registers_version_and_approval_flow() -> None:
         "feature_set",
         "training_run",
     }
+    assert [event.action for event in audit_log.events] == [
+        "model_versions.request_approval",
+        "model_versions.approved",
+    ]
+    assert audit_log.events[-1].resource_id == str(version.id)
+    assert audit_log.events[-1].metadata["decision"] == "approved"
+    assert audit_log.events[-1].metadata["project_id"] == str(project_id)
 
 
 def test_model_registry_service_rejects_duplicate_registered_model_slug() -> None:

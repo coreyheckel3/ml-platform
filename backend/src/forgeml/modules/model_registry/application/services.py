@@ -1,6 +1,8 @@
 from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
+from forgeml.modules.administration.application.audit import record_user_audit_event
+from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.model_registry.domain.entities import (
     ModelApproval,
     ModelApprovalStatus,
@@ -79,8 +81,14 @@ class ReviewModelVersionCommand:
 
 
 class ModelRegistryService:
-    def __init__(self, *, repository: ModelRegistryRepository) -> None:
+    def __init__(
+        self,
+        *,
+        repository: ModelRegistryRepository,
+        audit_log: AuditEventRecorder | None = None,
+    ) -> None:
         self._repository = repository
+        self._audit_log = audit_log
 
     def create_registered_model(
         self,
@@ -231,6 +239,7 @@ class ModelRegistryService:
     ) -> ModelApproval:
         self._require(principal, "model_versions:request_approval")
         version = self._get_scoped_version(command.model_version_id, principal)
+        model = self._get_scoped_model(version.registered_model_id, principal)
         validate_approval_request(version.status)
         updated = replace(version, status=ModelVersionStatus.PENDING_APPROVAL)
         self._repository.update_model_version(updated)
@@ -247,7 +256,23 @@ class ModelRegistryService:
                 "requires_reviewer": True,
             },
         )
-        return self._repository.add_approval(approval)
+        saved = self._repository.add_approval(approval)
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=model.organization_id,
+            actor_id=command.requested_by,
+            action="model_versions.request_approval",
+            resource_type="model_version",
+            resource_id=version.id,
+            metadata={
+                "registered_model_id": str(model.id),
+                "project_id": str(model.project_id),
+                "version": version.version,
+                "approval_id": str(saved.id),
+                "status": saved.status.value,
+            },
+        )
+        return saved
 
     def review_model_version(
         self,
@@ -256,6 +281,7 @@ class ModelRegistryService:
     ) -> ModelApproval:
         self._require(principal, "model_versions:review")
         version = self._get_scoped_version(command.model_version_id, principal)
+        model = self._get_scoped_model(version.registered_model_id, principal)
         validate_approval_decision(command.status)
         validate_reviewable_status(version.status)
         updated = replace(
@@ -279,7 +305,23 @@ class ModelRegistryService:
                 "decision": command.status.value,
             },
         )
-        return self._repository.add_approval(approval)
+        saved = self._repository.add_approval(approval)
+        record_user_audit_event(
+            self._audit_log,
+            organization_id=model.organization_id,
+            actor_id=command.reviewer_id,
+            action=f"model_versions.{command.status.value}",
+            resource_type="model_version",
+            resource_id=version.id,
+            metadata={
+                "registered_model_id": str(model.id),
+                "project_id": str(model.project_id),
+                "version": version.version,
+                "approval_id": str(saved.id),
+                "decision": command.status.value,
+            },
+        )
+        return saved
 
     def list_approvals(
         self,
