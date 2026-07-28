@@ -3,6 +3,7 @@ from uuid import uuid4
 from scripts.workers.run_training_worker import summary_payload, worker_principal
 
 from forgeml.modules.training.application.services import TrainingWorkerRunSummary
+from forgeml.modules.training.infrastructure.sqlalchemy_models import TrainingRunModel
 
 
 def test_training_worker_summary_payload_serializes_run_ids() -> None:
@@ -37,3 +38,17 @@ def test_training_worker_principal_is_scoped_to_organization() -> None:
 
     assert principal.organization_id == str(organization_id)
     assert principal.has("training_runs:write")
+
+
+def test_training_worker_import_registers_training_foreign_key_tables() -> None:
+    referenced_tables = {
+        foreign_key.column.table.name for foreign_key in TrainingRunModel.__table__.foreign_keys
+    }
+
+    assert {
+        "dataset_versions",
+        "experiment_runs",
+        "experiments",
+        "feature_sets",
+        "projects",
+    }.issubset(referenced_tables)

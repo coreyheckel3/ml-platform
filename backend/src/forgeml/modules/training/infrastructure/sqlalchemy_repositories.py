@@ -13,6 +13,7 @@ from forgeml.modules.experiments.infrastructure.sqlalchemy_models import (
     ExperimentRunModel,
 )
 from forgeml.modules.feature_store.infrastructure.sqlalchemy_models import FeatureSetModel
+from forgeml.modules.projects.infrastructure.sqlalchemy_models import ProjectModel
 from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunEvent,
@@ -27,6 +28,7 @@ _RUNNABLE_TRAINING_STATUSES = {
     TrainingRunStatus.REQUESTED.value,
     TrainingRunStatus.QUEUED.value,
 }
+_SQLALCHEMY_METADATA_DEPENDENCIES = (ProjectModel,)
 
 
 class SqlAlchemyTrainingRunRepository:
