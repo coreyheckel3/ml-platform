@@ -300,6 +300,8 @@ Capabilities:
 - Notification channels
 - Audit log access for authorized users
 - Audit log filters by actor type, action, and resource type
+- Audit preset filters for common ML lifecycle event families
+- Active-project audit activity filtering
 - Audit event metadata inspection
 
 ## Frontend Architecture

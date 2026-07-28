@@ -1059,3 +1059,34 @@ Implemented scope:
 - `AlertingService` records `alert_events.open`, `alert_events.acknowledge`, and `alert_events.resolve`.
 - `RetrainingService` records `retraining_runs.pending_approval`, `retraining_runs.trigger`, `retraining_runs.skip`, `retraining_runs.approve`, and `retraining_runs.reject`.
 - Unit tests cover audit emission across training, registry, deployment, alerting, and retraining workflows.
+
+## Sprint 34: Audit Operations Console
+
+Goal: Turn the Settings audit log from a basic table into an operator-grade triage surface for security and ML lifecycle events.
+
+Deliverables:
+
+- Audit preset filters for common ML lifecycle families
+- Project-context activity filter over audit metadata
+- Selected audit event detail panel
+- Metadata key-value inspection
+- Action-specific visual indicators
+- Regression coverage for audit presets, project scoping, and detail inspection
+- Product-surface and implementation-state documentation updates
+
+Acceptance criteria:
+
+- Authorized users can quickly filter all events, training events, model review events, deployment rollout events, alert events, and retraining events.
+- Users can narrow returned audit events to the active browser project context when metadata includes `project_id`.
+- Selecting an audit event shows actor, organization, resource, time, and metadata in a stable detail panel.
+- The audit table keeps its existing manual actor, action, and resource filters.
+- The UI handles events with no metadata without layout shifts.
+- Existing signed-out and missing-permission states are preserved.
+- Frontend regression tests cover authenticated loading, presets, project scoping, manual filters, detail inspection, and project-context clearing.
+
+Implemented scope:
+
+- `SettingsPage` now includes audit presets, project activity filtering, selected-row highlighting, and a detail panel.
+- Audit metadata is rendered as key-value rows with stable wrapping for long IDs and nested values.
+- Action icons distinguish alert, deployment, retraining, training, and generic audit event families.
+- `SettingsPage` tests cover preset filtering, active-project filtering, detail metadata inspection, and existing workspace controls.

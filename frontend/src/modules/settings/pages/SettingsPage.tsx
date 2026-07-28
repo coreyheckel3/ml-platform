@@ -1,15 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  Activity,
+  Bell,
+  Bot,
   ClipboardList,
+  Eye,
   KeyRound,
+  ListFilter,
   LockKeyhole,
   RefreshCw,
+  Rocket,
   Search,
   ShieldCheck,
   UserRound,
   UsersRound,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { getCurrentUser, type CurrentUser } from "../../auth/api/auth";
 import {
@@ -33,11 +39,43 @@ type AuditFilterDraft = {
   resourceType: string;
 };
 
+type AuditPreset = {
+  label: string;
+  filters: AuditFilterDraft;
+};
+
 const initialAuditDraft: AuditFilterDraft = {
   actorType: "",
   action: "",
   resourceType: "",
 };
+
+const auditPresets: AuditPreset[] = [
+  {
+    label: "All Events",
+    filters: initialAuditDraft,
+  },
+  {
+    label: "Training",
+    filters: { actorType: "", action: "", resourceType: "training_run" },
+  },
+  {
+    label: "Model Review",
+    filters: { actorType: "", action: "", resourceType: "model_version" },
+  },
+  {
+    label: "Deployment Rollout",
+    filters: { actorType: "", action: "deployments.rollout", resourceType: "" },
+  },
+  {
+    label: "Alerts",
+    filters: { actorType: "", action: "", resourceType: "alert_event" },
+  },
+  {
+    label: "Retraining",
+    filters: { actorType: "", action: "", resourceType: "retraining_run" },
+  },
+];
 
 const securityDefaults = [
   {
@@ -70,6 +108,8 @@ export function SettingsPage() {
   );
   const [auditDraft, setAuditDraft] = useState<AuditFilterDraft>(initialAuditDraft);
   const [auditFilters, setAuditFilters] = useState<AuditLogFilters>({ limit: 50 });
+  const [auditProjectScoped, setAuditProjectScoped] = useState(false);
+  const [selectedAuditEntryId, setSelectedAuditEntryId] = useState<string | null>(null);
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const userQuery = useQuery({
     queryKey: ["current-user", token],
@@ -88,7 +128,35 @@ export function SettingsPage() {
     queryFn: () => listAuditLog(token ?? "", auditFilters),
     enabled: Boolean(token && user && canReadAuditLog),
   });
-  const auditEntries = auditQuery.data?.items ?? [];
+  const visibleAuditEntries = useMemo(
+    () => {
+      const auditEntries = auditQuery.data?.items ?? [];
+      return auditProjectScoped && selectedProjectId
+        ? auditEntries.filter((entry) => auditEntryMatchesProject(entry, selectedProjectId))
+        : auditEntries;
+    },
+    [auditQuery.data?.items, auditProjectScoped, selectedProjectId],
+  );
+  const selectedAuditEntry = useMemo(
+    () => visibleAuditEntries.find((entry) => entry.id === selectedAuditEntryId) ?? null,
+    [selectedAuditEntryId, visibleAuditEntries],
+  );
+
+  useEffect(() => {
+    if (visibleAuditEntries.length === 0) {
+      setSelectedAuditEntryId(null);
+      return;
+    }
+    if (!visibleAuditEntries.some((entry) => entry.id === selectedAuditEntryId)) {
+      setSelectedAuditEntryId(visibleAuditEntries[0].id);
+    }
+  }, [selectedAuditEntryId, visibleAuditEntries]);
+
+  useEffect(() => {
+    if (!selectedProjectId && auditProjectScoped) {
+      setAuditProjectScoped(false);
+    }
+  }, [auditProjectScoped, selectedProjectId]);
 
   function clearProjectContext() {
     if (typeof window !== "undefined") {
@@ -111,6 +179,16 @@ export function SettingsPage() {
   function resetAuditFilters() {
     setAuditDraft(initialAuditDraft);
     setAuditFilters({ limit: 50 });
+  }
+
+  function applyAuditPreset(preset: AuditPreset) {
+    setAuditDraft(preset.filters);
+    setAuditFilters({
+      actorType: cleanDraftValue(preset.filters.actorType),
+      action: cleanDraftValue(preset.filters.action),
+      resourceType: cleanDraftValue(preset.filters.resourceType),
+      limit: 50,
+    });
   }
 
   return (
@@ -247,6 +325,14 @@ export function SettingsPage() {
             <StateMessage message="Current permissions do not include audit log access." />
           ) : (
             <div className="grid gap-4">
+              <AuditOperationsBar
+                presets={auditPresets}
+                activeFilters={auditFilters}
+                selectedProjectId={selectedProjectId}
+                projectScoped={auditProjectScoped}
+                onPresetSelect={applyAuditPreset}
+                onProjectScopedChange={setAuditProjectScoped}
+              />
               <AuditFiltersForm
                 draft={auditDraft}
                 onDraftChange={setAuditDraft}
@@ -255,18 +341,81 @@ export function SettingsPage() {
               />
               {auditQuery.error ? (
                 <StateMessage message="Audit log request failed." tone="danger" />
-              ) : auditQuery.isFetching && auditEntries.length === 0 ? (
+              ) : auditQuery.isFetching && visibleAuditEntries.length === 0 ? (
                 <StateMessage message="Loading audit events." />
-              ) : auditEntries.length === 0 ? (
+              ) : visibleAuditEntries.length === 0 ? (
                 <StateMessage message="No audit events matched the current filters." />
               ) : (
-                <AuditLogTable entries={auditEntries} />
+                <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
+                  <AuditLogTable
+                    entries={visibleAuditEntries}
+                    selectedEntryId={selectedAuditEntry?.id ?? null}
+                    onSelectEntry={setSelectedAuditEntryId}
+                  />
+                  <AuditEventDetail entry={selectedAuditEntry} />
+                </div>
               )}
             </div>
           )}
         </DataPanel>
       </div>
     </>
+  );
+}
+
+function AuditOperationsBar({
+  presets,
+  activeFilters,
+  selectedProjectId,
+  projectScoped,
+  onPresetSelect,
+  onProjectScopedChange,
+}: {
+  presets: AuditPreset[];
+  activeFilters: AuditLogFilters;
+  selectedProjectId: string;
+  projectScoped: boolean;
+  onPresetSelect: (preset: AuditPreset) => void;
+  onProjectScopedChange: (enabled: boolean) => void;
+}) {
+  return (
+    <div className="grid gap-3 border-b border-slate-200 pb-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {presets.map((preset) => {
+          const selected = filtersMatchDraft(activeFilters, preset.filters);
+          return (
+            <button
+              key={preset.label}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onPresetSelect(preset)}
+              className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-xs font-semibold transition ${
+                selected
+                  ? "border-ink bg-ink text-white"
+                  : "border-slate-200 bg-white text-steel hover:text-ink"
+              }`}
+            >
+              <ListFilter className="h-4 w-4" />
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
+      <label className="flex max-w-xl items-center gap-3 rounded border border-slate-200 bg-cloud px-3 py-2 text-sm text-steel">
+        <input
+          type="checkbox"
+          aria-label="Project activity"
+          checked={projectScoped}
+          disabled={!selectedProjectId}
+          onChange={(event) => onProjectScopedChange(event.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-signal focus:ring-signal"
+        />
+        <span className="font-medium text-ink">Project activity</span>
+        <span className="truncate text-xs">
+          {selectedProjectId || "No active project context"}
+        </span>
+      </label>
+    </div>
   );
 }
 
@@ -372,7 +521,15 @@ function AuditFiltersForm({
   );
 }
 
-function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
+function AuditLogTable({
+  entries,
+  selectedEntryId,
+  onSelectEntry,
+}: {
+  entries: AuditLogEntry[];
+  selectedEntryId: string | null;
+  onSelectEntry: (entryId: string) => void;
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[960px] text-left text-sm">
@@ -383,11 +540,17 @@ function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
             <th>Resource</th>
             <th>Actor</th>
             <th>Metadata</th>
+            <th>Inspect</th>
           </tr>
         </thead>
         <tbody>
           {entries.map((entry) => (
-            <tr key={entry.id} className="border-t border-slate-100">
+            <tr
+              key={entry.id}
+              className={`border-t border-slate-100 ${
+                selectedEntryId === entry.id ? "bg-emerald-50" : ""
+              }`}
+            >
               <td className="py-3 text-xs text-steel">{formatDateTime(entry.created_at)}</td>
               <td>
                 <div className="flex items-center gap-2 font-medium">
@@ -407,12 +570,92 @@ function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
               <td className="max-w-[360px] truncate text-xs text-steel">
                 {formatMetadata(entry.metadata)}
               </td>
+              <td>
+                <button
+                  type="button"
+                  aria-label={`Inspect ${entry.action}`}
+                  onClick={() => onSelectEntry(entry.id)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-200 bg-white text-steel transition hover:text-ink"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
   );
+}
+
+function AuditEventDetail({ entry }: { entry: AuditLogEntry | null }) {
+  if (!entry) {
+    return <StateMessage message="Select an audit event to inspect metadata." />;
+  }
+
+  return (
+    <aside className="rounded border border-slate-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase text-steel">Audit Event Detail</div>
+          <div className="mt-2 break-words text-sm font-semibold text-ink">{entry.action}</div>
+        </div>
+        <AuditActionIcon action={entry.action} />
+      </div>
+      <dl className="mt-4 grid gap-3 text-sm">
+        <DetailRow label="Time" value={formatDateTime(entry.created_at)} />
+        <DetailRow label="Actor" value={`${entry.actor_type}:${entry.actor_id}`} />
+        <DetailRow label="Organization" value={entry.organization_id ?? "none"} />
+        <DetailRow label="Resource" value={`${entry.resource_type}:${entry.resource_id}`} />
+      </dl>
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <div className="text-xs font-semibold uppercase text-steel">Metadata</div>
+        <div className="mt-3 grid gap-2">
+          {Object.entries(entry.metadata).length === 0 ? (
+            <div className="rounded bg-field px-3 py-2 text-xs text-steel">none</div>
+          ) : (
+            Object.entries(entry.metadata).map(([key, value]) => (
+              <div
+                key={key}
+                className="grid gap-1 rounded bg-field px-3 py-2 text-xs md:grid-cols-[120px_minmax(0,1fr)]"
+              >
+                <div className="font-semibold text-steel">{key}</div>
+                <div className="break-words font-medium text-ink">
+                  {formatMetadataValue(value)}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid gap-1 rounded bg-field px-3 py-2">
+      <dt className="text-xs font-semibold uppercase text-steel">{label}</dt>
+      <dd className="break-words text-sm font-medium text-ink">{value}</dd>
+    </div>
+  );
+}
+
+function AuditActionIcon({ action }: { action: string }) {
+  const className = "h-5 w-5 text-signal";
+  if (action.startsWith("alert_events.")) {
+    return <Bell className={className} />;
+  }
+  if (action.startsWith("deployments.")) {
+    return <Rocket className={className} />;
+  }
+  if (action.startsWith("retraining_runs.")) {
+    return <Bot className={className} />;
+  }
+  if (action.startsWith("training_runs.")) {
+    return <Activity className={className} />;
+  }
+  return <ClipboardList className={className} />;
 }
 
 function PermissionGroupCard({ group }: { group: PermissionGroup }) {
@@ -534,6 +777,22 @@ function cleanDraftValue(value: string): string | undefined {
   return cleaned || undefined;
 }
 
+function filtersMatchDraft(filters: AuditLogFilters, draft: AuditFilterDraft): boolean {
+  return (
+    (filters.actorType ?? "") === draft.actorType &&
+    (filters.action ?? "") === draft.action &&
+    (filters.resourceType ?? "") === draft.resourceType
+  );
+}
+
+function auditEntryMatchesProject(entry: AuditLogEntry, projectId: string): boolean {
+  const metadataProjectId = entry.metadata.project_id;
+  return (
+    String(metadataProjectId ?? "") === projectId ||
+    (entry.resource_type === "project" && entry.resource_id === projectId)
+  );
+}
+
 function formatMetadata(metadata: Record<string, unknown>): string {
   const entries = Object.entries(metadata);
   if (entries.length === 0) {
@@ -543,4 +802,14 @@ function formatMetadata(metadata: Record<string, unknown>): string {
     .slice(0, 4)
     .map(([key, value]) => `${key}: ${String(value)}`)
     .join(", ");
+}
+
+function formatMetadataValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") {
+    return "none";
+  }
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+  return String(value);
 }

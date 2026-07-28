@@ -34,8 +34,10 @@ describe("SettingsPage", () => {
     expect(screen.getByText("projects:read")).toBeInTheDocument();
     expect(screen.getByText("model_versions:approve")).toBeInTheDocument();
     expect(screen.getByText("admin:audit_log:read")).toBeInTheDocument();
-    expect(await screen.findByText("model_versions.review")).toBeInTheDocument();
-    expect(screen.getByText("decision: approved")).toBeInTheDocument();
+    expect((await screen.findAllByText("model_versions.review")).length).toBeGreaterThan(0);
+    expect(screen.getByText("auth.login")).toBeInTheDocument();
+    expect(screen.getByText(/decision: approved/)).toBeInTheDocument();
+    expect(screen.getByText("Audit Event Detail")).toBeInTheDocument();
     expect(screen.getAllByText("project-1").length).toBeGreaterThan(0);
     const authCall = findFetchCall(fetchMock, "/api/v1/auth/me");
     expect(authCall[1]?.headers).toMatchObject({
@@ -46,12 +48,32 @@ describe("SettingsPage", () => {
       authorization: "Bearer token-123",
     });
 
+    const projectActivityToggle = screen.getByLabelText("Project activity");
+    fireEvent.click(projectActivityToggle);
+
+    expect(projectActivityToggle).toBeChecked();
+    expect(screen.queryByText("auth.login")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retraining" }));
+
+    expect(await screen.findByText("retraining_runs.trigger")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).includes("resource_type=retraining_run"),
+        ),
+      ).toBe(true);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Inspect retraining_runs.trigger" }));
+    expect(screen.getByText("workflow:fraud-retrain")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
     fireEvent.change(screen.getByLabelText("Action"), {
       target: { value: "deployments.rollback" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(await screen.findByText("deployments.rollback")).toBeInTheDocument();
+    expect((await screen.findAllByText("deployments.rollback")).length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(([input]) =>
@@ -63,6 +85,9 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear project context" }));
 
     expect(screen.getByText("Cleared active project context for this browser.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(projectActivityToggle).not.toBeChecked();
+    });
     expect(window.localStorage.getItem(PROJECT_CONTEXT_KEY)).toBeNull();
   });
 
@@ -120,22 +145,62 @@ function mockCurrentUser() {
 
     if (method === "GET" && path.startsWith("/api/v1/admin/audit-log")) {
       const query = new URL(`http://forgeml.local${path}`).searchParams;
-      const action = query.get("action") || "model_versions.review";
+      const action = query.get("action");
+      const resourceType = query.get("resource_type");
+      if (!action && !resourceType) {
+        return jsonResponse({
+          items: [
+            auditEntry({
+              id: "audit-model-review",
+              action: "model_versions.review",
+              resourceType: "model_version",
+              resourceId: "model-version-1",
+              metadata: { decision: "approved", project_id: "project-1" },
+            }),
+            auditEntry({
+              id: "audit-login",
+              action: "auth.login",
+              resourceType: "user",
+              resourceId: "user-1",
+              metadata: { email: "corey@example.com" },
+            }),
+          ],
+        });
+      }
+      if (resourceType === "retraining_run") {
+        return jsonResponse({
+          items: [
+            auditEntry({
+              id: "audit-retraining",
+              action: "retraining_runs.trigger",
+              resourceType: "retraining_run",
+              resourceId: "retraining-run-1",
+              metadata: {
+                project_id: "project-1",
+                policy_id: "policy-1",
+                training_run_id: "training-run-1",
+                orchestrator_run_id: "workflow:fraud-retrain",
+              },
+            }),
+          ],
+        });
+      }
+      const resolvedAction = action || "model_versions.review";
       return jsonResponse({
         items: [
-          {
-            id: `audit-${action}`,
-            organization_id: "org-1",
-            actor_type: "user",
-            actor_id: "user-1",
-            action,
-            resource_type: action === "deployments.rollback" ? "deployment" : "model_version",
-            resource_id: action === "deployments.rollback" ? "deployment-1" : "model-version-1",
-            metadata: action === "deployments.rollback" ? { revision: 2 } : { decision: "approved" },
-            created_at: "2026-07-26T12:30:00+00:00",
-          },
+          auditEntry({
+            id: `audit-${resolvedAction}`,
+            action: resolvedAction,
+            resourceType:
+              resolvedAction === "deployments.rollback" ? "deployment" : "model_version",
+            resourceId:
+              resolvedAction === "deployments.rollback" ? "deployment-1" : "model-version-1",
+            metadata:
+              resolvedAction === "deployments.rollback"
+                ? { revision: 2, project_id: "project-1" }
+                : { decision: "approved", project_id: "project-1" },
+          }),
         ],
-        next_cursor: null,
       });
     }
 
@@ -143,6 +208,32 @@ function mockCurrentUser() {
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+function auditEntry({
+  id,
+  action,
+  resourceType,
+  resourceId,
+  metadata,
+}: {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  metadata: Record<string, unknown>;
+}) {
+  return {
+    id,
+    organization_id: "org-1",
+    actor_type: "user",
+    actor_id: "user-1",
+    action,
+    resource_type: resourceType,
+    resource_id: resourceId,
+    metadata,
+    created_at: "2026-07-26T12:30:00+00:00",
+  };
 }
 
 function jsonResponse(body: unknown, ok = true): Response {
