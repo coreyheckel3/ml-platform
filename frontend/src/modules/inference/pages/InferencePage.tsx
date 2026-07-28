@@ -29,7 +29,9 @@ export function InferencePage() {
   const [endpointName, setEndpointName] = useState("");
   const [endpointDescription, setEndpointDescription] = useState("");
   const [routePath, setRoutePath] = useState("");
-  const [probeRequestId, setProbeRequestId] = useState("control-plane-probe");
+  const [probeRequestId, setProbeRequestId] = useState(() =>
+    createProbeRequestId(),
+  );
   const [probePayloadText, setProbePayloadText] = useState(
     JSON.stringify(defaultProbePayload, null, 2),
   );
@@ -163,6 +165,7 @@ export function InferencePage() {
       setOperationMessage(
         `Probe ${prediction.request_id} ${prediction.status} in ${prediction.latency_ms.toFixed(1)}ms.`,
       );
+      setProbeRequestId(createProbeRequestId());
       queryClient.invalidateQueries({
         queryKey: ["inference-requests", selectedEndpoint?.id],
       });
@@ -720,6 +723,14 @@ const defaultProbePayload = {
   request_source: "control-plane-probe",
   amount: 128.45,
 };
+
+function createProbeRequestId(): string {
+  const entropy =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(16).slice(2, 10);
+  return `control-plane-probe-${entropy}`;
+}
 
 function parseJsonObject(
   value: string,

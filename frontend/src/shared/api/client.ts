@@ -7,13 +7,21 @@ type ApiRequestOptions = {
   token?: string | null;
 };
 
-export async function apiGet<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+type ApiErrorResponse = {
+  detail?: unknown;
+  title?: unknown;
+};
+
+export async function apiGet<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<T> {
   const response = await fetch(path, {
-    headers: buildHeaders(options)
+    headers: buildHeaders(options),
   });
 
   if (!response.ok) {
-    throw new Error(`ForgeML API request failed with ${response.status}`);
+    throw new Error(await readApiErrorMessage(response));
   }
 
   return response.json() as Promise<T>;
@@ -22,19 +30,19 @@ export async function apiGet<T>(path: string, options: ApiRequestOptions = {}): 
 export async function apiPost<TRequest, TResponse>(
   path: string,
   body: TRequest,
-  options: ApiRequestOptions = {}
+  options: ApiRequestOptions = {},
 ): Promise<TResponse> {
   const response = await fetch(path, {
     method: "POST",
     headers: {
       ...buildHeaders(options),
-      "content-type": "application/json"
+      "content-type": "application/json",
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
-    throw new Error(`ForgeML API request failed with ${response.status}`);
+    throw new Error(await readApiErrorMessage(response));
   }
 
   return response.json() as Promise<TResponse>;
@@ -42,10 +50,26 @@ export async function apiPost<TRequest, TResponse>(
 
 function buildHeaders(options: ApiRequestOptions): HeadersInit {
   const headers: Record<string, string> = {
-    accept: "application/json"
+    accept: "application/json",
   };
   if (options.token) {
     headers.authorization = `Bearer ${options.token}`;
   }
   return headers;
+}
+
+async function readApiErrorMessage(response: Response): Promise<string> {
+  const fallback = `ForgeML API request failed with ${response.status}`;
+  try {
+    const payload = (await response.json()) as ApiErrorResponse;
+    if (typeof payload.detail === "string" && payload.detail.trim()) {
+      return payload.detail;
+    }
+    if (typeof payload.title === "string" && payload.title.trim()) {
+      return payload.title;
+    }
+  } catch {
+    return fallback;
+  }
+  return fallback;
 }

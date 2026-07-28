@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -57,6 +58,7 @@ from forgeml.modules.projects.infrastructure.sqlalchemy_models import (
 from forgeml.modules.training.domain.entities import TrainingRunStatus
 from forgeml.modules.training.infrastructure.sqlalchemy_models import TrainingRunModel
 from forgeml.platform.database.base import Base
+from forgeml.platform.domain.errors import ConflictError
 
 
 def test_inference_repository_round_trips_endpoints_requests_metrics_and_reference() -> None:
@@ -296,11 +298,33 @@ def test_inference_repository_round_trips_endpoints_requests_metrics_and_referen
             project_id,
             endpoints[0].route_path,
         )
+        request_id_exists = repository.request_id_exists(endpoint_id, "req-001")
+        missing_request_id_exists = repository.request_id_exists(endpoint_id, "req-404")
 
     assert endpoints[0].route_path == "/inference/fraud-risk-online"
     assert route_exists
+    assert request_id_exists
+    assert not missing_request_id_exists
     assert request_logs[0].request_id == "req-001"
     assert metric_snapshots[0].prediction_count == 1200
     assert reference is not None
     assert reference.revision_status == "healthy"
     assert reference.model_signature["outputs"] == ["score"]
+
+    with Session(engine) as session:
+        repository = SqlAlchemyInferenceRepository(session)
+
+        with pytest.raises(ConflictError, match="request id"):
+            repository.add_request_log(
+                InferenceRequestLog(
+                    id=uuid4(),
+                    endpoint_id=endpoint_id,
+                    deployment_revision_id=revision_id,
+                    request_id="req-001",
+                    status=InferenceRequestStatus.SUCCEEDED,
+                    latency_ms=21.0,
+                    input_payload={"amount": 221.0},
+                    output_payload={"score": 0.62},
+                    error_message=None,
+                )
+            )

@@ -124,6 +124,8 @@ class InferenceService:
         endpoint = self._get_scoped_endpoint(command.endpoint_id, principal)
         request_id = command.request_id or str(uuid4())
         validate_prediction_payload(command.payload)
+        if self._repository.request_id_exists(endpoint.id, request_id):
+            raise ConflictError("An inference request already uses this request id.")
         try:
             validate_endpoint_status(endpoint.status)
             reference = self._repository.get_serving_reference(endpoint.deployment_revision_id)

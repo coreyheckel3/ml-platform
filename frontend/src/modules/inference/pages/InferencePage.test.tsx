@@ -70,15 +70,18 @@ describe("InferencePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Probe endpoint" }));
 
     expect(
-      await screen.findByText("Probe control-plane-probe succeeded in 17.5ms."),
+      await screen.findByText(
+        /^Probe control-plane-probe-.+ succeeded in 17.5ms\.$/,
+      ),
     ).toBeInTheDocument();
     const probeCall = findFetchCall(
       fetchMock,
       `/api/v1/inference-endpoints/${endpointId}/predict`,
       "POST",
     );
-    expect(JSON.parse(String(probeCall[1]?.body))).toMatchObject({
-      request_id: "control-plane-probe",
+    const probeBody = JSON.parse(String(probeCall[1]?.body));
+    expect(probeBody.request_id).toMatch(/^control-plane-probe-/);
+    expect(probeBody).toMatchObject({
       payload: {
         customer_tenure_days: 418,
         request_source: "control-plane-probe",
@@ -205,11 +208,12 @@ function mockInferenceWorkflow() {
         method === "POST" &&
         path === `/api/v1/inference-endpoints/${endpointId}/predict`
       ) {
+        const requestBody = JSON.parse(String(init?.body));
         const response = {
           log_id: "request-log-1",
           endpoint_id: endpointId,
           deployment_revision_id: revisionId,
-          request_id: "control-plane-probe",
+          request_id: requestBody.request_id,
           status: "succeeded",
           latency_ms: 17.5,
           output_payload: {
@@ -222,7 +226,7 @@ function mockInferenceWorkflow() {
             id: "request-log-1",
             endpoint_id: endpointId,
             deployment_revision_id: revisionId,
-            request_id: "control-plane-probe",
+            request_id: requestBody.request_id,
             status: "succeeded",
             latency_ms: 17.5,
             input_payload: {},

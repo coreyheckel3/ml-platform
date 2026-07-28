@@ -37,6 +37,9 @@ class InferenceRepository(Protocol):
     def add_request_log(self, request_log: InferenceRequestLog) -> InferenceRequestLog:
         raise NotImplementedError
 
+    def request_id_exists(self, endpoint_id: UUID, request_id: str) -> bool:
+        raise NotImplementedError
+
     def list_request_logs(self, endpoint_id: UUID) -> list[InferenceRequestLog]:
         raise NotImplementedError
 

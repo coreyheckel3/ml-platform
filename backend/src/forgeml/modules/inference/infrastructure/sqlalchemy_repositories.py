@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from forgeml.modules.deployments.infrastructure.sqlalchemy_models import (
@@ -24,6 +25,7 @@ from forgeml.modules.model_registry.infrastructure.sqlalchemy_models import (
     ModelVersionModel,
     RegisteredModelModel,
 )
+from forgeml.platform.domain.errors import ConflictError
 
 
 class SqlAlchemyInferenceRepository:
@@ -133,8 +135,24 @@ class SqlAlchemyInferenceRepository:
             error_message=request_log.error_message,
         )
         self._session.add(model)
-        self._session.flush()
+        try:
+            self._session.flush()
+        except IntegrityError as exc:
+            if _is_request_id_unique_violation(exc):
+                raise ConflictError("An inference request already uses this request id.") from exc
+            raise
         return _request_log_to_domain(model)
+
+    def request_id_exists(self, endpoint_id: UUID, request_id: str) -> bool:
+        return (
+            self._session.scalar(
+                select(InferenceRequestLogModel.id).where(
+                    InferenceRequestLogModel.endpoint_id == endpoint_id,
+                    InferenceRequestLogModel.request_id == request_id,
+                )
+            )
+            is not None
+        )
 
     def list_request_logs(self, endpoint_id: UUID) -> list[InferenceRequestLog]:
         models = self._session.scalars(
@@ -210,3 +228,8 @@ def _metric_snapshot_to_domain(model: InferenceMetricSnapshotModel) -> Inference
         p50_latency_ms=float(model.p50_latency_ms),
         p95_latency_ms=float(model.p95_latency_ms),
     )
+
+
+def _is_request_id_unique_violation(exc: IntegrityError) -> bool:
+    message = str(exc.orig).lower()
+    return "endpoint_id" in message and "request_id" in message

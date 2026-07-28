@@ -63,6 +63,12 @@ class FakeInferenceRepository:
         self.request_logs.append(request_log)
         return request_log
 
+    def request_id_exists(self, endpoint_id: UUID, request_id: str) -> bool:
+        return any(
+            request_log.endpoint_id == endpoint_id and request_log.request_id == request_id
+            for request_log in self.request_logs
+        )
+
     def list_request_logs(self, endpoint_id: UUID) -> list[InferenceRequestLog]:
         return [
             request_log
@@ -208,6 +214,66 @@ def test_inference_service_rejects_duplicate_route() -> None:
 
     with pytest.raises(ConflictError):
         service.create_endpoint(command, actor)
+
+
+def test_inference_service_rejects_duplicate_prediction_request_id() -> None:
+    repository = FakeInferenceRepository()
+    service = InferenceService(repository=repository, runtime=FakeInferenceRuntime())
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    deployment_id = uuid4()
+    revision_id = uuid4()
+    repository.references[revision_id] = _serving_reference(
+        organization_id=organization_id,
+        project_id=project_id,
+        deployment_id=deployment_id,
+        revision_id=revision_id,
+        revision_status="healthy",
+        traffic_percentage=100,
+    )
+    actor = principal(
+        organization_id,
+        user_id,
+        {
+            "inference_endpoints:create",
+            "inference:predict",
+        },
+    )
+    endpoint = service.create_endpoint(
+        CreateInferenceEndpointCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            deployment_id=deployment_id,
+            deployment_revision_id=revision_id,
+            name="Fraud Risk Online",
+            description="Real-time fraud scoring.",
+            route_path=None,
+            created_by=user_id,
+        ),
+        actor,
+    )
+
+    service.predict(
+        PredictCommand(
+            endpoint_id=endpoint.id,
+            payload={"amount": 128.45},
+            request_id="req-001",
+        ),
+        actor,
+    )
+
+    with pytest.raises(ConflictError, match="request id"):
+        service.predict(
+            PredictCommand(
+                endpoint_id=endpoint.id,
+                payload={"amount": 128.45},
+                request_id="req-001",
+            ),
+            actor,
+        )
+
+    assert len(repository.request_logs) == 1
 
 
 def test_inference_service_rejects_unservable_revision() -> None:
