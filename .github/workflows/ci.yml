@@ -43,6 +43,8 @@ jobs:
         run: pytest backend/tests
       - name: Check OpenAPI contract
         run: python scripts/ci/generate_openapi_contract.py --check
+      - name: Check API authorization contract
+        run: python scripts/ci/check_api_authorization_contract.py
 
   frontend:
     runs-on: ubuntu-latest

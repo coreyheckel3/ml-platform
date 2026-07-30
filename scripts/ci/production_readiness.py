@@ -50,6 +50,8 @@ REQUIRED_FILES = (
     "scripts/ci/check_frontend_bundle_budget.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
+    "scripts/ci/check_api_authorization_contract.py",
+    "contracts/security/api-authorization.v1.json",
 )
 
 
@@ -74,6 +76,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_openapi_contract(repo_root),
+        check_api_authorization_contract(repo_root),
     ]
 
 
@@ -371,6 +374,50 @@ def check_openapi_contract(repo_root: Path) -> ReadinessCheck:
             "checked-in OpenAPI contract covers core API groups and is checked in CI"
             if passed
             else f"has_ci_gate={has_ci_gate}, missing_paths={missing_paths}"
+        ),
+    )
+
+
+def check_api_authorization_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/security/api-authorization.v1.json").read_text(encoding="utf-8")
+    )
+    public_routes = {
+        (route.get("method"), route.get("path")) for route in contract.get("public_routes", [])
+    }
+    protected_routes = {
+        (route.get("method"), route.get("path")) for route in contract.get("protected_routes", [])
+    }
+    required_public_routes = {
+        ("GET", "/health/live"),
+        ("GET", "/health/ready"),
+        ("GET", "/metrics"),
+        ("POST", "/api/v1/auth/login"),
+        ("POST", "/api/v1/auth/refresh"),
+        ("POST", "/api/v1/auth/logout"),
+    }
+    required_protected_routes = {
+        ("GET", "/api/v1/auth/me"),
+        ("GET", "/api/v1/projects"),
+        ("POST", "/api/v1/projects/{project_id}/training-runs"),
+        ("POST", "/api/v1/inference-endpoints/{endpoint_id}/predict"),
+    }
+    has_ci_gate = "python scripts/ci/check_api_authorization_contract.py" in ci_source
+    missing_public = sorted(required_public_routes - public_routes)
+    missing_protected = sorted(required_protected_routes - protected_routes)
+    passed = has_ci_gate and not missing_public and not missing_protected
+    return ReadinessCheck(
+        name="api authorization contract",
+        passed=passed,
+        detail=(
+            "public allowlist and protected route contract are checked in CI"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"missing_public={missing_public}, "
+                f"missing_protected={missing_protected}"
+            )
         ),
     )
 

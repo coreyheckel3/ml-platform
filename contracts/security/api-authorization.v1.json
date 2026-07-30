@@ -1,0 +1,1028 @@
+{
+  "generated_from": "forgeml.main:create_app",
+  "protected_routes": [
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_audit_log_api_v1_admin_audit_log_get",
+      "path": "/api/v1/admin/audit-log",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "administration"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "acknowledge_alert_event_api_v1_alert_events__event_id__acknowledge_post",
+      "path": "/api/v1/alert-events/{event_id}/acknowledge",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "alerting"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "resolve_alert_event_api_v1_alert_events__event_id__resolve_post",
+      "path": "/api/v1/alert-events/{event_id}/resolve",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "alerting"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "evaluate_alert_rule_api_v1_alert_rules__rule_id__evaluate_post",
+      "path": "/api/v1/alert-rules/{rule_id}/evaluate",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "alerting"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "me_api_v1_auth_me_get",
+      "path": "/api/v1/auth/me",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "auth"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_dataset_version_api_v1_dataset_versions__version_id__get",
+      "path": "/api/v1/dataset-versions/{version_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "finalize_dataset_version_api_v1_dataset_versions__version_id__finalize_post",
+      "path": "/api/v1/dataset-versions/{version_id}/finalize",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_dataset_schema_api_v1_dataset_versions__version_id__schema_get",
+      "path": "/api/v1/dataset-versions/{version_id}/schema",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "validate_dataset_version_api_v1_dataset_versions__version_id__validate_post",
+      "path": "/api/v1/dataset-versions/{version_id}/validate",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_dataset_validation_runs_api_v1_dataset_versions__version_id__validation_runs_get",
+      "path": "/api/v1/dataset-versions/{version_id}/validation-runs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_dataset_api_v1_datasets__dataset_id__get",
+      "path": "/api/v1/datasets/{dataset_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_dataset_versions_api_v1_datasets__dataset_id__versions_get",
+      "path": "/api/v1/datasets/{dataset_id}/versions",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_dataset_version_api_v1_datasets__dataset_id__versions_post",
+      "path": "/api/v1/datasets/{dataset_id}/versions",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_deployment_health_checks_api_v1_deployment_revisions__revision_id__health_checks_get",
+      "path": "/api/v1/deployment-revisions/{revision_id}/health-checks",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "record_deployment_health_api_v1_deployment_revisions__revision_id__health_checks_post",
+      "path": "/api/v1/deployment-revisions/{revision_id}/health-checks",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "update_deployment_traffic_api_v1_deployment_revisions__revision_id__traffic_post",
+      "path": "/api/v1/deployment-revisions/{revision_id}/traffic",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_deployment_api_v1_deployments__deployment_id__get",
+      "path": "/api/v1/deployments/{deployment_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_deployment_events_api_v1_deployments__deployment_id__events_get",
+      "path": "/api/v1/deployments/{deployment_id}/events",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_deployment_revisions_api_v1_deployments__deployment_id__revisions_get",
+      "path": "/api/v1/deployments/{deployment_id}/revisions",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_deployment_revision_api_v1_deployments__deployment_id__revisions_post",
+      "path": "/api/v1/deployments/{deployment_id}/revisions",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "rollback_deployment_api_v1_deployments__deployment_id__rollback_post",
+      "path": "/api/v1/deployments/{deployment_id}/rollback",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_drift_reports_for_profile_api_v1_drift_profiles__profile_id__reports_get",
+      "path": "/api/v1/drift-profiles/{profile_id}/reports",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "drift_detection"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "run_drift_report_api_v1_drift_profiles__profile_id__reports_post",
+      "path": "/api/v1/drift-profiles/{profile_id}/reports",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "drift_detection"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_drift_feature_results_api_v1_drift_reports__report_id__features_get",
+      "path": "/api/v1/drift-reports/{report_id}/features",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "drift_detection"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_experiment_run_api_v1_experiment_runs__run_id__get",
+      "path": "/api/v1/experiment-runs/{run_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_experiment_artifacts_api_v1_experiment_runs__run_id__artifacts_get",
+      "path": "/api/v1/experiment-runs/{run_id}/artifacts",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "log_experiment_artifact_api_v1_experiment_runs__run_id__artifacts_post",
+      "path": "/api/v1/experiment-runs/{run_id}/artifacts",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "complete_experiment_run_api_v1_experiment_runs__run_id__complete_post",
+      "path": "/api/v1/experiment-runs/{run_id}/complete",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "log_experiment_metrics_api_v1_experiment_runs__run_id__metrics_post",
+      "path": "/api/v1/experiment-runs/{run_id}/metrics",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_experiment_api_v1_experiments__experiment_id__get",
+      "path": "/api/v1/experiments/{experiment_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_experiment_runs_api_v1_experiments__experiment_id__runs_get",
+      "path": "/api/v1/experiments/{experiment_id}/runs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "start_experiment_run_api_v1_experiments__experiment_id__runs_post",
+      "path": "/api/v1/experiments/{experiment_id}/runs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "materialize_feature_pipeline_api_v1_feature_pipelines__pipeline_id__materialize_post",
+      "path": "/api/v1/feature-pipelines/{pipeline_id}/materialize",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_feature_set_api_v1_feature_sets__feature_set_id__get",
+      "path": "/api/v1/feature-sets/{feature_set_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_feature_definitions_api_v1_feature_sets__feature_set_id__features_get",
+      "path": "/api/v1/feature-sets/{feature_set_id}/features",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "register_feature_definitions_api_v1_feature_sets__feature_set_id__features_post",
+      "path": "/api/v1/feature-sets/{feature_set_id}/features",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_feature_lineage_api_v1_feature_sets__feature_set_id__lineage_get",
+      "path": "/api/v1/feature-sets/{feature_set_id}/lineage",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_feature_materializations_api_v1_feature_sets__feature_set_id__materializations_get",
+      "path": "/api/v1/feature-sets/{feature_set_id}/materializations",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_feature_pipelines_api_v1_feature_sets__feature_set_id__pipelines_get",
+      "path": "/api/v1/feature-sets/{feature_set_id}/pipelines",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "register_feature_pipeline_api_v1_feature_sets__feature_set_id__pipelines_post",
+      "path": "/api/v1/feature-sets/{feature_set_id}/pipelines",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_inference_endpoint_api_v1_inference_endpoints__endpoint_id__get",
+      "path": "/api/v1/inference-endpoints/{endpoint_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_inference_metric_snapshots_api_v1_inference_endpoints__endpoint_id__metric_snapshots_get",
+      "path": "/api/v1/inference-endpoints/{endpoint_id}/metric-snapshots",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "record_inference_metric_snapshot_api_v1_inference_endpoints__endpoint_id__metric_snapshots_post",
+      "path": "/api/v1/inference-endpoints/{endpoint_id}/metric-snapshots",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "predict_api_v1_inference_endpoints__endpoint_id__predict_post",
+      "path": "/api/v1/inference-endpoints/{endpoint_id}/predict",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_inference_requests_api_v1_inference_endpoints__endpoint_id__requests_get",
+      "path": "/api/v1/inference-endpoints/{endpoint_id}/requests",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_model_version_api_v1_model_versions__version_id__get",
+      "path": "/api/v1/model-versions/{version_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "request_model_approval_api_v1_model_versions__version_id__approval_request_post",
+      "path": "/api/v1/model-versions/{version_id}/approval-request",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_model_approvals_api_v1_model_versions__version_id__approvals_get",
+      "path": "/api/v1/model-versions/{version_id}/approvals",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_model_lineage_api_v1_model_versions__version_id__lineage_get",
+      "path": "/api/v1/model-versions/{version_id}/lineage",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "review_model_version_api_v1_model_versions__version_id__review_post",
+      "path": "/api/v1/model-versions/{version_id}/review",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_registered_model_api_v1_models__model_id__get",
+      "path": "/api/v1/models/{model_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_model_versions_api_v1_models__model_id__versions_get",
+      "path": "/api/v1/models/{model_id}/versions",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "register_model_version_api_v1_models__model_id__versions_post",
+      "path": "/api/v1/models/{model_id}/versions",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "promote_training_run_to_model_version_api_v1_models__model_id__versions_promote_training_run_post",
+      "path": "/api/v1/models/{model_id}/versions/promote-training-run",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_projects_api_v1_projects_get",
+      "path": "/api/v1/projects",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "projects"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_project_api_v1_projects_post",
+      "path": "/api/v1/projects",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "projects"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_project_api_v1_projects__project_id__get",
+      "path": "/api/v1/projects/{project_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "projects"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_alert_events_api_v1_projects__project_id__alert_events_get",
+      "path": "/api/v1/projects/{project_id}/alert-events",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "alerting"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_alert_rules_api_v1_projects__project_id__alert_rules_get",
+      "path": "/api/v1/projects/{project_id}/alert-rules",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "alerting"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_alert_rule_api_v1_projects__project_id__alert_rules_post",
+      "path": "/api/v1/projects/{project_id}/alert-rules",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "alerting"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_datasets_api_v1_projects__project_id__datasets_get",
+      "path": "/api/v1/projects/{project_id}/datasets",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_dataset_api_v1_projects__project_id__datasets_post",
+      "path": "/api/v1/projects/{project_id}/datasets",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "datasets"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_deployments_api_v1_projects__project_id__deployments_get",
+      "path": "/api/v1/projects/{project_id}/deployments",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_deployment_api_v1_projects__project_id__deployments_post",
+      "path": "/api/v1/projects/{project_id}/deployments",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_drift_profiles_api_v1_projects__project_id__drift_profiles_get",
+      "path": "/api/v1/projects/{project_id}/drift-profiles",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "drift_detection"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_drift_profile_api_v1_projects__project_id__drift_profiles_post",
+      "path": "/api/v1/projects/{project_id}/drift-profiles",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "drift_detection"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_drift_reports_for_project_api_v1_projects__project_id__drift_reports_get",
+      "path": "/api/v1/projects/{project_id}/drift-reports",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "drift_detection"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_experiments_api_v1_projects__project_id__experiments_get",
+      "path": "/api/v1/projects/{project_id}/experiments",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_experiment_api_v1_projects__project_id__experiments_post",
+      "path": "/api/v1/projects/{project_id}/experiments",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "experiments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_feature_sets_api_v1_projects__project_id__feature_sets_get",
+      "path": "/api/v1/projects/{project_id}/feature-sets",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_feature_set_api_v1_projects__project_id__feature_sets_post",
+      "path": "/api/v1/projects/{project_id}/feature-sets",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "feature-store"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_inference_endpoints_api_v1_projects__project_id__inference_endpoints_get",
+      "path": "/api/v1/projects/{project_id}/inference-endpoints",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_inference_endpoint_api_v1_projects__project_id__inference_endpoints_post",
+      "path": "/api/v1/projects/{project_id}/inference-endpoints",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_registered_models_api_v1_projects__project_id__models_get",
+      "path": "/api/v1/projects/{project_id}/models",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_registered_model_api_v1_projects__project_id__models_post",
+      "path": "/api/v1/projects/{project_id}/models",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "model-registry"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_inference_endpoint_monitoring_summaries_api_v1_projects__project_id__monitoring_inference_endpoints_get",
+      "path": "/api/v1/projects/{project_id}/monitoring/inference-endpoints",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "monitoring"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_project_monitoring_summary_api_v1_projects__project_id__monitoring_summary_get",
+      "path": "/api/v1/projects/{project_id}/monitoring/summary",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "monitoring"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_retraining_policies_api_v1_projects__project_id__retraining_policies_get",
+      "path": "/api/v1/projects/{project_id}/retraining-policies",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "create_retraining_policy_api_v1_projects__project_id__retraining_policies_post",
+      "path": "/api/v1/projects/{project_id}/retraining-policies",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_retraining_runs_api_v1_projects__project_id__retraining_runs_get",
+      "path": "/api/v1/projects/{project_id}/retraining-runs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_training_runs_api_v1_projects__project_id__training_runs_get",
+      "path": "/api/v1/projects/{project_id}/training-runs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "start_training_run_api_v1_projects__project_id__training_runs_post",
+      "path": "/api/v1/projects/{project_id}/training-runs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "evaluate_retraining_policy_api_v1_retraining_policies__policy_id__evaluate_post",
+      "path": "/api/v1/retraining-policies/{policy_id}/evaluate",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "trigger_retraining_run_api_v1_retraining_policies__policy_id__trigger_post",
+      "path": "/api/v1/retraining-policies/{policy_id}/trigger",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_retraining_run_api_v1_retraining_runs__run_id__get",
+      "path": "/api/v1/retraining-runs/{run_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "approve_retraining_run_api_v1_retraining_runs__run_id__approve_post",
+      "path": "/api/v1/retraining-runs/{run_id}/approve",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "reject_retraining_run_api_v1_retraining_runs__run_id__reject_post",
+      "path": "/api/v1/retraining-runs/{run_id}/reject",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "retraining"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_training_run_api_v1_training_runs__training_run_id__get",
+      "path": "/api/v1/training-runs/{training_run_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "cancel_training_run_api_v1_training_runs__training_run_id__cancel_post",
+      "path": "/api/v1/training-runs/{training_run_id}/cancel",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_training_run_events_api_v1_training_runs__training_run_id__events_get",
+      "path": "/api/v1/training-runs/{training_run_id}/events",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_training_run_logs_api_v1_training_runs__training_run_id__logs_get",
+      "path": "/api/v1/training-runs/{training_run_id}/logs",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "record_training_result_api_v1_training_runs__training_run_id__result_post",
+      "path": "/api/v1/training-runs/{training_run_id}/result",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    }
+  ],
+  "public_route_policy": {
+    "allowlist": [
+      {
+        "method": "GET",
+        "path": "/health/live",
+        "reason": "Kubernetes and local liveness probe."
+      },
+      {
+        "method": "GET",
+        "path": "/health/ready",
+        "reason": "Kubernetes and local readiness probe."
+      },
+      {
+        "method": "GET",
+        "path": "/metrics",
+        "reason": "Prometheus scrape endpoint."
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "reason": "Credential exchange endpoint."
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/logout",
+        "reason": "Refresh token revocation endpoint."
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/refresh",
+        "reason": "Refresh token exchange endpoint."
+      }
+    ],
+    "description": "Only explicitly allowlisted endpoints may be reachable without a validated JWT principal."
+  },
+  "public_routes": [
+    {
+      "authorization": "public",
+      "method": "POST",
+      "operation_id": "login_api_v1_auth_login_post",
+      "path": "/api/v1/auth/login",
+      "reason": "Credential exchange endpoint.",
+      "tags": [
+        "auth"
+      ]
+    },
+    {
+      "authorization": "public",
+      "method": "POST",
+      "operation_id": "logout_api_v1_auth_logout_post",
+      "path": "/api/v1/auth/logout",
+      "reason": "Refresh token revocation endpoint.",
+      "tags": [
+        "auth"
+      ]
+    },
+    {
+      "authorization": "public",
+      "method": "POST",
+      "operation_id": "refresh_api_v1_auth_refresh_post",
+      "path": "/api/v1/auth/refresh",
+      "reason": "Refresh token exchange endpoint.",
+      "tags": [
+        "auth"
+      ]
+    },
+    {
+      "authorization": "public",
+      "method": "GET",
+      "operation_id": "live_health_live_get",
+      "path": "/health/live",
+      "reason": "Kubernetes and local liveness probe.",
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "authorization": "public",
+      "method": "GET",
+      "operation_id": "ready_health_ready_get",
+      "path": "/health/ready",
+      "reason": "Kubernetes and local readiness probe.",
+      "tags": [
+        "health"
+      ]
+    },
+    {
+      "authorization": "public",
+      "method": "GET",
+      "operation_id": "metrics_metrics_get",
+      "path": "/metrics",
+      "reason": "Prometheus scrape endpoint.",
+      "tags": [
+        "observability"
+      ]
+    }
+  ],
+  "schema_version": "forgeml.api_authorization.v1",
+  "summary": {
+    "protected_route_count": 92,
+    "public_route_count": 6,
+    "total_route_count": 98
+  }
+}

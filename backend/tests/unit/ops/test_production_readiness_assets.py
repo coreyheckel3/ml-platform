@@ -70,3 +70,17 @@ def test_openapi_contract_gate_is_enforced() -> None:
     assert "/api/v1/auth/login" in paths
     assert "/api/v1/projects/{project_id}/training-runs" in paths
     assert "/api/v1/inference-endpoints/{endpoint_id}/predict" in paths
+
+
+def test_api_authorization_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/security/api-authorization.v1.json").read_text(encoding="utf-8")
+    )
+    public_routes = {(route["method"], route["path"]) for route in contract["public_routes"]}
+    protected_routes = {(route["method"], route["path"]) for route in contract["protected_routes"]}
+
+    assert "python scripts/ci/check_api_authorization_contract.py" in workflow
+    assert ("POST", "/api/v1/auth/login") in public_routes
+    assert ("GET", "/api/v1/auth/me") in protected_routes
+    assert ("POST", "/api/v1/inference-endpoints/{endpoint_id}/predict") in protected_routes

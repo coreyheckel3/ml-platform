@@ -1187,3 +1187,35 @@ Implemented scope:
 - GitHub Actions runs the OpenAPI contract check in the backend job.
 - Production-readiness checks include an OpenAPI contract gate.
 - Backend ops tests cover contract freshness, core route coverage, and generator behavior.
+
+## Sprint 38: API Authorization Contract
+
+Goal: Prevent accidental unauthenticated API exposure by making public and protected route posture explicit, generated, and release-gated.
+
+Deliverables:
+
+- Generated API authorization contract from the FastAPI route table
+- Public route allowlist for health, metrics, and token exchange endpoints
+- Detection for any non-allowlisted public API route
+- CI authorization contract gate
+- Production-readiness authorization contract gate
+- Security contract documentation
+- Threat-model and implementation-state documentation updates
+- Unit tests for route classification, stale contract detection, and policy violations
+
+Acceptance criteria:
+
+- Every non-allowlisted API route is protected by the `get_current_principal` dependency.
+- The checked-in authorization contract lists all public and protected route records.
+- The checker fails when the checked-in contract is stale.
+- The checker fails when a private API route is reachable without a principal dependency.
+- CI runs the authorization contract checker in the backend job.
+- Production-readiness checks verify public and protected route invariants.
+
+Implemented scope:
+
+- `scripts/ci/check_api_authorization_contract.py` introspects FastAPI `APIRoute` dependencies and validates public route posture.
+- `contracts/security/api-authorization.v1.json` captures the current generated authorization manifest.
+- GitHub Actions runs the API authorization contract check after the OpenAPI check.
+- Production-readiness checks enforce key public and protected route coverage.
+- Security docs and threat model now describe the API authorization contract.
