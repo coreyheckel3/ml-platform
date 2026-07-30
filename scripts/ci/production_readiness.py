@@ -48,6 +48,8 @@ REQUIRED_FILES = (
     "scripts/ops/restore_postgres.sh",
     "backend/tests/unit/ml/test_example_training_pipelines.py",
     "scripts/ci/check_frontend_bundle_budget.py",
+    "scripts/ci/generate_openapi_contract.py",
+    "contracts/openapi/forgeml.v1.openapi.json",
 )
 
 
@@ -71,6 +73,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_training_execution_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
+        check_openapi_contract(repo_root),
     ]
 
 
@@ -336,6 +339,38 @@ def check_frontend_performance_contract(repo_root: Path) -> ReadinessCheck:
                 f"uses_suspense_boundary={uses_suspense_boundary}, "
                 f"lazy_route_imports={lazy_route_imports}"
             )
+        ),
+    )
+
+
+def check_openapi_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/openapi/forgeml.v1.openapi.json").read_text(encoding="utf-8")
+    )
+    paths = set(contract.get("paths", {}))
+    required_paths = {
+        "/health/live",
+        "/health/ready",
+        "/api/v1/auth/login",
+        "/api/v1/projects",
+        "/api/v1/projects/{project_id}/datasets",
+        "/api/v1/projects/{project_id}/training-runs",
+        "/api/v1/models/{model_id}/versions/promote-training-run",
+        "/api/v1/inference-endpoints/{endpoint_id}/predict",
+        "/api/v1/projects/{project_id}/drift-reports",
+        "/api/v1/retraining-policies/{policy_id}/trigger",
+    }
+    missing_paths = sorted(required_paths - paths)
+    has_ci_gate = "python scripts/ci/generate_openapi_contract.py --check" in ci_source
+    passed = has_ci_gate and not missing_paths
+    return ReadinessCheck(
+        name="openapi contract",
+        passed=passed,
+        detail=(
+            "checked-in OpenAPI contract covers core API groups and is checked in CI"
+            if passed
+            else f"has_ci_gate={has_ci_gate}, missing_paths={missing_paths}"
         ),
     )
 

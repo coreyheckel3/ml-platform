@@ -57,3 +57,16 @@ def test_frontend_performance_gate_is_enforced() -> None:
     assert "python scripts/ci/check_frontend_bundle_budget.py" in workflow
     assert "<Suspense fallback={<RouteLoadingState />}" in app_source
     assert routes_source.count("lazy(() =>") >= 10
+
+
+def test_openapi_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/openapi/forgeml.v1.openapi.json").read_text(encoding="utf-8")
+    )
+    paths = contract["paths"]
+
+    assert "python scripts/ci/generate_openapi_contract.py --check" in workflow
+    assert "/api/v1/auth/login" in paths
+    assert "/api/v1/projects/{project_id}/training-runs" in paths
+    assert "/api/v1/inference-endpoints/{endpoint_id}/predict" in paths

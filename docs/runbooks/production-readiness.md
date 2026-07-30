@@ -8,6 +8,7 @@ Run these checks before a staging or production deployment:
 
 ```bash
 python scripts/ci/production_readiness.py
+python scripts/ci/generate_openapi_contract.py --check
 python -m pytest backend/tests
 npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
@@ -26,6 +27,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 ## Required Evidence
 
 - CI run URL for backend, frontend, Docker, and production-readiness checks
+- OpenAPI contract check result proving the checked-in schema matches the FastAPI app
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend bundle-budget result showing all JavaScript chunks below 500 KB
 - Alembic head revision included in the deployment artifact

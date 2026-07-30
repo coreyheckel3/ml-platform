@@ -41,6 +41,8 @@ jobs:
         env:
           FORGEML_DATABASE_URL: postgresql+psycopg://forgeml:forgeml@localhost:5432/forgeml_test
         run: pytest backend/tests
+      - name: Check OpenAPI contract
+        run: python scripts/ci/generate_openapi_contract.py --check
 
   frontend:
     runs-on: ubuntu-latest

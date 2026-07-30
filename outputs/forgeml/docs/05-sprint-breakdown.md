@@ -1156,3 +1156,34 @@ Implemented scope:
 - `scripts/ci/check_frontend_bundle_budget.py` enforces the JavaScript chunk budget over built Vite assets.
 - GitHub Actions runs the bundle-budget check in the frontend job.
 - Backend ops tests cover the bundle-budget checker and readiness contract.
+
+## Sprint 37: API Contract Governance
+
+Goal: Make the ForgeML REST API contract explicit, deterministic, and release-gated so frontend, SDK, and automation clients can depend on stable platform APIs.
+
+Deliverables:
+
+- Canonical OpenAPI contract generated from the FastAPI application
+- Deterministic OpenAPI serialization
+- CI drift check for the checked-in API contract
+- Production-readiness contract validation
+- Contract tests for generation, drift detection, and core API coverage
+- OpenAPI runbook documentation
+- Implementation-state documentation updates
+
+Acceptance criteria:
+
+- `contracts/openapi/forgeml.v1.openapi.json` is generated from the running FastAPI app.
+- The generator supports write and `--check` modes.
+- CI fails when the checked-in OpenAPI contract is stale.
+- Production-readiness checks verify the OpenAPI contract exists and covers core API groups.
+- Tests prove deterministic serialization, stale-contract detection, write/check round trips, and checked-in contract freshness.
+- Contract documentation explains how to regenerate and verify the schema.
+
+Implemented scope:
+
+- `scripts/ci/generate_openapi_contract.py` generates and verifies the canonical OpenAPI artifact.
+- `contracts/openapi/forgeml.v1.openapi.json` captures the current FastAPI API schema.
+- GitHub Actions runs the OpenAPI contract check in the backend job.
+- Production-readiness checks include an OpenAPI contract gate.
+- Backend ops tests cover contract freshness, core route coverage, and generator behavior.
