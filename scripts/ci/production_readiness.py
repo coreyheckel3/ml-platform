@@ -52,6 +52,8 @@ REQUIRED_FILES = (
     "contracts/openapi/forgeml.v1.openapi.json",
     "scripts/ci/check_api_authorization_contract.py",
     "contracts/security/api-authorization.v1.json",
+    "scripts/ci/check_permission_catalog.py",
+    "contracts/security/permission-catalog.v1.json",
 )
 
 
@@ -77,6 +79,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_frontend_performance_contract(repo_root),
         check_openapi_contract(repo_root),
         check_api_authorization_contract(repo_root),
+        check_permission_catalog_contract(repo_root),
     ]
 
 
@@ -417,6 +420,43 @@ def check_api_authorization_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_ci_gate={has_ci_gate}, "
                 f"missing_public={missing_public}, "
                 f"missing_protected={missing_protected}"
+            )
+        ),
+    )
+
+
+def check_permission_catalog_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/security/permission-catalog.v1.json").read_text(encoding="utf-8")
+    )
+    permissions = {permission.get("code") for permission in contract.get("permissions", [])}
+    roles = {role.get("code") for role in contract.get("role_presets", [])}
+    required_permissions = {
+        "projects:create",
+        "projects:read",
+        "training_runs:create",
+        "training_runs:read",
+        "model_versions:review",
+        "deployments:rollback",
+        "inference:predict",
+        "admin:audit_log:read",
+    }
+    required_roles = {"platform_admin", "ml_engineer", "ml_operator", "ml_viewer"}
+    has_ci_gate = "python scripts/ci/check_permission_catalog.py" in ci_source
+    missing_permissions = sorted(required_permissions - permissions)
+    missing_roles = sorted(required_roles - roles)
+    passed = has_ci_gate and not missing_permissions and not missing_roles
+    return ReadinessCheck(
+        name="permission catalog contract",
+        passed=passed,
+        detail=(
+            "permission vocabulary and role presets are checked in CI"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"missing_permissions={missing_permissions}, "
+                f"missing_roles={missing_roles}"
             )
         ),
     )

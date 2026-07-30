@@ -1219,3 +1219,35 @@ Implemented scope:
 - GitHub Actions runs the API authorization contract check after the OpenAPI check.
 - Production-readiness checks enforce key public and protected route coverage.
 - Security docs and threat model now describe the API authorization contract.
+
+## Sprint 39: Permission Catalog Governance
+
+Goal: Make ForgeML's RBAC vocabulary explicit, role-oriented, and release-gated so new service-layer permission checks cannot drift into undocumented string literals.
+
+Deliverables:
+
+- Central permission catalog with module, action, and description metadata
+- Role presets for platform admins, ML engineers, ML operators, viewers, and security auditors
+- Generated permission catalog security contract
+- Service-layer permission scanner for enforced `principal.has(...)` and `_require(...)` checks
+- CI permission catalog gate
+- Production-readiness permission catalog gate
+- Contract tests for catalog coverage, stale detection, role references, and unknown permission detection
+- Security and runbook documentation updates
+
+Acceptance criteria:
+
+- Every service-enforced permission string is present in the central catalog.
+- Every role preset references known permissions or the explicit wildcard.
+- `contracts/security/permission-catalog.v1.json` captures permissions, roles, and enforcement locations.
+- The checker fails when a service enforces an unknown permission.
+- The checker fails when the checked-in permission catalog is stale.
+- CI and production-readiness both run the permission catalog gate.
+
+Implemented scope:
+
+- `forgeml.platform.security.permissions` defines the canonical permission and role preset vocabulary.
+- `scripts/ci/check_permission_catalog.py` extracts enforced permissions from service modules and verifies the catalog.
+- `contracts/security/permission-catalog.v1.json` records the generated permission catalog contract.
+- GitHub Actions and production-readiness checks enforce permission catalog freshness.
+- Ops tests cover catalog coverage, role references, stale detection, and unknown permission violations.

@@ -84,3 +84,18 @@ def test_api_authorization_contract_gate_is_enforced() -> None:
     assert ("POST", "/api/v1/auth/login") in public_routes
     assert ("GET", "/api/v1/auth/me") in protected_routes
     assert ("POST", "/api/v1/inference-endpoints/{endpoint_id}/predict") in protected_routes
+
+
+def test_permission_catalog_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/security/permission-catalog.v1.json").read_text(encoding="utf-8")
+    )
+    permissions = {permission["code"] for permission in contract["permissions"]}
+    roles = {role["code"] for role in contract["role_presets"]}
+
+    assert "python scripts/ci/check_permission_catalog.py" in workflow
+    assert "training_runs:create" in permissions
+    assert "inference:predict" in permissions
+    assert "model_versions:review" in permissions
+    assert {"platform_admin", "ml_engineer", "ml_operator", "ml_viewer"}.issubset(roles)

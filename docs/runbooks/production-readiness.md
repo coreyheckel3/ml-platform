@@ -10,6 +10,7 @@ Run these checks before a staging or production deployment:
 python scripts/ci/production_readiness.py
 python scripts/ci/generate_openapi_contract.py --check
 python scripts/ci/check_api_authorization_contract.py
+python scripts/ci/check_permission_catalog.py
 python -m pytest backend/tests
 npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
@@ -30,6 +31,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - CI run URL for backend, frontend, Docker, and production-readiness checks
 - OpenAPI contract check result proving the checked-in schema matches the FastAPI app
 - API authorization contract result proving only allowlisted routes are public
+- Permission catalog check result proving enforced permissions and role presets are cataloged
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend bundle-budget result showing all JavaScript chunks below 500 KB
 - Alembic head revision included in the deployment artifact

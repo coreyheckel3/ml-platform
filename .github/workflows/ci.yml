@@ -45,6 +45,8 @@ jobs:
         run: python scripts/ci/generate_openapi_contract.py --check
       - name: Check API authorization contract
         run: python scripts/ci/check_api_authorization_contract.py
+      - name: Check permission catalog
+        run: python scripts/ci/check_permission_catalog.py
 
   frontend:
     runs-on: ubuntu-latest

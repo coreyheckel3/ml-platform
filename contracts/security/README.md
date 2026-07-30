@@ -18,3 +18,20 @@ Verify the checked-in contract:
 ```bash
 PYTHONPATH=backend/src:. python scripts/ci/check_api_authorization_contract.py
 ```
+
+## Permission Catalog
+
+`permission-catalog.v1.json` captures the canonical ForgeML permission vocabulary,
+role presets, and the service-layer locations where permissions are enforced.
+
+Regenerate after an intentional permission or role change:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_permission_catalog.py --write
+```
+
+Verify the checked-in catalog:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_permission_catalog.py
+```

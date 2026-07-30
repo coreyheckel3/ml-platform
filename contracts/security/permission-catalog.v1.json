@@ -1,0 +1,664 @@
+{
+  "generated_from": [
+    "forgeml.platform.security.permissions",
+    "backend/src/forgeml/modules"
+  ],
+  "permissions": [
+    {
+      "action": "read",
+      "code": "admin:audit_log:read",
+      "description": "Read organization audit log events.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/administration/application/services.py:31"
+      ],
+      "module": "administration"
+    },
+    {
+      "action": "write",
+      "code": "alert_events:acknowledge",
+      "description": "Acknowledge alert events.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/alerting/application/services.py:187"
+      ],
+      "module": "alerting"
+    },
+    {
+      "action": "read",
+      "code": "alert_events:read",
+      "description": "Read alert events.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/alerting/application/services.py:183"
+      ],
+      "module": "alerting"
+    },
+    {
+      "action": "write",
+      "code": "alert_events:resolve",
+      "description": "Resolve alert events.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/alerting/application/services.py:214"
+      ],
+      "module": "alerting"
+    },
+    {
+      "action": "create",
+      "code": "alert_rules:create",
+      "description": "Create alert rules.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/alerting/application/services.py:69"
+      ],
+      "module": "alerting"
+    },
+    {
+      "action": "execute",
+      "code": "alert_rules:evaluate",
+      "description": "Evaluate alert rules against observed metrics.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/alerting/application/services.py:107"
+      ],
+      "module": "alerting"
+    },
+    {
+      "action": "read",
+      "code": "alert_rules:read",
+      "description": "Read alert rules.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/alerting/application/services.py:99"
+      ],
+      "module": "alerting"
+    },
+    {
+      "action": "create",
+      "code": "dataset_versions:create",
+      "description": "Create immutable dataset version upload records.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/datasets/application/services.py:120"
+      ],
+      "module": "datasets"
+    },
+    {
+      "action": "write",
+      "code": "dataset_versions:finalize",
+      "description": "Finalize dataset versions after object upload.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/datasets/application/services.py:169"
+      ],
+      "module": "datasets"
+    },
+    {
+      "action": "write",
+      "code": "dataset_versions:validate",
+      "description": "Run schema validation for dataset versions.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/datasets/application/services.py:237"
+      ],
+      "module": "datasets"
+    },
+    {
+      "action": "create",
+      "code": "datasets:create",
+      "description": "Create datasets.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/datasets/application/services.py:88"
+      ],
+      "module": "datasets"
+    },
+    {
+      "action": "read",
+      "code": "datasets:read",
+      "description": "Read datasets and versions.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/datasets/application/services.py:108",
+        "backend/src/forgeml/modules/datasets/application/services.py:112",
+        "backend/src/forgeml/modules/datasets/application/services.py:155",
+        "backend/src/forgeml/modules/datasets/application/services.py:160",
+        "backend/src/forgeml/modules/datasets/application/services.py:220",
+        "backend/src/forgeml/modules/datasets/application/services.py:232"
+      ],
+      "module": "datasets"
+    },
+    {
+      "action": "write",
+      "code": "deployment_health:write",
+      "description": "Record deployment revision health checks.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/deployments/application/services.py:248"
+      ],
+      "module": "deployments"
+    },
+    {
+      "action": "create",
+      "code": "deployment_revisions:create",
+      "description": "Create deployment revisions.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/deployments/application/services.py:136"
+      ],
+      "module": "deployments"
+    },
+    {
+      "action": "write",
+      "code": "deployment_revisions:traffic",
+      "description": "Update deployment revision traffic allocations.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/deployments/application/services.py:211"
+      ],
+      "module": "deployments"
+    },
+    {
+      "action": "create",
+      "code": "deployments:create",
+      "description": "Create deployments.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/deployments/application/services.py:96"
+      ],
+      "module": "deployments"
+    },
+    {
+      "action": "read",
+      "code": "deployments:read",
+      "description": "Read deployments.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/deployments/application/services.py:124",
+        "backend/src/forgeml/modules/deployments/application/services.py:128",
+        "backend/src/forgeml/modules/deployments/application/services.py:202",
+        "backend/src/forgeml/modules/deployments/application/services.py:283",
+        "backend/src/forgeml/modules/deployments/application/services.py:342"
+      ],
+      "module": "deployments"
+    },
+    {
+      "action": "write",
+      "code": "deployments:rollback",
+      "description": "Roll back deployments to a prior healthy revision.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/deployments/application/services.py:292"
+      ],
+      "module": "deployments"
+    },
+    {
+      "action": "create",
+      "code": "drift_profiles:create",
+      "description": "Create drift profiles.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/drift_detection/application/services.py:68"
+      ],
+      "module": "drift_detection"
+    },
+    {
+      "action": "read",
+      "code": "drift_profiles:read",
+      "description": "Read drift profiles.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/drift_detection/application/services.py:95"
+      ],
+      "module": "drift_detection"
+    },
+    {
+      "action": "create",
+      "code": "drift_reports:create",
+      "description": "Run drift reports.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/drift_detection/application/services.py:103"
+      ],
+      "module": "drift_detection"
+    },
+    {
+      "action": "read",
+      "code": "drift_reports:read",
+      "description": "Read drift reports and feature-level drift results.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/drift_detection/application/services.py:159",
+        "backend/src/forgeml/modules/drift_detection/application/services.py:168",
+        "backend/src/forgeml/modules/drift_detection/application/services.py:179"
+      ],
+      "module": "drift_detection"
+    },
+    {
+      "action": "write",
+      "code": "experiment_artifacts:write",
+      "description": "Attach experiment artifacts.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/experiments/application/services.py:180"
+      ],
+      "module": "experiments"
+    },
+    {
+      "action": "create",
+      "code": "experiment_runs:create",
+      "description": "Create experiment runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/experiments/application/services.py:120"
+      ],
+      "module": "experiments"
+    },
+    {
+      "action": "read",
+      "code": "experiment_runs:read",
+      "description": "Read experiment run metadata, metrics, parameters, and reports.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/experiments/application/services.py:148",
+        "backend/src/forgeml/modules/experiments/application/services.py:153",
+        "backend/src/forgeml/modules/experiments/application/services.py:198"
+      ],
+      "module": "experiments"
+    },
+    {
+      "action": "write",
+      "code": "experiment_runs:write",
+      "description": "Write experiment run metrics and status updates.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/experiments/application/services.py:161",
+        "backend/src/forgeml/modules/experiments/application/services.py:207"
+      ],
+      "module": "experiments"
+    },
+    {
+      "action": "create",
+      "code": "experiments:create",
+      "description": "Create experiment containers.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/experiments/application/services.py:84"
+      ],
+      "module": "experiments"
+    },
+    {
+      "action": "read",
+      "code": "experiments:read",
+      "description": "Read experiment metadata.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/experiments/application/services.py:108",
+        "backend/src/forgeml/modules/experiments/application/services.py:112"
+      ],
+      "module": "experiments"
+    },
+    {
+      "action": "write",
+      "code": "feature_definitions:write",
+      "description": "Register feature definitions.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/feature_store/application/services.py:126"
+      ],
+      "module": "feature_store"
+    },
+    {
+      "action": "create",
+      "code": "feature_materializations:create",
+      "description": "Trigger feature materialization jobs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/feature_store/application/services.py:195"
+      ],
+      "module": "feature_store"
+    },
+    {
+      "action": "write",
+      "code": "feature_pipelines:write",
+      "description": "Register feature pipelines.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/feature_store/application/services.py:157"
+      ],
+      "module": "feature_store"
+    },
+    {
+      "action": "create",
+      "code": "feature_sets:create",
+      "description": "Create feature sets.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/feature_store/application/services.py:89"
+      ],
+      "module": "feature_store"
+    },
+    {
+      "action": "read",
+      "code": "feature_sets:read",
+      "description": "Read feature sets, features, materializations, and lineage.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/feature_store/application/services.py:114",
+        "backend/src/forgeml/modules/feature_store/application/services.py:118",
+        "backend/src/forgeml/modules/feature_store/application/services.py:148",
+        "backend/src/forgeml/modules/feature_store/application/services.py:186",
+        "backend/src/forgeml/modules/feature_store/application/services.py:223",
+        "backend/src/forgeml/modules/feature_store/application/services.py:228"
+      ],
+      "module": "feature_store"
+    },
+    {
+      "action": "execute",
+      "code": "inference:predict",
+      "description": "Invoke online prediction endpoints.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/inference/application/services.py:123"
+      ],
+      "module": "inference"
+    },
+    {
+      "action": "create",
+      "code": "inference_endpoints:create",
+      "description": "Create inference endpoints.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/inference/application/services.py:76"
+      ],
+      "module": "inference"
+    },
+    {
+      "action": "read",
+      "code": "inference_endpoints:read",
+      "description": "Read inference endpoints and prediction request logs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/inference/application/services.py:115",
+        "backend/src/forgeml/modules/inference/application/services.py:119",
+        "backend/src/forgeml/modules/inference/application/services.py:172",
+        "backend/src/forgeml/modules/inference/application/services.py:207"
+      ],
+      "module": "inference"
+    },
+    {
+      "action": "write",
+      "code": "inference_metrics:write",
+      "description": "Record inference metric snapshots.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/inference/application/services.py:181"
+      ],
+      "module": "inference"
+    },
+    {
+      "action": "create",
+      "code": "model_versions:create",
+      "description": "Register model versions and promote training artifacts.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/model_registry/application/services.py:140",
+        "backend/src/forgeml/modules/model_registry/application/services.py:167"
+      ],
+      "module": "model_registry"
+    },
+    {
+      "action": "write",
+      "code": "model_versions:request_approval",
+      "description": "Request model-version approval.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/model_registry/application/services.py:240"
+      ],
+      "module": "model_registry"
+    },
+    {
+      "action": "approve",
+      "code": "model_versions:review",
+      "description": "Approve or reject model versions.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/model_registry/application/services.py:282"
+      ],
+      "module": "model_registry"
+    },
+    {
+      "action": "create",
+      "code": "models:create",
+      "description": "Create registered models.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/model_registry/application/services.py:98"
+      ],
+      "module": "model_registry"
+    },
+    {
+      "action": "read",
+      "code": "models:read",
+      "description": "Read model registry records.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/model_registry/application/services.py:128",
+        "backend/src/forgeml/modules/model_registry/application/services.py:132",
+        "backend/src/forgeml/modules/model_registry/application/services.py:227",
+        "backend/src/forgeml/modules/model_registry/application/services.py:232",
+        "backend/src/forgeml/modules/model_registry/application/services.py:331",
+        "backend/src/forgeml/modules/model_registry/application/services.py:340"
+      ],
+      "module": "model_registry"
+    },
+    {
+      "action": "read",
+      "code": "monitoring:read",
+      "description": "Read monitoring summaries and endpoint dashboards.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/monitoring/application/services.py:21",
+        "backend/src/forgeml/modules/monitoring/application/services.py:53"
+      ],
+      "module": "monitoring"
+    },
+    {
+      "action": "create",
+      "code": "projects:create",
+      "description": "Create projects.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/projects/application/services.py:36"
+      ],
+      "module": "projects"
+    },
+    {
+      "action": "read",
+      "code": "projects:read",
+      "description": "Read project metadata.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/projects/application/services.py:60",
+        "backend/src/forgeml/modules/projects/application/services.py:65"
+      ],
+      "module": "projects"
+    },
+    {
+      "action": "create",
+      "code": "retraining_policies:create",
+      "description": "Create retraining policies.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/retraining/application/services.py:92"
+      ],
+      "module": "retraining"
+    },
+    {
+      "action": "read",
+      "code": "retraining_policies:read",
+      "description": "Read retraining policies.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/retraining/application/services.py:140"
+      ],
+      "module": "retraining"
+    },
+    {
+      "action": "approve",
+      "code": "retraining_runs:approve",
+      "description": "Approve pending retraining runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/retraining/application/services.py:188"
+      ],
+      "module": "retraining"
+    },
+    {
+      "action": "create",
+      "code": "retraining_runs:create",
+      "description": "Evaluate or trigger retraining runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/retraining/application/services.py:148",
+        "backend/src/forgeml/modules/retraining/application/services.py:165"
+      ],
+      "module": "retraining"
+    },
+    {
+      "action": "read",
+      "code": "retraining_runs:read",
+      "description": "Read retraining runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/retraining/application/services.py:177",
+        "backend/src/forgeml/modules/retraining/application/services.py:184"
+      ],
+      "module": "retraining"
+    },
+    {
+      "action": "approve",
+      "code": "retraining_runs:reject",
+      "description": "Reject pending retraining runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/retraining/application/services.py:220"
+      ],
+      "module": "retraining"
+    },
+    {
+      "action": "write",
+      "code": "training_runs:cancel",
+      "description": "Cancel queued or running training runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/training/application/services.py:411"
+      ],
+      "module": "training"
+    },
+    {
+      "action": "create",
+      "code": "training_runs:create",
+      "description": "Queue training runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/training/application/services.py:106"
+      ],
+      "module": "training"
+    },
+    {
+      "action": "read",
+      "code": "training_runs:read",
+      "description": "Read training runs, events, and logs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/training/application/services.py:228",
+        "backend/src/forgeml/modules/training/application/services.py:232",
+        "backend/src/forgeml/modules/training/application/services.py:465",
+        "backend/src/forgeml/modules/training/application/services.py:474"
+      ],
+      "module": "training"
+    },
+    {
+      "action": "write",
+      "code": "training_runs:write",
+      "description": "Record training results and execute training runs.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/training/application/services.py:240",
+        "backend/src/forgeml/modules/training/application/services.py:255",
+        "backend/src/forgeml/modules/training/application/services.py:275"
+      ],
+      "module": "training"
+    }
+  ],
+  "role_presets": [
+    {
+      "code": "ml_engineer",
+      "description": "Build datasets, features, experiments, training runs, and models.",
+      "name": "ML Engineer",
+      "permissions": [
+        "dataset_versions:create",
+        "dataset_versions:finalize",
+        "dataset_versions:validate",
+        "datasets:create",
+        "datasets:read",
+        "drift_profiles:create",
+        "drift_profiles:read",
+        "drift_reports:create",
+        "drift_reports:read",
+        "experiment_artifacts:write",
+        "experiment_runs:create",
+        "experiment_runs:read",
+        "experiment_runs:write",
+        "experiments:create",
+        "experiments:read",
+        "feature_definitions:write",
+        "feature_materializations:create",
+        "feature_pipelines:write",
+        "feature_sets:create",
+        "feature_sets:read",
+        "model_versions:create",
+        "model_versions:request_approval",
+        "models:create",
+        "models:read",
+        "projects:create",
+        "projects:read",
+        "training_runs:cancel",
+        "training_runs:create",
+        "training_runs:read",
+        "training_runs:write"
+      ]
+    },
+    {
+      "code": "ml_operator",
+      "description": "Operate deployments, inference endpoints, monitoring, alerts, and retraining.",
+      "name": "ML Operator",
+      "permissions": [
+        "alert_events:acknowledge",
+        "alert_events:read",
+        "alert_events:resolve",
+        "alert_rules:create",
+        "alert_rules:evaluate",
+        "alert_rules:read",
+        "deployment_health:write",
+        "deployment_revisions:create",
+        "deployment_revisions:traffic",
+        "deployments:create",
+        "deployments:read",
+        "deployments:rollback",
+        "drift_profiles:create",
+        "drift_profiles:read",
+        "drift_reports:create",
+        "drift_reports:read",
+        "inference:predict",
+        "inference_endpoints:create",
+        "inference_endpoints:read",
+        "inference_metrics:write",
+        "models:read",
+        "monitoring:read",
+        "projects:read",
+        "retraining_policies:create",
+        "retraining_policies:read",
+        "retraining_runs:approve",
+        "retraining_runs:create",
+        "retraining_runs:read",
+        "retraining_runs:reject",
+        "training_runs:create",
+        "training_runs:read"
+      ]
+    },
+    {
+      "code": "ml_viewer",
+      "description": "Read-only access across ForgeML project and ML lifecycle resources.",
+      "name": "ML Viewer",
+      "permissions": [
+        "alert_events:read",
+        "alert_rules:read",
+        "datasets:read",
+        "deployments:read",
+        "drift_profiles:read",
+        "drift_reports:read",
+        "experiment_runs:read",
+        "experiments:read",
+        "feature_sets:read",
+        "inference_endpoints:read",
+        "models:read",
+        "monitoring:read",
+        "projects:read",
+        "retraining_policies:read",
+        "retraining_runs:read",
+        "training_runs:read"
+      ]
+    },
+    {
+      "code": "platform_admin",
+      "description": "Full ForgeML platform administration across all modules.",
+      "name": "Platform Admin",
+      "permissions": [
+        "*"
+      ]
+    },
+    {
+      "code": "security_auditor",
+      "description": "Read audit trails and platform activity without mutation rights.",
+      "name": "Security Auditor",
+      "permissions": [
+        "admin:audit_log:read",
+        "projects:read"
+      ]
+    }
+  ],
+  "schema_version": "forgeml.permission_catalog.v1",
+  "summary": {
+    "enforced_permission_count": 55,
+    "permission_count": 55,
+    "role_preset_count": 5
+  }
+}

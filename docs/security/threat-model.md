@@ -27,7 +27,7 @@ ForgeML is a modular monolith ML platform that stores control-plane metadata, mo
 | Risk | Control |
 | --- | --- |
 | Credential disclosure | Environment-based secrets, no secret values in repository, rotation runbooks |
-| Broken object-level authorization | RBAC checks in application services, project-scoped repositories, and a CI-gated API authorization contract |
+| Broken object-level authorization | RBAC checks in application services, project-scoped repositories, a CI-gated API authorization contract, and a checked permission catalog |
 | Unauthenticated API exposure | Public route allowlist generated from FastAPI route dependencies and checked in CI |
 | Request floods | Configurable rate limiting with metrics and retry headers |
 | Browser exploitation | Secure response headers and strict CORS origins |
