@@ -114,4 +114,7 @@ def _artifacts_from_summary(
 
 
 def _read_json(path: Path) -> dict[str, object]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    payload: object = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"Training artifact must contain a JSON object: {path}")
+    return {str(key): value for key, value in payload.items()}

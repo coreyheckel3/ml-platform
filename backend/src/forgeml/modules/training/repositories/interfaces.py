@@ -6,6 +6,7 @@ from forgeml.modules.training.domain.entities import (
     TrainingExecutionResult,
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
 )
 
 
@@ -37,6 +38,15 @@ class TrainingRunRepository(Protocol):
         raise NotImplementedError
 
     def list_events(self, training_run_id: UUID) -> list[TrainingRunEvent]:
+        raise NotImplementedError
+
+    def add_log(self, log: TrainingRunLog) -> TrainingRunLog:
+        raise NotImplementedError
+
+    def next_log_sequence(self, training_run_id: UUID) -> int:
+        raise NotImplementedError
+
+    def list_logs(self, training_run_id: UUID) -> list[TrainingRunLog]:
         raise NotImplementedError
 
     def experiment_belongs_to_project(

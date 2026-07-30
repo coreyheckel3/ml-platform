@@ -155,7 +155,9 @@ def score_movie(user_profile: dict[str, Any], movie_profile: dict[str, Any]) -> 
     genre_affinity = user_profile["genre_affinity"].get(movie_profile["genre"], 0.0)
     normalized_rating = movie_profile["mean_rating"] / 5.0
     normalized_recency = (movie_profile["release_year"] - 1990) / 40
-    return (0.55 * normalized_rating) + (0.35 * genre_affinity) + (0.10 * normalized_recency)
+    return float(
+        (0.55 * normalized_rating) + (0.35 * genre_affinity) + (0.10 * normalized_recency)
+    )
 
 
 def _genre_affinity(rows: list[dict[str, str]]) -> dict[str, float]:
@@ -172,8 +174,8 @@ def _genre_affinity(rows: list[dict[str, str]]) -> dict[str, float]:
 
 
 def _mean(values: Any) -> float:
-    value_list = list(values)
-    return sum(value_list) / len(value_list)
+    value_list = [float(value) for value in values]
+    return float(sum(value_list) / len(value_list))
 
 
 def main() -> None:

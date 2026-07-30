@@ -28,6 +28,7 @@ from forgeml.modules.projects.infrastructure.sqlalchemy_models import (
 from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
     TrainingRunStatus,
 )
 from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
@@ -214,6 +215,17 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
                 metadata={"orchestrator_run_id": "workflow-1"},
             )
         )
+        repository.add_log(
+            TrainingRunLog(
+                id=uuid4(),
+                training_run_id=training_run.id,
+                sequence=1,
+                level="info",
+                logger="training.scheduler",
+                message="Training run was queued for execution.",
+                metadata={"orchestrator_run_id": "workflow-1"},
+            )
+        )
         session.commit()
 
     with Session(engine) as session:
@@ -228,6 +240,8 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
         claimed_run = repository.claim_training_run(queued_training_run_id)
         second_claim = repository.claim_training_run(queued_training_run_id)
         events = repository.list_events(training_run_id)
+        logs = repository.list_logs(training_run_id)
+        next_log_sequence = repository.next_log_sequence(training_run_id)
         experiment_exists = repository.experiment_belongs_to_project(
             organization_id,
             project_id,
@@ -245,6 +259,9 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
     assert second_claim is None
     assert any(run.metrics.get("auc") == 0.94 for run in training_runs)
     assert events[0].event_type == "queued"
+    assert logs[0].sequence == 1
+    assert logs[0].message == "Training run was queued for execution."
+    assert next_log_sequence == 2
     assert experiment_exists
     assert dataset_exists
     assert feature_set_exists

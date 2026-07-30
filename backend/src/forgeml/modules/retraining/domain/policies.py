@@ -150,8 +150,16 @@ def retraining_policy_accepts_drift(
 ) -> tuple[bool, str]:
     if policy.trigger_type != RetrainingTriggerType.DRIFT:
         return False, "Policy is not configured for drift-triggered retraining."
-    min_drift_score = float(policy.trigger_config["min_drift_score"])
-    min_drifted_features = int(policy.trigger_config["min_drifted_features"])
+    min_drift_score = _finite_float(
+        policy.trigger_config["min_drift_score"],
+        "min_drift_score",
+        minimum=0.0,
+        maximum=1.0,
+    )
+    min_drifted_features = _non_negative_int(
+        policy.trigger_config["min_drifted_features"],
+        "min_drifted_features",
+    )
     if signal.status != "completed":
         return False, "Drift report is not completed."
     if signal.drift_score < min_drift_score:
@@ -167,13 +175,19 @@ def retraining_policy_accepts_alert(
 ) -> tuple[bool, str]:
     if policy.trigger_type != RetrainingTriggerType.ALERT:
         return False, "Policy is not configured for alert-triggered retraining."
-    severities = {str(severity) for severity in policy.trigger_config["severities"]}
+    configured_severities = policy.trigger_config["severities"]
+    if not isinstance(configured_severities, list):
+        raise DomainValidationError("Alert retraining severities must be a list.")
+    severities = {str(severity) for severity in configured_severities}
     if signal.status not in {"open", "acknowledged"}:
         return False, "Alert event is no longer active."
     if signal.severity not in severities:
         return False, "Alert severity does not match retraining policy."
     min_observed_value = policy.trigger_config.get("min_observed_value")
-    if min_observed_value is not None and signal.observed_value < float(min_observed_value):
+    if min_observed_value is not None and signal.observed_value < _finite_float(
+        min_observed_value,
+        "min_observed_value",
+    ):
         return False, "Alert observed value is below the retraining policy threshold."
     return True, "Alert event matches retraining policy thresholds."
 

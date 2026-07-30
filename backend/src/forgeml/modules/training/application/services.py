@@ -8,12 +8,14 @@ from forgeml.modules.training.domain.entities import (
     TrainingExecutionResult,
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
     TrainingRunStatus,
 )
 from forgeml.modules.training.domain.policies import (
     validate_metrics,
     validate_run_name,
     validate_terminal_status,
+    validate_training_log,
     validate_training_run_request,
 )
 from forgeml.modules.training.repositories.interfaces import (
@@ -187,6 +189,18 @@ class TrainingRunService:
                 metadata={"orchestrator_run_id": saved.orchestrator_run_id},
             )
         )
+        self._record_log(
+            training_run_id=saved.id,
+            level="info",
+            logger="training.scheduler",
+            message="Training run was queued for execution.",
+            metadata={
+                "orchestrator_run_id": saved.orchestrator_run_id,
+                "algorithm": saved.algorithm,
+                "model_type": saved.model_type,
+                "objective_metric_name": saved.objective_metric_name,
+            },
+        )
         record_user_audit_event(
             self._audit_log,
             organization_id=saved.organization_id,
@@ -322,10 +336,60 @@ class TrainingRunService:
                 },
             )
         )
+        self._record_log(
+            training_run_id=claimed.id,
+            level="info",
+            logger="training.worker",
+            message="Worker claimed training run.",
+            metadata={
+                "worker_id": worker_id,
+                "orchestrator_run_id": claimed.orchestrator_run_id,
+            },
+        )
+        self._record_log(
+            training_run_id=claimed.id,
+            level="info",
+            logger="training.runner",
+            message="Training runner execution started.",
+            metadata={
+                "runner": self._runner.__class__.__name__,
+                "algorithm": claimed.algorithm,
+                "model_type": claimed.model_type,
+            },
+        )
 
         try:
             execution_result = self._runner.run(claimed)
+            if execution_result.artifacts:
+                self._record_log(
+                    training_run_id=claimed.id,
+                    level="info",
+                    logger="training.artifacts",
+                    message="Training runner produced artifacts.",
+                    metadata={
+                        "artifact_count": len(execution_result.artifacts),
+                        "artifacts": [
+                            {
+                                "name": artifact.name,
+                                "artifact_type": artifact.artifact_type,
+                                "uri": artifact.uri,
+                            }
+                            for artifact in execution_result.artifacts
+                        ],
+                    },
+                )
         except Exception as exc:  # noqa: BLE001
+            self._record_log(
+                training_run_id=claimed.id,
+                level="error",
+                logger="training.runner",
+                message="Training runner raised an exception.",
+                metadata={
+                    "error_type": exc.__class__.__name__,
+                    "error_message": str(exc),
+                    "runner": self._runner.__class__.__name__,
+                },
+            )
             execution_result = TrainingExecutionResult(
                 status=TrainingRunStatus.FAILED,
                 metrics={},
@@ -365,6 +429,16 @@ class TrainingRunService:
                 metadata={"orchestrator_run_id": saved.orchestrator_run_id},
             )
         )
+        self._record_log(
+            training_run_id=saved.id,
+            level="warning",
+            logger="training.scheduler",
+            message="Training run was canceled.",
+            metadata={
+                "orchestrator_run_id": saved.orchestrator_run_id,
+                "previous_status": training_run.status.value,
+            },
+        )
         record_user_audit_event(
             self._audit_log,
             organization_id=saved.organization_id,
@@ -391,6 +465,15 @@ class TrainingRunService:
         self._require(principal, "training_runs:read")
         training_run = self._get_scoped_training_run(training_run_id, principal)
         return self._training_runs.list_events(training_run.id)
+
+    def list_logs(
+        self,
+        training_run_id: UUID,
+        principal: Principal,
+    ) -> list[TrainingRunLog]:
+        self._require(principal, "training_runs:read")
+        training_run = self._get_scoped_training_run(training_run_id, principal)
+        return self._training_runs.list_logs(training_run.id)
 
     def _get_scoped_training_run(
         self,
@@ -444,7 +527,47 @@ class TrainingRunService:
                 metadata={"metrics": saved.metrics},
             )
         )
+        self._record_log(
+            training_run_id=saved.id,
+            level=_terminal_log_level(status),
+            logger="training.lifecycle",
+            message=f"Training run finished with status {status.value}.",
+            metadata={
+                "status": status.value,
+                "metrics": saved.metrics,
+                "error_message": error_message,
+            },
+        )
         return saved
+
+    def _record_log(
+        self,
+        *,
+        training_run_id: UUID,
+        level: str,
+        logger: str,
+        message: str,
+        metadata: dict[str, object],
+    ) -> TrainingRunLog:
+        sequence = self._training_runs.next_log_sequence(training_run_id)
+        validate_training_log(
+            sequence=sequence,
+            level=level,
+            logger=logger,
+            message=message,
+            metadata=metadata,
+        )
+        return self._training_runs.add_log(
+            TrainingRunLog(
+                id=uuid4(),
+                training_run_id=training_run_id,
+                sequence=sequence,
+                level=level,
+                logger=logger,
+                message=message.strip(),
+                metadata=metadata,
+            )
+        )
 
 
 def _to_experiment_status(status: TrainingRunStatus) -> ExperimentRunStatus:
@@ -453,6 +576,14 @@ def _to_experiment_status(status: TrainingRunStatus) -> ExperimentRunStatus:
     if status == TrainingRunStatus.FAILED:
         return ExperimentRunStatus.FAILED
     return ExperimentRunStatus.CANCELED
+
+
+def _terminal_log_level(status: TrainingRunStatus) -> str:
+    if status == TrainingRunStatus.FAILED:
+        return "error"
+    if status == TrainingRunStatus.CANCELED:
+        return "warning"
+    return "info"
 
 
 def _has_dataset_version_reference(

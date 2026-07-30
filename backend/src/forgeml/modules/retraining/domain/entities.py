@@ -20,7 +20,10 @@ class RetrainingRunStatus(StrEnum):
     SKIPPED = "skipped"
     PENDING_APPROVAL = "pending_approval"
     QUEUED = "queued"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
     FAILED = "failed"
+    CANCELED = "canceled"
     REJECTED = "rejected"
 
 

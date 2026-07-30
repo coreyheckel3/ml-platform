@@ -27,11 +27,15 @@ from forgeml.modules.retraining.infrastructure.sqlalchemy_models import (
     RetrainingPolicyModel,
     RetrainingRunModel,
 )
+from forgeml.modules.training.infrastructure.sqlalchemy_models import TrainingRunModel
 
 _ACTIVE_RETRAINING_STATUSES = (
     RetrainingRunStatus.PENDING_APPROVAL.value,
     RetrainingRunStatus.QUEUED.value,
+    RetrainingRunStatus.RUNNING.value,
+    RetrainingRunStatus.SUCCEEDED.value,
     RetrainingRunStatus.FAILED.value,
+    RetrainingRunStatus.CANCELED.value,
 )
 
 
@@ -145,6 +149,11 @@ class SqlAlchemyRetrainingRepository:
             .order_by(RetrainingRunModel.created_at.desc())
         ).all()
         return [_run_to_domain(model) for model in models]
+
+    def get_training_run_status(self, training_run_id: UUID) -> str | None:
+        return self._session.scalar(
+            select(TrainingRunModel.status).where(TrainingRunModel.id == training_run_id)
+        )
 
     def get_existing_run_for_trigger(
         self,

@@ -8,6 +8,7 @@ from forgeml.modules.training.api.routes import get_training_run_service
 from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
     TrainingRunStatus,
 )
 from forgeml.platform.api.dependencies import get_current_principal
@@ -24,6 +25,7 @@ class FakeTrainingRunService:
     dataset_version_id: UUID
     training_run_id: UUID
     event_id: UUID
+    log_id: UUID
 
     def start_training_run(self, command, principal):
         assert command.algorithm == "xgboost"
@@ -53,6 +55,20 @@ class FakeTrainingRunService:
                 training_run_id=self.training_run_id,
                 event_type="queued",
                 message="Training run was queued.",
+                metadata={"orchestrator_run_id": "workflow-1"},
+            )
+        ]
+
+    def list_logs(self, training_run_id, principal):
+        assert training_run_id == self.training_run_id
+        return [
+            TrainingRunLog(
+                id=self.log_id,
+                training_run_id=self.training_run_id,
+                sequence=1,
+                level="info",
+                logger="training.scheduler",
+                message="Training run was queued for execution.",
                 metadata={"orchestrator_run_id": "workflow-1"},
             )
         ]
@@ -96,6 +112,7 @@ def test_training_routes_expose_training_lifecycle() -> None:
         dataset_version_id=uuid4(),
         training_run_id=uuid4(),
         event_id=uuid4(),
+        log_id=uuid4(),
     )
     app = create_app()
     app.dependency_overrides[get_training_run_service] = lambda: service
@@ -129,6 +146,7 @@ def test_training_routes_expose_training_lifecycle() -> None:
         },
     )
     events = client.get(f"/api/v1/training-runs/{service.training_run_id}/events")
+    logs = client.get(f"/api/v1/training-runs/{service.training_run_id}/logs")
     canceled = client.post(f"/api/v1/training-runs/{service.training_run_id}/cancel")
 
     assert started.status_code == 202
@@ -139,5 +157,7 @@ def test_training_routes_expose_training_lifecycle() -> None:
     assert result.json()["metrics"]["auc"] == 0.94
     assert events.status_code == 200
     assert events.json()["items"][0]["event_type"] == "queued"
+    assert logs.status_code == 200
+    assert logs.json()["items"][0]["message"] == "Training run was queued for execution."
     assert canceled.status_code == 200
     assert canceled.json()["status"] == "canceled"

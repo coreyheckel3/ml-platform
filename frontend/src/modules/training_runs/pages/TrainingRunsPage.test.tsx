@@ -29,10 +29,17 @@ describe("TrainingRunsPage", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("Training run was queued.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Training run was queued."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Training run was queued for execution."),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Start run" })).not.toBeDisabled(),
+      expect(
+        screen.getByRole("button", { name: "Start run" }),
+      ).not.toBeDisabled(),
     );
     fireEvent.change(screen.getByLabelText("Run Name"), {
       target: { value: "fraud-xgb-depth-8" },
@@ -51,7 +58,9 @@ describe("TrainingRunsPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
 
-    expect(await screen.findByText(`Started training run ${startedRunId}.`)).toBeInTheDocument();
+    expect(
+      await screen.findByText(`Started training run ${startedRunId}.`),
+    ).toBeInTheDocument();
     const startCall = findFetchCall(
       fetchMock,
       "/api/v1/projects/project-1/training-runs",
@@ -68,7 +77,9 @@ describe("TrainingRunsPage", () => {
       hyperparameters: { max_depth: 8, learning_rate: 0.05 },
     });
 
-    expect(await screen.findByText("Started from the training UI.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Started from the training UI."),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Record result" }));
 
     expect(
@@ -97,9 +108,15 @@ describe("TrainingRunsPage", () => {
         name: `Cancel training run ${initialRunId}`,
       }),
     );
-    expect(await screen.findByText(`Canceled training run ${initialRunId}.`)).toBeInTheDocument();
     expect(
-      findFetchCall(fetchMock, `/api/v1/training-runs/${initialRunId}/cancel`, "POST"),
+      await screen.findByText(`Canceled training run ${initialRunId}.`),
+    ).toBeInTheDocument();
+    expect(
+      findFetchCall(
+        fetchMock,
+        `/api/v1/training-runs/${initialRunId}/cancel`,
+        "POST",
+      ),
     ).toBeTruthy();
   });
 });
@@ -114,14 +131,29 @@ function mockTrainingWorkflow() {
     }),
   ];
   const eventMap: Record<string, Array<Record<string, unknown>>> = {
-    [initialRunId]: [trainingEvent(initialRunId, "queued", "Training run was queued.")],
+    [initialRunId]: [
+      trainingEvent(initialRunId, "queued", "Training run was queued."),
+    ],
+  };
+  const logMap: Record<string, Array<Record<string, unknown>>> = {
+    [initialRunId]: [
+      trainingLog(
+        initialRunId,
+        1,
+        "info",
+        "Training run was queued for execution.",
+      ),
+    ],
   };
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = String(input);
       const method = init?.method ?? "GET";
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/training-runs") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/training-runs"
+      ) {
         return jsonResponse({ items: runs, next_cursor: null });
       }
 
@@ -129,13 +161,27 @@ function mockTrainingWorkflow() {
         const suffix = path.split("/api/v1/training-runs/")[1] ?? "";
         const [runId, nested] = suffix.split("/");
         if (nested === "events") {
-          return jsonResponse({ items: eventMap[runId] ?? [], next_cursor: null });
+          return jsonResponse({
+            items: eventMap[runId] ?? [],
+            next_cursor: null,
+          });
+        }
+        if (nested === "logs") {
+          return jsonResponse({
+            items: logMap[runId] ?? [],
+            next_cursor: null,
+          });
         }
         const run = runs.find((item) => item.id === runId);
-        return run ? jsonResponse(run) : jsonResponse({ detail: "not found" }, false);
+        return run
+          ? jsonResponse(run)
+          : jsonResponse({ detail: "not found" }, false);
       }
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/experiments") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/experiments"
+      ) {
         return jsonResponse({
           items: [
             {
@@ -190,7 +236,10 @@ function mockTrainingWorkflow() {
         });
       }
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/feature-sets") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/feature-sets"
+      ) {
         return jsonResponse({
           items: [
             {
@@ -208,7 +257,10 @@ function mockTrainingWorkflow() {
         });
       }
 
-      if (method === "POST" && path === "/api/v1/projects/project-1/training-runs") {
+      if (
+        method === "POST" &&
+        path === "/api/v1/projects/project-1/training-runs"
+      ) {
         const started = trainingRun({
           id: startedRunId,
           status: "queued",
@@ -217,12 +269,27 @@ function mockTrainingWorkflow() {
         });
         runs = [started, ...runs];
         eventMap[startedRunId] = [
-          trainingEvent(startedRunId, "queued", "Started from the training UI."),
+          trainingEvent(
+            startedRunId,
+            "queued",
+            "Started from the training UI.",
+          ),
+        ];
+        logMap[startedRunId] = [
+          trainingLog(
+            startedRunId,
+            1,
+            "info",
+            "Training run was queued for execution.",
+          ),
         ];
         return jsonResponse(started);
       }
 
-      if (method === "POST" && path === `/api/v1/training-runs/${startedRunId}/result`) {
+      if (
+        method === "POST" &&
+        path === `/api/v1/training-runs/${startedRunId}/result`
+      ) {
         const succeeded = trainingRun({
           id: startedRunId,
           status: "succeeded",
@@ -231,13 +298,29 @@ function mockTrainingWorkflow() {
         });
         runs = runs.map((run) => (run.id === startedRunId ? succeeded : run));
         eventMap[startedRunId] = [
-          trainingEvent(startedRunId, "succeeded", "Training run finished with status succeeded."),
+          trainingEvent(
+            startedRunId,
+            "succeeded",
+            "Training run finished with status succeeded.",
+          ),
           ...(eventMap[startedRunId] ?? []),
+        ];
+        logMap[startedRunId] = [
+          trainingLog(
+            startedRunId,
+            2,
+            "info",
+            "Training run finished with status succeeded.",
+          ),
+          ...(logMap[startedRunId] ?? []),
         ];
         return jsonResponse(succeeded);
       }
 
-      if (method === "POST" && path === `/api/v1/training-runs/${initialRunId}/cancel`) {
+      if (
+        method === "POST" &&
+        path === `/api/v1/training-runs/${initialRunId}/cancel`
+      ) {
         const canceled = trainingRun({
           id: initialRunId,
           status: "canceled",
@@ -249,6 +332,10 @@ function mockTrainingWorkflow() {
         eventMap[initialRunId] = [
           trainingEvent(initialRunId, "canceled", "Training run was canceled."),
           ...(eventMap[initialRunId] ?? []),
+        ];
+        logMap[initialRunId] = [
+          trainingLog(initialRunId, 2, "warning", "Training run was canceled."),
+          ...(logMap[initialRunId] ?? []),
         ];
         return jsonResponse(canceled);
       }
@@ -308,8 +395,30 @@ function trainingEvent(
     event_type: eventType,
     message,
     metadata: {
-      orchestrator_run_id: trainingRunId === startedRunId ? "workflow-2" : "workflow-1",
+      orchestrator_run_id:
+        trainingRunId === startedRunId ? "workflow-2" : "workflow-1",
     },
+  };
+}
+
+function trainingLog(
+  trainingRunId: string,
+  sequence: number,
+  level: string,
+  message: string,
+): Record<string, unknown> {
+  return {
+    id: `${trainingRunId}-log-${sequence}`,
+    training_run_id: trainingRunId,
+    sequence,
+    level,
+    logger: "training.scheduler",
+    message,
+    metadata: {
+      orchestrator_run_id:
+        trainingRunId === startedRunId ? "workflow-2" : "workflow-1",
+    },
+    created_at: null,
   };
 }
 

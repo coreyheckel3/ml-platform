@@ -21,6 +21,15 @@ from forgeml.modules.retraining.domain.entities import (
 )
 from forgeml.platform.security.rbac import Principal
 
+ACTIVE_RETRAINING_STATUSES = {
+    RetrainingRunStatus.PENDING_APPROVAL,
+    RetrainingRunStatus.QUEUED,
+    RetrainingRunStatus.RUNNING,
+    RetrainingRunStatus.SUCCEEDED,
+    RetrainingRunStatus.FAILED,
+    RetrainingRunStatus.CANCELED,
+}
+
 
 class FakeRetrainingRepository:
     def __init__(self) -> None:
@@ -32,6 +41,7 @@ class FakeRetrainingRepository:
         self.feature_sets: set[tuple[UUID, UUID]] = set()
         self.drift_signals: dict[UUID, DriftRetrainingSignal] = {}
         self.alert_signals: dict[UUID, AlertRetrainingSignal] = {}
+        self.training_statuses: dict[UUID, str] = {}
 
     def add_policy(self, policy: RetrainingPolicy) -> RetrainingPolicy:
         self.policies[policy.id] = policy
@@ -79,6 +89,9 @@ class FakeRetrainingRepository:
             if run.organization_id == organization_id and run.project_id == project_id
         ]
 
+    def get_training_run_status(self, training_run_id: UUID) -> str | None:
+        return self.training_statuses.get(training_run_id)
+
     def get_existing_run_for_trigger(
         self,
         policy_id: UUID,
@@ -99,7 +112,7 @@ class FakeRetrainingRepository:
             run.created_at
             for run in self.runs.values()
             if run.policy_id == policy_id
-            and run.status in {RetrainingRunStatus.PENDING_APPROVAL, RetrainingRunStatus.QUEUED}
+            and run.status in ACTIVE_RETRAINING_STATUSES
             and run.created_at is not None
         ]
         return max(created_at_values) if created_at_values else None
@@ -109,7 +122,7 @@ class FakeRetrainingRepository:
             1
             for run in self.runs.values()
             if run.policy_id == policy_id
-            and run.status in {RetrainingRunStatus.PENDING_APPROVAL, RetrainingRunStatus.QUEUED}
+            and run.status in ACTIVE_RETRAINING_STATUSES
             and run.created_at is not None
             and run.created_at >= since
         )
@@ -252,6 +265,14 @@ def test_retraining_service_queues_drift_triggered_training_run() -> None:
     assert audit_log.events[0].resource_id == str(evaluation.run.id)
     assert audit_log.events[0].metadata["decision"] == "triggered"
     assert audit_log.events[0].metadata["training_run_id"] == str(evaluation.run.training_run_id)
+
+    repository.training_statuses[evaluation.run.training_run_id] = "succeeded"
+    synced_runs = service.list_runs(project_id, actor)
+    synced_run = next(run for run in synced_runs if run.id == evaluation.run.id)
+
+    assert synced_run.status == RetrainingRunStatus.SUCCEEDED
+    assert synced_run.decision_metadata["training_status"] == "succeeded"
+    assert synced_run.decision_metadata["previous_retraining_status"] == "queued"
 
 
 def test_retraining_service_holds_run_for_approval_then_launches() -> None:

@@ -9,6 +9,7 @@ type FetchCall = [string, RequestInit | undefined];
 const policyId = "policy-2";
 const initialRunId = "run-1";
 const triggeredRunId = "run-2";
+const syncedRunId = "run-3";
 
 describe("RetrainingPage", () => {
   afterEach(() => {
@@ -30,17 +31,24 @@ describe("RetrainingPage", () => {
       </QueryClientProvider>,
     );
 
-    expect((await screen.findAllByText("Fraud Drift Retraining")).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText("Fraud Drift Retraining")).length,
+    ).toBeGreaterThan(0);
+    expect(await screen.findByText("succeeded")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Policy" }));
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Create policy" })).not.toBeDisabled(),
+      expect(
+        screen.getByRole("button", { name: "Create policy" }),
+      ).not.toBeDisabled(),
     );
 
     fireEvent.change(screen.getByLabelText("Policy Name"), {
       target: { value: "Fraud Auto Retraining" },
     });
     fireEvent.change(screen.getByLabelText("Policy Description"), {
-      target: { value: "Automated retraining for serving quality regressions." },
+      target: {
+        value: "Automated retraining for serving quality regressions.",
+      },
     });
     fireEvent.change(screen.getByLabelText("Minimum Drift Score"), {
       target: { value: "0.25" },
@@ -66,7 +74,9 @@ describe("RetrainingPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create policy" }));
 
     expect(
-      await screen.findByText("Created retraining policy Fraud Auto Retraining."),
+      await screen.findByText(
+        "Created retraining policy Fraud Auto Retraining.",
+      ),
     ).toBeInTheDocument();
     const createCall = findFetchCall(
       fetchMock,
@@ -124,7 +134,11 @@ describe("RetrainingPage", () => {
       await screen.findByText(`Approved retraining run ${triggeredRunId}.`),
     ).toBeInTheDocument();
     expect(
-      findFetchCall(fetchMock, `/api/v1/retraining-runs/${triggeredRunId}/approve`, "POST"),
+      findFetchCall(
+        fetchMock,
+        `/api/v1/retraining-runs/${triggeredRunId}/approve`,
+        "POST",
+      ),
     ).toBeTruthy();
 
     fireEvent.click(
@@ -136,7 +150,11 @@ describe("RetrainingPage", () => {
       await screen.findByText(`Rejected retraining run ${initialRunId}.`),
     ).toBeInTheDocument();
     expect(
-      findFetchCall(fetchMock, `/api/v1/retraining-runs/${initialRunId}/reject`, "POST"),
+      findFetchCall(
+        fetchMock,
+        `/api/v1/retraining-runs/${initialRunId}/reject`,
+        "POST",
+      ),
     ).toBeTruthy();
   });
 });
@@ -149,6 +167,12 @@ function mockRetrainingWorkflow() {
       policy_id: "policy-1",
       status: "pending_approval",
       training_run_id: null,
+    }),
+    retrainingRun({
+      id: syncedRunId,
+      policy_id: "policy-1",
+      status: "succeeded",
+      training_run_id: "training-run-3",
     }),
   ];
   const fetchMock = vi.fn(
@@ -163,11 +187,17 @@ function mockRetrainingWorkflow() {
         return jsonResponse({ items: policies, next_cursor: null });
       }
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/retraining-runs") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/retraining-runs"
+      ) {
         return jsonResponse({ items: runs, next_cursor: null });
       }
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/deployments") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/deployments"
+      ) {
         return jsonResponse({
           items: [
             {
@@ -186,7 +216,10 @@ function mockRetrainingWorkflow() {
         });
       }
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/experiments") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/experiments"
+      ) {
         return jsonResponse({
           items: [
             {
@@ -241,7 +274,10 @@ function mockRetrainingWorkflow() {
         });
       }
 
-      if (method === "GET" && path === "/api/v1/projects/project-1/feature-sets") {
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/feature-sets"
+      ) {
         return jsonResponse({
           items: [
             {
@@ -268,7 +304,10 @@ function mockRetrainingWorkflow() {
         return jsonResponse(created);
       }
 
-      if (method === "POST" && path === `/api/v1/retraining-policies/${policyId}/trigger`) {
+      if (
+        method === "POST" &&
+        path === `/api/v1/retraining-policies/${policyId}/trigger`
+      ) {
         const run = retrainingRun({
           id: triggeredRunId,
           policy_id: policyId,
@@ -285,7 +324,10 @@ function mockRetrainingWorkflow() {
         });
       }
 
-      if (method === "POST" && path === `/api/v1/retraining-runs/${triggeredRunId}/approve`) {
+      if (
+        method === "POST" &&
+        path === `/api/v1/retraining-runs/${triggeredRunId}/approve`
+      ) {
         const approved = retrainingRun({
           id: triggeredRunId,
           policy_id: policyId,
@@ -297,7 +339,10 @@ function mockRetrainingWorkflow() {
         return jsonResponse(approved);
       }
 
-      if (method === "POST" && path === `/api/v1/retraining-runs/${initialRunId}/reject`) {
+      if (
+        method === "POST" &&
+        path === `/api/v1/retraining-runs/${initialRunId}/reject`
+      ) {
         const rejected = retrainingRun({
           id: initialRunId,
           policy_id: "policy-1",

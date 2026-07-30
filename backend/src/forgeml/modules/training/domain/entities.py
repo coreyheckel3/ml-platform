@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -40,6 +41,18 @@ class TrainingRunEvent:
     event_type: str
     message: str
     metadata: dict[str, object]
+
+
+@dataclass(frozen=True)
+class TrainingRunLog:
+    id: UUID
+    training_run_id: UUID
+    sequence: int
+    level: str
+    logger: str
+    message: str
+    metadata: dict[str, object]
+    created_at: datetime | None = None
 
 
 @dataclass(frozen=True)

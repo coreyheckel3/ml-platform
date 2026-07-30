@@ -55,3 +55,19 @@ class TrainingRunEventResponse(BaseModel):
 class TrainingRunEventListResponse(BaseModel):
     items: list[TrainingRunEventResponse]
     next_cursor: str | None = None
+
+
+class TrainingRunLogResponse(BaseModel):
+    id: str
+    training_run_id: str
+    sequence: int
+    level: str
+    logger: str
+    message: str
+    metadata: dict[str, object]
+    created_at: str | None
+
+
+class TrainingRunLogListResponse(BaseModel):
+    items: list[TrainingRunLogResponse]
+    next_cursor: str | None = None

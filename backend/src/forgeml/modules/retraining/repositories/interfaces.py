@@ -43,6 +43,9 @@ class RetrainingRepository(Protocol):
     def list_runs(self, organization_id: UUID, project_id: UUID) -> list[RetrainingRun]:
         raise NotImplementedError
 
+    def get_training_run_status(self, training_run_id: UUID) -> str | None:
+        raise NotImplementedError
+
     def get_existing_run_for_trigger(
         self,
         policy_id: UUID,

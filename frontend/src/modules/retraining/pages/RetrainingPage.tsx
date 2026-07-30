@@ -1,11 +1,38 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, CircleCheck, CircleX, Play, Plus, RefreshCw, X } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  CheckCircle,
+  CircleCheck,
+  CircleX,
+  Play,
+  Plus,
+  RefreshCw,
+  X,
+} from "lucide-react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { listDatasets, listDatasetVersions, type Dataset } from "../../datasets/api/datasets";
-import { listDeployments, type Deployment } from "../../deployments/api/deployments";
-import { listExperiments, type Experiment } from "../../experiments/api/experiments";
-import { listFeatureSets, type FeatureSet } from "../../feature_store/api/featureStore";
+import {
+  listDatasets,
+  listDatasetVersions,
+  type Dataset,
+} from "../../datasets/api/datasets";
+import {
+  listDeployments,
+  type Deployment,
+} from "../../deployments/api/deployments";
+import {
+  listExperiments,
+  type Experiment,
+} from "../../experiments/api/experiments";
+import {
+  listFeatureSets,
+  type FeatureSet,
+} from "../../feature_store/api/featureStore";
 import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
@@ -36,7 +63,9 @@ export function RetrainingPage() {
   const [policyName, setPolicyName] = useState("");
   const [policyDescription, setPolicyDescription] = useState("");
   const [triggerType, setTriggerType] = useState("drift");
-  const [lineageMode, setLineageMode] = useState<"dataset" | "feature_set">("dataset");
+  const [lineageMode, setLineageMode] = useState<"dataset" | "feature_set">(
+    "dataset",
+  );
   const [minDriftScore, setMinDriftScore] = useState("0.2");
   const [minDriftedFeatures, setMinDriftedFeatures] = useState("1");
   const [alertInfoEnabled, setAlertInfoEnabled] = useState(false);
@@ -47,12 +76,16 @@ export function RetrainingPage() {
   const [algorithm, setAlgorithm] = useState("xgboost");
   const [modelType, setModelType] = useState("xgboost");
   const [objectiveMetricName, setObjectiveMetricName] = useState("auc");
-  const [hyperparametersText, setHyperparametersText] = useState(defaultHyperparametersText);
+  const [hyperparametersText, setHyperparametersText] = useState(
+    defaultHyperparametersText,
+  );
   const [cooldownSeconds, setCooldownSeconds] = useState("3600");
   const [maxRunsPerDay, setMaxRunsPerDay] = useState("3");
   const [approvalRequired, setApprovalRequired] = useState(true);
   const [enabled, setEnabled] = useState(true);
-  const [manualReason, setManualReason] = useState("Operator requested retraining.");
+  const [manualReason, setManualReason] = useState(
+    "Operator requested retraining.",
+  );
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const policiesQuery = useQuery({
@@ -89,7 +122,10 @@ export function RetrainingPage() {
     () => policiesQuery.data?.items ?? [],
     [policiesQuery.data?.items],
   );
-  const runs = useMemo(() => runsQuery.data?.items ?? [], [runsQuery.data?.items]);
+  const runs = useMemo(
+    () => runsQuery.data?.items ?? [],
+    [runsQuery.data?.items],
+  );
   const deployments = useMemo(
     () => deploymentsQuery.data?.items ?? [],
     [deploymentsQuery.data?.items],
@@ -127,15 +163,19 @@ export function RetrainingPage() {
     [datasetVersionsQuery.data?.items],
   );
   const selectedDatasetVersion =
-    datasetVersions.find((version) => version.id === selectedDatasetVersionId) ??
-    datasetVersions[0];
+    datasetVersions.find(
+      (version) => version.id === selectedDatasetVersionId,
+    ) ?? datasetVersions[0];
   const selectedFeatureSet =
     featureSets.find((featureSet) => featureSet.id === selectedFeatureSetId) ??
     featureSets[0];
-  const activePolicies = policies.filter((policy) => policy.enabled && policy.status === "active");
+  const activePolicies = policies.filter(
+    (policy) => policy.enabled && policy.status === "active",
+  );
   const pendingRuns = runs.filter((run) => run.status === "pending_approval");
   const queuedRuns = runs.filter((run) => run.status === "queued");
-  const terminalRuns = runs.filter((run) => ["rejected", "skipped", "failed"].includes(run.status));
+  const runningRuns = runs.filter((run) => run.status === "running");
+  const inFlightRuns = queuedRuns.length + runningRuns.length;
   const createPolicyMutation = useMutation({
     mutationFn: () => {
       if (!projectId || !token) {
@@ -156,8 +196,18 @@ export function RetrainingPage() {
           trigger_type: triggerType,
           trigger_config: buildTriggerConfig(),
           training_template: buildTrainingTemplate(),
-          cooldown_seconds: parseInteger(cooldownSeconds, "Cooldown", 0, 604_800),
-          max_runs_per_day: parseInteger(maxRunsPerDay, "Max runs per day", 1, 50),
+          cooldown_seconds: parseInteger(
+            cooldownSeconds,
+            "Cooldown",
+            0,
+            604_800,
+          ),
+          max_runs_per_day: parseInteger(
+            maxRunsPerDay,
+            "Max runs per day",
+            1,
+            50,
+          ),
           approval_required: approvalRequired,
           enabled,
         },
@@ -169,12 +219,16 @@ export function RetrainingPage() {
       setOperationMessage(`Created retraining policy ${policy.name}.`);
       setSelectedPolicyId(policy.id);
       closeCreateForm();
-      queryClient.invalidateQueries({ queryKey: ["retraining-policies", projectId] });
+      queryClient.invalidateQueries({
+        queryKey: ["retraining-policies", projectId],
+      });
     },
     onError: (error) => {
       setOperationMessage(null);
       setOperationError(
-        error instanceof Error ? error.message : "Retraining policy creation failed.",
+        error instanceof Error
+          ? error.message
+          : "Retraining policy creation failed.",
       );
     },
   });
@@ -204,7 +258,9 @@ export function RetrainingPage() {
     onError: (error) => {
       setOperationMessage(null);
       setOperationError(
-        error instanceof Error ? error.message : "Manual retraining trigger failed.",
+        error instanceof Error
+          ? error.message
+          : "Manual retraining trigger failed.",
       );
     },
   });
@@ -223,7 +279,9 @@ export function RetrainingPage() {
     },
     onError: (error) => {
       setOperationMessage(null);
-      setOperationError(error instanceof Error ? error.message : "Retraining approval failed.");
+      setOperationError(
+        error instanceof Error ? error.message : "Retraining approval failed.",
+      );
     },
   });
   const rejectRunMutation = useMutation({
@@ -241,7 +299,9 @@ export function RetrainingPage() {
     },
     onError: (error) => {
       setOperationMessage(null);
-      setOperationError(error instanceof Error ? error.message : "Retraining rejection failed.");
+      setOperationError(
+        error instanceof Error ? error.message : "Retraining rejection failed.",
+      );
     },
   });
 
@@ -250,7 +310,10 @@ export function RetrainingPage() {
       setSelectedPolicyId(policies[0].id);
       return;
     }
-    if (selectedPolicyId && !policies.some((policy) => policy.id === selectedPolicyId)) {
+    if (
+      selectedPolicyId &&
+      !policies.some((policy) => policy.id === selectedPolicyId)
+    ) {
       setSelectedPolicyId(policies[0]?.id ?? "");
     }
   }, [policies, selectedPolicyId]);
@@ -296,7 +359,10 @@ export function RetrainingPage() {
       setSelectedDatasetId(datasets[0].id);
       return;
     }
-    if (selectedDatasetId && !datasets.some((dataset) => dataset.id === selectedDatasetId)) {
+    if (
+      selectedDatasetId &&
+      !datasets.some((dataset) => dataset.id === selectedDatasetId)
+    ) {
       setSelectedDatasetId(datasets[0]?.id ?? "");
     }
   }, [datasets, selectedDatasetId]);
@@ -308,7 +374,9 @@ export function RetrainingPage() {
     }
     if (
       selectedDatasetVersionId &&
-      !datasetVersions.some((version) => version.id === selectedDatasetVersionId)
+      !datasetVersions.some(
+        (version) => version.id === selectedDatasetVersionId,
+      )
     ) {
       setSelectedDatasetVersionId(datasetVersions[0]?.id ?? "");
     }
@@ -359,7 +427,9 @@ export function RetrainingPage() {
     event.preventDefault();
     if (policyName.trim().length < 3) {
       setOperationMessage(null);
-      setOperationError("Retraining policy name must be at least 3 characters.");
+      setOperationError(
+        "Retraining policy name must be at least 3 characters.",
+      );
       return;
     }
     createPolicyMutation.mutate();
@@ -384,10 +454,15 @@ export function RetrainingPage() {
         alertCriticalEnabled ? "critical" : null,
       ].filter((value): value is string => Boolean(value));
       if (severities.length === 0) {
-        throw new Error("Alert-triggered retraining requires at least one severity.");
+        throw new Error(
+          "Alert-triggered retraining requires at least one severity.",
+        );
       }
       const config: Record<string, unknown> = { severities };
-      const minObserved = optionalNonNegativeFloat(alertMinObservedValue, "Minimum observed value");
+      const minObserved = optionalNonNegativeFloat(
+        alertMinObservedValue,
+        "Minimum observed value",
+      );
       if (minObserved !== null) {
         config.min_observed_value = minObserved;
       }
@@ -412,12 +487,18 @@ export function RetrainingPage() {
     if (!objectiveMetricName.trim()) {
       throw new Error("Objective metric name is required.");
     }
-    const hyperparameters = parseJsonObject(hyperparametersText, "Hyperparameters");
+    const hyperparameters = parseJsonObject(
+      hyperparametersText,
+      "Hyperparameters",
+    );
     const datasetVersionId =
-      lineageMode === "dataset" ? selectedDatasetVersion?.id ?? null : null;
-    const featureSetId = lineageMode === "feature_set" ? selectedFeatureSet?.id ?? null : null;
+      lineageMode === "dataset" ? (selectedDatasetVersion?.id ?? null) : null;
+    const featureSetId =
+      lineageMode === "feature_set" ? (selectedFeatureSet?.id ?? null) : null;
     if (!datasetVersionId && !featureSetId) {
-      throw new Error("Training template requires a dataset version or feature set.");
+      throw new Error(
+        "Training template requires a dataset version or feature set.",
+      );
     }
     return {
       experiment_id: selectedExperiment.id,
@@ -439,7 +520,11 @@ export function RetrainingPage() {
         description="Policy-driven retraining loops with drift triggers, alert triggers, approval gates, and training job handoff."
       />
       <div className="grid gap-4 md:grid-cols-4">
-        <MetricCard label="Policies" value={String(policies.length)} detail="configured loops" />
+        <MetricCard
+          label="Policies"
+          value={String(policies.length)}
+          detail="configured loops"
+        />
         <MetricCard
           label="Active"
           value={String(activePolicies.length)}
@@ -453,9 +538,9 @@ export function RetrainingPage() {
           tone={pendingRuns.length > 0 ? "warning" : "success"}
         />
         <MetricCard
-          label="Queued"
-          value={String(queuedRuns.length)}
-          detail={`${terminalRuns.length} terminal`}
+          label="In Flight"
+          value={String(inFlightRuns)}
+          detail={`${queuedRuns.length} queued / ${runningRuns.length} running`}
         />
       </div>
       {operationMessage ? (
@@ -566,7 +651,10 @@ export function RetrainingPage() {
           {!canLoadRetraining ? (
             <StateMessage message="No project context is selected." />
           ) : policiesQuery.error ? (
-            <StateMessage message="Retraining policy request failed." tone="danger" />
+            <StateMessage
+              message="Retraining policy request failed."
+              tone="danger"
+            />
           ) : policies.length === 0 ? (
             <StateMessage
               message={
@@ -627,7 +715,10 @@ export function RetrainingPage() {
           {!canLoadRetraining ? (
             <StateMessage message="No project context is selected." />
           ) : runsQuery.error ? (
-            <StateMessage message="Retraining run request failed." tone="danger" />
+            <StateMessage
+              message="Retraining run request failed."
+              tone="danger"
+            />
           ) : runs.length === 0 ? (
             <StateMessage
               message={
@@ -657,7 +748,10 @@ export function RetrainingPage() {
                       run={run}
                       policy={policyForRun(policies, run)}
                       selected={run.id === selectedRun?.id}
-                      isMutating={approveRunMutation.isPending || rejectRunMutation.isPending}
+                      isMutating={
+                        approveRunMutation.isPending ||
+                        rejectRunMutation.isPending
+                      }
                       onSelect={() => setSelectedRunId(run.id)}
                       onApprove={() => approveRunMutation.mutate(run)}
                       onReject={() => rejectRunMutation.mutate(run)}
@@ -673,7 +767,10 @@ export function RetrainingPage() {
           {!selectedRun ? (
             <StateMessage message="No retraining run is selected." />
           ) : (
-            <RunDetail run={selectedRun} policy={policyForRun(policies, selectedRun)} />
+            <RunDetail
+              run={selectedRun}
+              policy={policyForRun(policies, selectedRun)}
+            />
           )}
         </DataPanel>
       </div>
@@ -813,7 +910,9 @@ function CreatePolicyForm({
   onEnabledChange,
 }: CreatePolicyFormProps) {
   const lineageReady =
-    lineageMode === "dataset" ? datasetVersions.length > 0 : featureSets.length > 0;
+    lineageMode === "dataset"
+      ? datasetVersions.length > 0
+      : featureSets.length > 0;
   const canSubmit =
     !isPending &&
     !dependenciesLoading &&
@@ -901,13 +1000,19 @@ function CreatePolicyForm({
         onAlertMinObservedValueChange={onAlertMinObservedValueChange}
       />
       <div className="mt-4 rounded border border-slate-200 bg-white p-3">
-        <div className="text-xs font-semibold uppercase text-steel">Training Template</div>
+        <div className="text-xs font-semibold uppercase text-steel">
+          Training Template
+        </div>
         <div className="mt-3 grid gap-3 lg:grid-cols-[140px_1fr_1fr]">
           <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
             Lineage Source
             <select
               value={lineageMode}
-              onChange={(event) => onLineageModeChange(event.target.value as "dataset" | "feature_set")}
+              onChange={(event) =>
+                onLineageModeChange(
+                  event.target.value as "dataset" | "feature_set",
+                )
+              }
               className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
             >
               <option value="dataset">dataset</option>
@@ -934,7 +1039,9 @@ function CreatePolicyForm({
                 Dataset Version
                 <select
                   value={selectedDatasetVersionId}
-                  onChange={(event) => onDatasetVersionChange(event.target.value)}
+                  onChange={(event) =>
+                    onDatasetVersionChange(event.target.value)
+                  }
                   className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
                 >
                   {datasetVersions.map((version) => (
@@ -991,7 +1098,9 @@ function CreatePolicyForm({
             Objective Metric
             <input
               value={objectiveMetricName}
-              onChange={(event) => onObjectiveMetricNameChange(event.target.value)}
+              onChange={(event) =>
+                onObjectiveMetricNameChange(event.target.value)
+              }
               className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
             />
           </label>
@@ -1000,7 +1109,9 @@ function CreatePolicyForm({
           Hyperparameters
           <textarea
             value={hyperparametersText}
-            onChange={(event) => onHyperparametersTextChange(event.target.value)}
+            onChange={(event) =>
+              onHyperparametersTextChange(event.target.value)
+            }
             rows={5}
             className="rounded border border-slate-200 bg-white px-3 py-2 font-mono text-xs font-normal normal-case text-ink outline-none focus:border-signal"
           />
@@ -1044,7 +1155,8 @@ function CreatePolicyForm({
         </div>
       ) : !lineageReady ? (
         <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Select an available dataset version or feature set before creating the policy.
+          Select an available dataset version or feature set before creating the
+          policy.
         </div>
       ) : null}
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1126,7 +1238,9 @@ function TriggerConfigFields({
     return (
       <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_1fr]">
         <div>
-          <div className="text-xs font-semibold uppercase text-steel">Alert Severities</div>
+          <div className="text-xs font-semibold uppercase text-steel">
+            Alert Severities
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <ToggleField
               label="Info"
@@ -1153,7 +1267,9 @@ function TriggerConfigFields({
           <input
             inputMode="decimal"
             value={alertMinObservedValue}
-            onChange={(event) => onAlertMinObservedValueChange(event.target.value)}
+            onChange={(event) =>
+              onAlertMinObservedValueChange(event.target.value)
+            }
             className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
           />
         </label>
@@ -1184,14 +1300,19 @@ function PolicyCard({
         <div>
           <div className="font-medium">{policy.name}</div>
           <div className="mt-1 text-xs text-steel">
-            {policy.description || formatTrainingTemplate(policy.training_template)}
+            {policy.description ||
+              formatTrainingTemplate(policy.training_template)}
           </div>
         </div>
-        <span className={policyStatusClassName(policy)}>{policy.trigger_type}</span>
+        <span className={policyStatusClassName(policy)}>
+          {policy.trigger_type}
+        </span>
       </div>
       <div className="mt-3 grid gap-2 text-xs text-steel sm:grid-cols-4">
         <div>{deployment?.name ?? policy.deployment_id.slice(0, 8)}</div>
-        <div>{policy.approval_required ? "approval required" : "auto queue"}</div>
+        <div>
+          {policy.approval_required ? "approval required" : "auto queue"}
+        </div>
         <div>{formatDuration(policy.cooldown_seconds)} cooldown</div>
         <div>{policy.max_runs_per_day}/day limit</div>
       </div>
@@ -1251,7 +1372,9 @@ function PolicyDetail({
           icon={<Play className="h-4 w-4" />}
           label="Training"
           value={String(policy.training_template.algorithm ?? "algorithm")}
-          detail={String(policy.training_template.objective_metric_name ?? "objective")}
+          detail={String(
+            policy.training_template.objective_metric_name ?? "objective",
+          )}
         />
       </div>
       <div className="rounded border border-slate-200 p-3 text-xs text-steel">
@@ -1290,7 +1413,9 @@ function RunRow({
         <span className={runStatusClassName(run.status)}>{run.status}</span>
       </td>
       <td>{formatSignal(run)}</td>
-      <td className="max-w-[200px] truncate">{run.training_run_id ?? "not launched"}</td>
+      <td className="max-w-[200px] truncate">
+        {run.training_run_id ?? "not launched"}
+      </td>
       <td>
         <div className="flex items-center gap-2">
           <button
@@ -1345,7 +1470,9 @@ function RunDetail({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="font-semibold">{formatRunName(run)}</div>
-          <div className="mt-1 text-xs text-steel">{policy?.name ?? run.policy_id.slice(0, 8)}</div>
+          <div className="mt-1 text-xs text-steel">
+            {policy?.name ?? run.policy_id.slice(0, 8)}
+          </div>
         </div>
         <span className={runStatusClassName(run.status)}>{run.status}</span>
       </div>
@@ -1359,22 +1486,35 @@ function RunDetail({
         <SignalTile
           icon={<Play className="h-4 w-4" />}
           label="Training"
-          value={run.training_run_id ? run.training_run_id.slice(0, 8) : "not launched"}
+          value={
+            run.training_run_id
+              ? run.training_run_id.slice(0, 8)
+              : "not launched"
+          }
           detail={String(run.training_config.algorithm ?? "algorithm")}
         />
         <SignalTile
           icon={<CheckCircle className="h-4 w-4" />}
           label="Decision"
           value={String(run.decision_metadata.reason ?? run.reason)}
-          detail={run.approved_by ? "approved" : run.rejected_by ? "rejected" : "open"}
+          detail={
+            run.approved_by ? "approved" : run.rejected_by ? "rejected" : "open"
+          }
         />
       </div>
       <div className="rounded border border-slate-200 p-3 text-sm">
         <div className="font-medium">Training Config</div>
         <div className="mt-2 grid gap-2 text-xs text-steel sm:grid-cols-2">
-          <div>algorithm: {String(run.training_config.algorithm ?? "unknown")}</div>
-          <div>model: {String(run.training_config.model_type ?? "unknown")}</div>
-          <div>objective: {String(run.training_config.objective_metric_name ?? "unknown")}</div>
+          <div>
+            algorithm: {String(run.training_config.algorithm ?? "unknown")}
+          </div>
+          <div>
+            model: {String(run.training_config.model_type ?? "unknown")}
+          </div>
+          <div>
+            objective:{" "}
+            {String(run.training_config.objective_metric_name ?? "unknown")}
+          </div>
           <div>run id: {run.id}</div>
         </div>
       </div>
@@ -1402,7 +1542,8 @@ function ToggleField({
         className="h-4 w-4 rounded border-slate-300 text-signal focus:ring-signal"
       />
       <span>
-        {label}: <span className="font-normal normal-case text-ink">{text}</span>
+        {label}:{" "}
+        <span className="font-normal normal-case text-ink">{text}</span>
       </span>
     </label>
   );
@@ -1449,7 +1590,9 @@ function deploymentForPolicy(
   deployments: Deployment[],
   policy: RetrainingPolicy,
 ): Deployment | undefined {
-  return deployments.find((deployment) => deployment.id === policy.deployment_id);
+  return deployments.find(
+    (deployment) => deployment.id === policy.deployment_id,
+  );
 }
 
 function policyForRun(
@@ -1504,7 +1647,9 @@ function formatRunName(run: RetrainingRun): string {
 function formatSignal(run: RetrainingRun): string {
   if (run.drift_report_id) {
     const score = run.decision_metadata.drift_score;
-    return typeof score === "number" ? `drift ${score.toFixed(3)}` : "drift report";
+    return typeof score === "number"
+      ? `drift ${score.toFixed(3)}`
+      : "drift report";
   }
   if (run.alert_event_id) {
     const severity = run.decision_metadata.alert_severity;
@@ -1520,6 +1665,24 @@ function runVerb(status: string): string {
   if (status === "queued") {
     return "was queued";
   }
+  if (status === "running") {
+    return "is running";
+  }
+  if (status === "succeeded") {
+    return "succeeded";
+  }
+  if (status === "failed") {
+    return "failed";
+  }
+  if (status === "canceled") {
+    return "was canceled";
+  }
+  if (status === "rejected") {
+    return "was rejected";
+  }
+  if (status === "skipped") {
+    return "was skipped";
+  }
   return `status is ${status}`;
 }
 
@@ -1534,19 +1697,26 @@ function policyStatusClassName(policy: RetrainingPolicy): string {
 }
 
 function runStatusClassName(status: string): string {
-  if (status === "queued") {
+  if (status === "succeeded") {
     return "rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-signal";
   }
-  if (status === "pending_approval") {
+  if (
+    status === "pending_approval" ||
+    status === "queued" ||
+    status === "running"
+  ) {
     return "rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700";
   }
-  if (status === "failed" || status === "rejected") {
+  if (status === "failed" || status === "canceled" || status === "rejected") {
     return "rounded bg-rose-50 px-2 py-1 text-xs font-medium text-risk";
   }
   return "rounded bg-field px-2 py-1 text-xs font-medium";
 }
 
-function parseJsonObject(value: string, label: string): Record<string, unknown> {
+function parseJsonObject(
+  value: string,
+  label: string,
+): Record<string, unknown> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(value);
@@ -1559,7 +1729,12 @@ function parseJsonObject(value: string, label: string): Record<string, unknown> 
   return parsed as Record<string, unknown>;
 }
 
-function parseInteger(value: string, label: string, min: number, max: number): number {
+function parseInteger(
+  value: string,
+  label: string,
+  min: number,
+  max: number,
+): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
     throw new Error(`${label} must be an integer between ${min} and ${max}.`);

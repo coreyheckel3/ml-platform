@@ -12,6 +12,8 @@ from forgeml.modules.training.api.schemas import (
     TrainingRunEventListResponse,
     TrainingRunEventResponse,
     TrainingRunListResponse,
+    TrainingRunLogListResponse,
+    TrainingRunLogResponse,
     TrainingRunResponse,
 )
 from forgeml.modules.training.application.services import (
@@ -22,6 +24,7 @@ from forgeml.modules.training.application.services import (
 from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
     TrainingRunStatus,
 )
 from forgeml.modules.training.infrastructure.execution import LocalExampleTrainingRunner
@@ -153,6 +156,20 @@ def list_training_run_events(
     )
 
 
+@router.get(
+    "/training-runs/{training_run_id}/logs",
+    response_model=TrainingRunLogListResponse,
+)
+def list_training_run_logs(
+    training_run_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+    service: TrainingRunService = Depends(get_training_run_service),
+) -> TrainingRunLogListResponse:
+    return TrainingRunLogListResponse(
+        items=[_log_response(log) for log in service.list_logs(training_run_id, principal)]
+    )
+
+
 def _training_run_response(training_run: TrainingRun) -> TrainingRunResponse:
     return TrainingRunResponse(
         id=str(training_run.id),
@@ -184,4 +201,17 @@ def _event_response(event: TrainingRunEvent) -> TrainingRunEventResponse:
         event_type=event.event_type,
         message=event.message,
         metadata=event.metadata,
+    )
+
+
+def _log_response(log: TrainingRunLog) -> TrainingRunLogResponse:
+    return TrainingRunLogResponse(
+        id=str(log.id),
+        training_run_id=str(log.training_run_id),
+        sequence=log.sequence,
+        level=log.level,
+        logger=log.logger,
+        message=log.message,
+        metadata=log.metadata,
+        created_at=log.created_at.isoformat() if log.created_at else None,
     )

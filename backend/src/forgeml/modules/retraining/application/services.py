@@ -175,11 +175,14 @@ class RetrainingService:
 
     def list_runs(self, project_id: UUID, principal: Principal) -> list[RetrainingRun]:
         self._require(principal, "retraining_runs:read")
-        return self._repository.list_runs(UUID(principal.organization_id), project_id)
+        return [
+            self._sync_training_status(run)
+            for run in self._repository.list_runs(UUID(principal.organization_id), project_id)
+        ]
 
     def get_run(self, run_id: UUID, principal: Principal) -> RetrainingRun:
         self._require(principal, "retraining_runs:read")
-        return self._get_scoped_run(run_id, principal)
+        return self._sync_training_status(self._get_scoped_run(run_id, principal))
 
     def approve_run(self, run_id: UUID, principal: Principal) -> RetrainingRun:
         self._require(principal, "retraining_runs:approve")
@@ -404,21 +407,21 @@ class RetrainingService:
         if policy.trigger_type == RetrainingTriggerType.DRIFT:
             if command.drift_report_id is None:
                 raise DomainValidationError("Drift-triggered retraining requires a drift report.")
-            signal = self._repository.get_drift_signal(command.drift_report_id)
-            if signal is None or not _same_scope(policy, signal):
+            drift_signal = self._repository.get_drift_signal(command.drift_report_id)
+            if drift_signal is None or not _same_scope(policy, drift_signal):
                 raise ResourceNotFoundError("Drift report was not found.")
-            if signal.deployment_id != policy.deployment_id:
+            if drift_signal.deployment_id != policy.deployment_id:
                 raise ResourceNotFoundError("Drift report was not found.")
-            return signal, None
+            return drift_signal, None
         if policy.trigger_type == RetrainingTriggerType.ALERT:
             if command.alert_event_id is None:
                 raise DomainValidationError("Alert-triggered retraining requires an alert event.")
-            signal = self._repository.get_alert_signal(command.alert_event_id)
-            if signal is None or not _same_scope(policy, signal):
+            alert_signal = self._repository.get_alert_signal(command.alert_event_id)
+            if alert_signal is None or not _same_scope(policy, alert_signal):
                 raise ResourceNotFoundError("Alert event was not found.")
-            if signal.deployment_id != policy.deployment_id:
+            if alert_signal.deployment_id != policy.deployment_id:
                 raise ResourceNotFoundError("Alert event was not found.")
-            return None, signal
+            return None, alert_signal
         return None, None
 
     def _trigger_accepts_signal(
@@ -516,6 +519,9 @@ class RetrainingService:
         training_config: dict[str, object],
         requested_by: UUID,
     ) -> RetrainingTrainingRequest:
+        hyperparameters = training_config.get("hyperparameters", {})
+        if not isinstance(hyperparameters, dict):
+            raise DomainValidationError("Retraining training config hyperparameters are invalid.")
         return RetrainingTrainingRequest(
             organization_id=UUID(str(training_config["organization_id"])),
             project_id=UUID(str(training_config["project_id"])),
@@ -534,7 +540,7 @@ class RetrainingService:
             algorithm=str(training_config["algorithm"]),
             model_type=str(training_config["model_type"]),
             objective_metric_name=str(training_config["objective_metric_name"]),
-            hyperparameters=dict(training_config.get("hyperparameters", {})),
+            hyperparameters={str(key): value for key, value in hyperparameters.items()},
             requested_by=requested_by,
         )
 
@@ -593,6 +599,26 @@ class RetrainingService:
             metadata=event_metadata,
         )
 
+    def _sync_training_status(self, run: RetrainingRun) -> RetrainingRun:
+        if run.training_run_id is None:
+            return run
+        training_status = self._repository.get_training_run_status(run.training_run_id)
+        if training_status is None:
+            return run
+        next_status = _retraining_status_from_training_status(training_status)
+        if next_status is None or next_status == run.status:
+            return run
+        updated = replace(
+            run,
+            status=next_status,
+            decision_metadata={
+                **run.decision_metadata,
+                "training_status": training_status,
+                "previous_retraining_status": run.status.value,
+            },
+        )
+        return self._repository.update_run(updated)
+
     def _get_scoped_policy(self, policy_id: UUID, principal: Principal) -> RetrainingPolicy:
         policy = self._repository.get_policy(policy_id)
         if policy is None or str(policy.organization_id) != principal.organization_id:
@@ -628,3 +654,15 @@ def _ensure_aware(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value
+
+
+def _retraining_status_from_training_status(value: str) -> RetrainingRunStatus | None:
+    status_map = {
+        "requested": RetrainingRunStatus.QUEUED,
+        "queued": RetrainingRunStatus.QUEUED,
+        "running": RetrainingRunStatus.RUNNING,
+        "succeeded": RetrainingRunStatus.SUCCEEDED,
+        "failed": RetrainingRunStatus.FAILED,
+        "canceled": RetrainingRunStatus.CANCELED,
+    }
+    return status_map.get(value)

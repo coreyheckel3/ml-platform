@@ -18,6 +18,7 @@ from forgeml.modules.training.domain.entities import (
     TrainingExecutionResult,
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
     TrainingRunStatus,
 )
 from forgeml.platform.domain.errors import (
@@ -32,6 +33,7 @@ class FakeTrainingRunRepository:
     def __init__(self) -> None:
         self.training_runs: dict[UUID, TrainingRun] = {}
         self.events: list[TrainingRunEvent] = []
+        self.logs: list[TrainingRunLog] = []
         self.experiments: set[tuple[UUID, UUID, UUID]] = set()
         self.dataset_versions: set[tuple[UUID, UUID]] = set()
         self.feature_sets: set[tuple[UUID, UUID]] = set()
@@ -86,6 +88,17 @@ class FakeTrainingRunRepository:
 
     def list_events(self, training_run_id: UUID) -> list[TrainingRunEvent]:
         return [event for event in self.events if event.training_run_id == training_run_id]
+
+    def add_log(self, log: TrainingRunLog) -> TrainingRunLog:
+        self.logs.append(log)
+        return log
+
+    def next_log_sequence(self, training_run_id: UUID) -> int:
+        sequences = [log.sequence for log in self.logs if log.training_run_id == training_run_id]
+        return (max(sequences) if sequences else 0) + 1
+
+    def list_logs(self, training_run_id: UUID) -> list[TrainingRunLog]:
+        return [log for log in self.logs if log.training_run_id == training_run_id]
 
     def experiment_belongs_to_project(
         self,
@@ -376,6 +389,15 @@ def test_training_service_executes_queued_run_with_runner() -> None:
         "running",
         "succeeded",
     ]
+    assert [log.sequence for log in service.list_logs(training_run.id, actor)] == [1, 2, 3, 4, 5]
+    assert [log.message for log in repository.logs] == [
+        "Training run was queued for execution.",
+        "Worker claimed training run.",
+        "Training runner execution started.",
+        "Training runner produced artifacts.",
+        "Training run finished with status succeeded.",
+    ]
+    assert repository.logs[-1].metadata["metrics"] == {"auc": 0.95}
 
 
 def test_training_service_rejects_execution_without_matching_runner() -> None:

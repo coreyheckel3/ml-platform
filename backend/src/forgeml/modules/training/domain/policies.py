@@ -6,6 +6,7 @@ from forgeml.platform.domain.errors import DomainValidationError
 
 _NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/ -]*$")
 _METRIC_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_.:/-]*$")
+_LOG_LEVELS = {"debug", "info", "warning", "error"}
 _ALLOWED_TERMINAL_STATUSES = {
     TrainingRunStatus.SUCCEEDED,
     TrainingRunStatus.FAILED,
@@ -62,6 +63,30 @@ def validate_metrics(metrics: dict[str, float]) -> None:
 def validate_terminal_status(status: TrainingRunStatus) -> None:
     if status not in _ALLOWED_TERMINAL_STATUSES:
         raise DomainValidationError("Training result must use a terminal status.")
+
+
+def validate_training_log(
+    *,
+    sequence: int,
+    level: str,
+    logger: str,
+    message: str,
+    metadata: dict[str, object],
+) -> None:
+    if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence < 1:
+        raise DomainValidationError("Training log sequence must be a positive integer.")
+    if level not in _LOG_LEVELS:
+        raise DomainValidationError("Training log level is unsupported.")
+    _validate_name(logger, "Training log logger", 1, 120)
+    stripped_message = message.strip()
+    if len(stripped_message) < 1:
+        raise DomainValidationError("Training log message is required.")
+    if len(stripped_message) > 4000:
+        raise DomainValidationError("Training log message must be at most 4000 characters.")
+    if not isinstance(metadata, dict):
+        raise DomainValidationError("Training log metadata must be an object.")
+    if len(metadata) > 100:
+        raise DomainValidationError("Training log metadata cannot exceed 100 keys.")
 
 
 def _validate_name(value: str, label: str, minimum: int, maximum: int) -> None:

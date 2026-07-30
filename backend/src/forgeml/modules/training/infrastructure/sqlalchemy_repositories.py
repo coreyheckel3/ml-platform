@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from forgeml.modules.datasets.infrastructure.sqlalchemy_models import (
@@ -17,10 +17,12 @@ from forgeml.modules.projects.infrastructure.sqlalchemy_models import ProjectMod
 from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunEvent,
+    TrainingRunLog,
     TrainingRunStatus,
 )
 from forgeml.modules.training.infrastructure.sqlalchemy_models import (
     TrainingRunEventModel,
+    TrainingRunLogModel,
     TrainingRunModel,
 )
 
@@ -132,6 +134,36 @@ class SqlAlchemyTrainingRunRepository:
             .order_by(TrainingRunEventModel.created_at)
         ).all()
         return [_event_to_domain(model) for model in models]
+
+    def add_log(self, log: TrainingRunLog) -> TrainingRunLog:
+        model = TrainingRunLogModel(
+            id=log.id,
+            training_run_id=log.training_run_id,
+            sequence=log.sequence,
+            level=log.level,
+            logger=log.logger,
+            message=log.message,
+            metadata_json=log.metadata,
+        )
+        self._session.add(model)
+        self._session.flush()
+        return _log_to_domain(model)
+
+    def next_log_sequence(self, training_run_id: UUID) -> int:
+        current_max = self._session.scalar(
+            select(func.max(TrainingRunLogModel.sequence)).where(
+                TrainingRunLogModel.training_run_id == training_run_id
+            )
+        )
+        return int(current_max or 0) + 1
+
+    def list_logs(self, training_run_id: UUID) -> list[TrainingRunLog]:
+        models = self._session.scalars(
+            select(TrainingRunLogModel)
+            .where(TrainingRunLogModel.training_run_id == training_run_id)
+            .order_by(TrainingRunLogModel.sequence)
+        ).all()
+        return [_log_to_domain(model) for model in models]
 
     def experiment_belongs_to_project(
         self,
@@ -267,4 +299,17 @@ def _event_to_domain(model: TrainingRunEventModel) -> TrainingRunEvent:
         event_type=model.event_type,
         message=model.message,
         metadata=model.metadata_json,
+    )
+
+
+def _log_to_domain(model: TrainingRunLogModel) -> TrainingRunLog:
+    return TrainingRunLog(
+        id=model.id,
+        training_run_id=model.training_run_id,
+        sequence=model.sequence,
+        level=model.level,
+        logger=model.logger,
+        message=model.message,
+        metadata=model.metadata_json,
+        created_at=model.created_at,
     )

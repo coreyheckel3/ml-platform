@@ -109,6 +109,8 @@ def test_retraining_repository_round_trips_policies_runs_and_trigger_signals() -
     alert_event_id = uuid4()
     policy_id = uuid4()
     run_id = uuid4()
+    linked_training_run_id = uuid4()
+    linked_experiment_run_id = uuid4()
 
     with Session(engine) as session:
         session.add(OrganizationModel(id=organization_id, name="ForgeML", slug="forgeml"))
@@ -279,6 +281,45 @@ def test_retraining_repository_round_trips_policies_runs_and_trigger_signals() -
                 resolved_by=None,
             )
         )
+        session.add(
+            TrainingRunModel(
+                id=linked_training_run_id,
+                organization_id=organization_id,
+                project_id=project_id,
+                experiment_id=experiment_id,
+                experiment_run_id=linked_experiment_run_id,
+                dataset_version_id=dataset_version_id,
+                feature_set_id=None,
+                algorithm="xgboost",
+                model_type="xgboost",
+                objective_metric_name="auc",
+                hyperparameters_json={"max_depth": 6},
+                status="succeeded",
+                requested_by=user_id,
+                artifact_uri="s3://forgeml/training-runs/retrain-1",
+                orchestrator_run_id="workflow-retrain-1",
+                metrics_json={"auc": 0.94},
+                error_message=None,
+            )
+        )
+        session.add(
+            ExperimentRunModel(
+                id=linked_experiment_run_id,
+                experiment_id=experiment_id,
+                project_id=project_id,
+                run_name="fraud-retrain-drift-abcdef12",
+                status="running",
+                model_type="xgboost",
+                started_by=user_id,
+                dataset_version_id=dataset_version_id,
+                feature_set_id=None,
+                parameters_json={"max_depth": 6},
+                metrics_json={},
+                artifact_uri="s3://forgeml/training-runs/retrain-1",
+                evaluation_report_json={},
+                error_message=None,
+            )
+        )
         repository = SqlAlchemyRetrainingRepository(session)
         policy = repository.add_policy(
             RetrainingPolicy(
@@ -357,6 +398,7 @@ def test_retraining_repository_round_trips_policies_runs_and_trigger_signals() -
         )
         drift_signal = repository.get_drift_signal(drift_report_id)
         alert_signal = repository.get_alert_signal(alert_event_id)
+        training_status = repository.get_training_run_status(linked_training_run_id)
 
     assert policies[0].slug == "fraud-drift-retraining"
     assert runs[0].status == RetrainingRunStatus.PENDING_APPROVAL
@@ -370,3 +412,4 @@ def test_retraining_repository_round_trips_policies_runs_and_trigger_signals() -
     assert drift_signal.drift_score == 0.42
     assert alert_signal is not None
     assert alert_signal.deployment_id == deployment_id
+    assert training_status == "succeeded"

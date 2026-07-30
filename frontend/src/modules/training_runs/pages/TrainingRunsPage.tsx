@@ -8,15 +8,27 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   listDatasets,
   listDatasetVersions,
   type Dataset,
 } from "../../datasets/api/datasets";
-import { listExperiments, type Experiment } from "../../experiments/api/experiments";
-import { listFeatureSets, type FeatureSet } from "../../feature_store/api/featureStore";
+import {
+  listExperiments,
+  type Experiment,
+} from "../../experiments/api/experiments";
+import {
+  listFeatureSets,
+  type FeatureSet,
+} from "../../feature_store/api/featureStore";
 import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
@@ -24,11 +36,13 @@ import {
   cancelTrainingRun,
   getTrainingRun,
   listTrainingRunEvents,
+  listTrainingRunLogs,
   listTrainingRuns,
   recordTrainingResult,
   startTrainingRun,
   type TrainingRun,
   type TrainingRunEvent,
+  type TrainingRunLog,
 } from "../api/trainingRuns";
 
 export function TrainingRunsPage() {
@@ -42,16 +56,23 @@ export function TrainingRunsPage() {
   const [selectedDatasetVersionId, setSelectedDatasetVersionId] = useState("");
   const [selectedFeatureSetId, setSelectedFeatureSetId] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [lineageMode, setLineageMode] = useState<"dataset" | "feature_set">("dataset");
+  const [lineageMode, setLineageMode] = useState<"dataset" | "feature_set">(
+    "dataset",
+  );
   const [runName, setRunName] = useState("manual-training-run");
   const [algorithm, setAlgorithm] = useState("xgboost");
   const [modelType, setModelType] = useState("xgboost");
   const [objectiveMetricName, setObjectiveMetricName] = useState("auc");
-  const [hyperparametersText, setHyperparametersText] = useState(defaultHyperparametersText);
-  const [resultStatus, setResultStatus] =
-    useState<"succeeded" | "failed" | "canceled">("succeeded");
+  const [hyperparametersText, setHyperparametersText] = useState(
+    defaultHyperparametersText,
+  );
+  const [resultStatus, setResultStatus] = useState<
+    "succeeded" | "failed" | "canceled"
+  >("succeeded");
   const [metricsText, setMetricsText] = useState(defaultMetricsText);
-  const [evaluationReportText, setEvaluationReportText] = useState(defaultEvaluationReportText);
+  const [evaluationReportText, setEvaluationReportText] = useState(
+    defaultEvaluationReportText,
+  );
   const [resultErrorMessage, setResultErrorMessage] = useState("");
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
@@ -108,8 +129,9 @@ export function TrainingRunsPage() {
     [datasetVersionsQuery.data?.items],
   );
   const selectedDatasetVersion =
-    datasetVersions.find((version) => version.id === selectedDatasetVersionId) ??
-    datasetVersions[0];
+    datasetVersions.find(
+      (version) => version.id === selectedDatasetVersionId,
+    ) ?? datasetVersions[0];
   const selectedFeatureSet =
     featureSets.find((featureSet) => featureSet.id === selectedFeatureSetId) ??
     featureSets[0];
@@ -123,10 +145,19 @@ export function TrainingRunsPage() {
     queryFn: () => listTrainingRunEvents(selectedRun?.id ?? "", token ?? ""),
     enabled: Boolean(token && selectedRun),
   });
+  const logsQuery = useQuery({
+    queryKey: ["training-run-logs", selectedRun?.id],
+    queryFn: () => listTrainingRunLogs(selectedRun?.id ?? "", token ?? ""),
+    enabled: Boolean(token && selectedRun),
+  });
   const selectedRunDetail = selectedRunQuery.data ?? selectedRun;
   const events = useMemo(
     () => eventsQuery.data?.items ?? [],
     [eventsQuery.data?.items],
+  );
+  const logs = useMemo(
+    () => logsQuery.data?.items ?? [],
+    [logsQuery.data?.items],
   );
   const counts = countByStatus(trainingRuns.map((run) => run.status));
   const terminalCount =
@@ -145,12 +176,20 @@ export function TrainingRunsPage() {
           experiment_id: selectedExperiment.id,
           run_name: runName.trim(),
           dataset_version_id:
-            lineageMode === "dataset" ? selectedDatasetVersion?.id ?? null : null,
-          feature_set_id: lineageMode === "feature_set" ? selectedFeatureSet?.id ?? null : null,
+            lineageMode === "dataset"
+              ? (selectedDatasetVersion?.id ?? null)
+              : null,
+          feature_set_id:
+            lineageMode === "feature_set"
+              ? (selectedFeatureSet?.id ?? null)
+              : null,
           algorithm: algorithm.trim(),
           model_type: modelType.trim(),
           objective_metric_name: objectiveMetricName.trim(),
-          hyperparameters: parseJsonObject(hyperparametersText, "Hyperparameters"),
+          hyperparameters: parseJsonObject(
+            hyperparametersText,
+            "Hyperparameters",
+          ),
         },
         token,
       );
@@ -165,7 +204,9 @@ export function TrainingRunsPage() {
     onError: (error) => {
       setOperationMessage(null);
       setOperationError(
-        error instanceof Error ? error.message : "Training run creation failed.",
+        error instanceof Error
+          ? error.message
+          : "Training run creation failed.",
       );
     },
   });
@@ -185,7 +226,9 @@ export function TrainingRunsPage() {
     onError: (error) => {
       setOperationMessage(null);
       setOperationError(
-        error instanceof Error ? error.message : "Training run cancellation failed.",
+        error instanceof Error
+          ? error.message
+          : "Training run cancellation failed.",
       );
     },
   });
@@ -199,7 +242,10 @@ export function TrainingRunsPage() {
         {
           status: resultStatus,
           metrics: parseMetricObject(metricsText),
-          evaluation_report: parseJsonObject(evaluationReportText, "Evaluation report"),
+          evaluation_report: parseJsonObject(
+            evaluationReportText,
+            "Evaluation report",
+          ),
           error_message: optionalString(resultErrorMessage),
         },
         token,
@@ -207,14 +253,18 @@ export function TrainingRunsPage() {
     },
     onSuccess: (run) => {
       setOperationError(null);
-      setOperationMessage(`Recorded ${run.status} result for ${run.id.slice(0, 8)}.`);
+      setOperationMessage(
+        `Recorded ${run.status} result for ${run.id.slice(0, 8)}.`,
+      );
       setSelectedRunId(run.id);
       invalidateTrainingState(run.id);
     },
     onError: (error) => {
       setOperationMessage(null);
       setOperationError(
-        error instanceof Error ? error.message : "Training result recording failed.",
+        error instanceof Error
+          ? error.message
+          : "Training result recording failed.",
       );
     },
   });
@@ -224,7 +274,10 @@ export function TrainingRunsPage() {
       setSelectedRunId(trainingRuns[0].id);
       return;
     }
-    if (selectedRunId && !trainingRuns.some((run) => run.id === selectedRunId)) {
+    if (
+      selectedRunId &&
+      !trainingRuns.some((run) => run.id === selectedRunId)
+    ) {
       setSelectedRunId(trainingRuns[0]?.id ?? "");
     }
   }, [trainingRuns, selectedRunId]);
@@ -247,7 +300,10 @@ export function TrainingRunsPage() {
       setSelectedDatasetId(datasets[0].id);
       return;
     }
-    if (selectedDatasetId && !datasets.some((dataset) => dataset.id === selectedDatasetId)) {
+    if (
+      selectedDatasetId &&
+      !datasets.some((dataset) => dataset.id === selectedDatasetId)
+    ) {
       setSelectedDatasetId(datasets[0]?.id ?? "");
     }
   }, [datasets, selectedDatasetId]);
@@ -259,7 +315,9 @@ export function TrainingRunsPage() {
     }
     if (
       selectedDatasetVersionId &&
-      !datasetVersions.some((version) => version.id === selectedDatasetVersionId)
+      !datasetVersions.some(
+        (version) => version.id === selectedDatasetVersionId,
+      )
     ) {
       setSelectedDatasetVersionId(datasetVersions[0]?.id ?? "");
     }
@@ -282,6 +340,7 @@ export function TrainingRunsPage() {
     queryClient.invalidateQueries({ queryKey: ["training-runs", projectId] });
     queryClient.invalidateQueries({ queryKey: ["training-run", runId] });
     queryClient.invalidateQueries({ queryKey: ["training-run-events", runId] });
+    queryClient.invalidateQueries({ queryKey: ["training-run-logs", runId] });
     queryClient.invalidateQueries({ queryKey: ["experiments", projectId] });
   }
 
@@ -304,7 +363,9 @@ export function TrainingRunsPage() {
     }
     if (algorithm.trim().length < 2 || modelType.trim().length < 2) {
       setOperationMessage(null);
-      setOperationError("Algorithm and model type must be at least 2 characters.");
+      setOperationError(
+        "Algorithm and model type must be at least 2 characters.",
+      );
       return;
     }
     if (!objectiveMetricName.trim()) {
@@ -338,8 +399,16 @@ export function TrainingRunsPage() {
         description="Airflow-orchestrated training jobs with retries, cancellation, evaluation, and artifact tracking."
       />
       <div className="grid gap-4 md:grid-cols-4">
-        <MetricCard label="Queued" value={String(counts.queued ?? 0)} detail="awaiting workers" />
-        <MetricCard label="Running" value={String(counts.running ?? 0)} detail="active jobs" />
+        <MetricCard
+          label="Queued"
+          value={String(counts.queued ?? 0)}
+          detail="awaiting workers"
+        />
+        <MetricCard
+          label="Running"
+          value={String(counts.running ?? 0)}
+          detail="active jobs"
+        />
         <MetricCard
           label="Succeeded"
           value={String(counts.succeeded ?? 0)}
@@ -430,7 +499,10 @@ export function TrainingRunsPage() {
           {!canLoadTrainingRuns ? (
             <StateMessage message="No project context is selected." />
           ) : runsQuery.error ? (
-            <StateMessage message="Training run request failed." tone="danger" />
+            <StateMessage
+              message="Training run request failed."
+              tone="danger"
+            />
           ) : trainingRuns.length === 0 ? (
             <StateMessage
               message={
@@ -474,7 +546,10 @@ export function TrainingRunsPage() {
           {!selectedRunDetail ? (
             <StateMessage message="No training run is selected." />
           ) : selectedRunQuery.error ? (
-            <StateMessage message="Training run detail request failed." tone="danger" />
+            <StateMessage
+              message="Training run detail request failed."
+              tone="danger"
+            />
           ) : (
             <RunDetail run={selectedRunDetail} />
           )}
@@ -494,7 +569,9 @@ export function TrainingRunsPage() {
                 <select
                   value={resultStatus}
                   onChange={(event) =>
-                    setResultStatus(event.target.value as "succeeded" | "failed" | "canceled")
+                    setResultStatus(
+                      event.target.value as "succeeded" | "failed" | "canceled",
+                    )
                   }
                   className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
                 >
@@ -516,7 +593,9 @@ export function TrainingRunsPage() {
                 Evaluation Report
                 <textarea
                   value={evaluationReportText}
-                  onChange={(event) => setEvaluationReportText(event.target.value)}
+                  onChange={(event) =>
+                    setEvaluationReportText(event.target.value)
+                  }
                   rows={5}
                   className="rounded border border-slate-200 bg-white px-3 py-2 font-mono text-xs font-normal normal-case text-ink outline-none focus:border-signal"
                 />
@@ -525,7 +604,9 @@ export function TrainingRunsPage() {
                 Error Message
                 <input
                   value={resultErrorMessage}
-                  onChange={(event) => setResultErrorMessage(event.target.value)}
+                  onChange={(event) =>
+                    setResultErrorMessage(event.target.value)
+                  }
                   className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
                 />
               </label>
@@ -545,7 +626,10 @@ export function TrainingRunsPage() {
           {!selectedRunDetail ? (
             <StateMessage message="No training run is selected." />
           ) : eventsQuery.error ? (
-            <StateMessage message="Training run event request failed." tone="danger" />
+            <StateMessage
+              message="Training run event request failed."
+              tone="danger"
+            />
           ) : events.length === 0 ? (
             <StateMessage
               message={
@@ -558,6 +642,33 @@ export function TrainingRunsPage() {
             <div className="space-y-3">
               {events.map((event) => (
                 <EventRow key={event.id} event={event} />
+              ))}
+            </div>
+          )}
+        </DataPanel>
+      </div>
+
+      <div className="mt-6">
+        <DataPanel title="Execution Logs">
+          {!selectedRunDetail ? (
+            <StateMessage message="No training run is selected." />
+          ) : logsQuery.error ? (
+            <StateMessage
+              message="Training run log request failed."
+              tone="danger"
+            />
+          ) : logs.length === 0 ? (
+            <StateMessage
+              message={
+                logsQuery.isFetching
+                  ? "Loading training run logs."
+                  : "No execution logs are recorded for this run."
+              }
+            />
+          ) : (
+            <div className="max-h-[420px] space-y-2 overflow-auto rounded border border-slate-200 bg-slate-950 p-3">
+              {logs.map((log) => (
+                <LogRow key={log.id} log={log} />
               ))}
             </div>
           )}
@@ -653,7 +764,9 @@ function StartRunForm({
   onHyperparametersTextChange,
 }: StartRunFormProps) {
   const lineageReady =
-    lineageMode === "dataset" ? datasetVersions.length > 0 : featureSets.length > 0;
+    lineageMode === "dataset"
+      ? datasetVersions.length > 0
+      : featureSets.length > 0;
   const canSubmit =
     !isPending &&
     !dependenciesLoading &&
@@ -695,7 +808,9 @@ function StartRunForm({
           <select
             value={lineageMode}
             onChange={(event) =>
-              onLineageModeChange(event.target.value as "dataset" | "feature_set")
+              onLineageModeChange(
+                event.target.value as "dataset" | "feature_set",
+              )
             }
             className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
           >
@@ -772,7 +887,9 @@ function StartRunForm({
           Objective Metric
           <input
             value={objectiveMetricName}
-            onChange={(event) => onObjectiveMetricNameChange(event.target.value)}
+            onChange={(event) =>
+              onObjectiveMetricNameChange(event.target.value)
+            }
             className="h-10 rounded border border-slate-200 bg-white px-3 text-sm font-normal normal-case text-ink outline-none focus:border-signal"
           />
         </label>
@@ -792,7 +909,8 @@ function StartRunForm({
         </div>
       ) : !lineageReady ? (
         <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          Select an available dataset version or feature set before starting a run.
+          Select an available dataset version or feature set before starting a
+          run.
         </div>
       ) : null}
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -901,7 +1019,11 @@ function RunDetail({ run }: { run: TrainingRun }) {
           icon={<ClipboardCheck className="h-4 w-4" />}
           label="Lineage"
           value={run.dataset_version_id ? "dataset" : "feature set"}
-          detail={(run.dataset_version_id ?? run.feature_set_id ?? "none").slice(0, 8)}
+          detail={(
+            run.dataset_version_id ??
+            run.feature_set_id ??
+            "none"
+          ).slice(0, 8)}
         />
       </div>
       <div className="rounded border border-slate-200 p-3 text-sm">
@@ -928,11 +1050,29 @@ function EventRow({ event }: { event: TrainingRunEvent }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="font-medium">{event.message}</div>
-          <div className="mt-1 text-xs text-steel">{formatEventMetadata(event.metadata)}</div>
+          <div className="mt-1 text-xs text-steel">
+            {formatEventMetadata(event.metadata)}
+          </div>
         </div>
         <span className="rounded bg-field px-2 py-1 text-xs font-medium">
           {event.event_type}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function LogRow({ log }: { log: TrainingRunLog }) {
+  return (
+    <div className="grid gap-2 rounded border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-200 md:grid-cols-[64px_86px_minmax(120px,180px)_1fr]">
+      <div className="font-mono text-slate-400">#{log.sequence}</div>
+      <div className={logLevelClassName(log.level)}>{log.level}</div>
+      <div className="truncate font-mono text-slate-400">{log.logger}</div>
+      <div className="min-w-0">
+        <div className="break-words font-mono">{log.message}</div>
+        <div className="mt-1 truncate font-mono text-slate-500">
+          {formatLogMetadata(log.metadata)}
+        </div>
       </div>
     </div>
   );
@@ -1011,7 +1151,20 @@ function statusClassName(status: string): string {
   return "rounded bg-field px-2 py-1 text-xs font-medium";
 }
 
-function parseJsonObject(value: string, label: string): Record<string, unknown> {
+function logLevelClassName(level: string): string {
+  if (level === "error") {
+    return "w-fit rounded bg-rose-950 px-2 py-0.5 font-medium text-rose-200";
+  }
+  if (level === "warning") {
+    return "w-fit rounded bg-amber-950 px-2 py-0.5 font-medium text-amber-200";
+  }
+  return "w-fit rounded bg-emerald-950 px-2 py-0.5 font-medium text-emerald-200";
+}
+
+function parseJsonObject(
+  value: string,
+  label: string,
+): Record<string, unknown> {
   let parsed: unknown;
   try {
     parsed = JSON.parse(value);
@@ -1051,6 +1204,36 @@ function formatEventMetadata(metadata: Record<string, unknown>): string {
     return workerId;
   }
   return "event metadata recorded";
+}
+
+function formatLogMetadata(metadata: Record<string, unknown>): string {
+  const entries = Object.entries(metadata).filter(
+    ([, value]) => value !== null,
+  );
+  if (entries.length === 0) {
+    return "no metadata";
+  }
+  return entries
+    .slice(0, 3)
+    .map(([key, value]) => `${key}=${formatMetadataValue(value)}`)
+    .join(" ");
+}
+
+function formatMetadataValue(value: unknown): string {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return `${value.length} items`;
+  }
+  if (value && typeof value === "object") {
+    return "object";
+  }
+  return "none";
 }
 
 function readLocalStorage(key: string): string | null {

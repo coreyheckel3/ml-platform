@@ -28,6 +28,17 @@ export type TrainingRunEvent = {
   metadata: Record<string, unknown>;
 };
 
+export type TrainingRunLog = {
+  id: string;
+  training_run_id: string;
+  sequence: number;
+  level: string;
+  logger: string;
+  message: string;
+  metadata: Record<string, unknown>;
+  created_at: string | null;
+};
+
 export type TrainingRunListResponse = {
   items: TrainingRun[];
   next_cursor: string | null;
@@ -35,6 +46,11 @@ export type TrainingRunListResponse = {
 
 export type TrainingRunEventListResponse = {
   items: TrainingRunEvent[];
+  next_cursor: string | null;
+};
+
+export type TrainingRunLogListResponse = {
+  items: TrainingRunLog[];
   next_cursor: string | null;
 };
 
@@ -59,57 +75,75 @@ export type RecordTrainingResultPayload = {
 export function startTrainingRun(
   projectId: string,
   payload: StartTrainingRunPayload,
-  token: string
+  token: string,
 ): Promise<TrainingRun> {
   return apiPost<StartTrainingRunPayload, TrainingRun>(
     `/api/v1/projects/${projectId}/training-runs`,
     payload,
-    { token }
+    { token },
   );
 }
 
 export function listTrainingRuns(
   projectId: string,
-  token: string
+  token: string,
 ): Promise<TrainingRunListResponse> {
-  return apiGet<TrainingRunListResponse>(`/api/v1/projects/${projectId}/training-runs`, {
-    token
-  });
+  return apiGet<TrainingRunListResponse>(
+    `/api/v1/projects/${projectId}/training-runs`,
+    {
+      token,
+    },
+  );
 }
 
-export function getTrainingRun(trainingRunId: string, token: string): Promise<TrainingRun> {
-  return apiGet<TrainingRun>(`/api/v1/training-runs/${trainingRunId}`, { token });
+export function getTrainingRun(
+  trainingRunId: string,
+  token: string,
+): Promise<TrainingRun> {
+  return apiGet<TrainingRun>(`/api/v1/training-runs/${trainingRunId}`, {
+    token,
+  });
 }
 
 export function recordTrainingResult(
   trainingRunId: string,
   payload: RecordTrainingResultPayload,
-  token: string
+  token: string,
 ): Promise<TrainingRun> {
   return apiPost<RecordTrainingResultPayload, TrainingRun>(
     `/api/v1/training-runs/${trainingRunId}/result`,
     payload,
-    { token }
+    { token },
   );
 }
 
 export function cancelTrainingRun(
   trainingRunId: string,
-  token: string
+  token: string,
 ): Promise<TrainingRun> {
   return apiPost<Record<string, never>, TrainingRun>(
     `/api/v1/training-runs/${trainingRunId}/cancel`,
     {},
-    { token }
+    { token },
   );
 }
 
 export function listTrainingRunEvents(
   trainingRunId: string,
-  token: string
+  token: string,
 ): Promise<TrainingRunEventListResponse> {
   return apiGet<TrainingRunEventListResponse>(
     `/api/v1/training-runs/${trainingRunId}/events`,
-    { token }
+    { token },
+  );
+}
+
+export function listTrainingRunLogs(
+  trainingRunId: string,
+  token: string,
+): Promise<TrainingRunLogListResponse> {
+  return apiGet<TrainingRunLogListResponse>(
+    `/api/v1/training-runs/${trainingRunId}/logs`,
+    { token },
   );
 }

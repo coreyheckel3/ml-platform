@@ -53,6 +53,7 @@ from forgeml.modules.retraining.infrastructure.sqlalchemy_models import (
 )
 from forgeml.modules.training.infrastructure.sqlalchemy_models import (
     TrainingRunEventModel,
+    TrainingRunLogModel,
     TrainingRunModel,
 )
 
@@ -90,6 +91,7 @@ __all__ = [
     "RetrainingPolicyModel",
     "RetrainingRunModel",
     "TrainingRunEventModel",
+    "TrainingRunLogModel",
     "TrainingRunModel",
     "UserModel",
 ]
