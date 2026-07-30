@@ -10,6 +10,7 @@ Run these checks before a staging or production deployment:
 python scripts/ci/production_readiness.py
 python -m pytest backend/tests
 npm --prefix frontend run lint
+npm --prefix frontend audit --omit=dev
 npm --prefix frontend run test -- --run
 npm --prefix frontend run build
 docker compose -f infra/compose/docker-compose.yml --profile full config
@@ -24,6 +25,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 ## Required Evidence
 
 - CI run URL for backend, frontend, Docker, and production-readiness checks
+- Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Alembic head revision included in the deployment artifact
 - Terraform plan reviewed for the target environment
 - k6 summary showing p95 latency below 500 ms for smoke traffic

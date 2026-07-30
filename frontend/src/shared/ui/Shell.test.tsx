@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -10,6 +9,7 @@ import {
   TOKEN_EXPIRES_AT_KEY,
   TOKEN_TYPE_KEY,
 } from "../../modules/auth/session/sessionStore";
+import { MemoryRouter } from "../routing/router";
 import { Shell } from "./Shell";
 
 type FetchCall = [string, RequestInit | undefined];
@@ -34,7 +34,9 @@ describe("Shell", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText("ml.engineer@example.com")).toBeInTheDocument();
+    expect(
+      await screen.findByText("ml.engineer@example.com"),
+    ).toBeInTheDocument();
     const currentUserCall = findFetchCall(fetchMock, "/api/v1/auth/me");
     expect(currentUserCall[1]?.headers).toMatchObject({
       authorization: "Bearer access-token",
@@ -69,9 +71,15 @@ describe("Shell", () => {
     );
 
     await waitFor(() => {
-      expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBe("rotated-access-token");
+      expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBe(
+        "rotated-access-token",
+      );
     });
-    const refreshCall = findFetchCall(fetchMock, "/api/v1/auth/refresh", "POST");
+    const refreshCall = findFetchCall(
+      fetchMock,
+      "/api/v1/auth/refresh",
+      "POST",
+    );
     expect(JSON.parse(String(refreshCall[1]?.body))).toMatchObject({
       refresh_token: "refresh-token",
     });
@@ -93,34 +101,39 @@ function seedSession(expiresAt = new Date(Date.now() + 900_000).toISOString()) {
 }
 
 function mockAuthWorkflow() {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input);
-    const method = init?.method ?? "GET";
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(input);
+      const method = init?.method ?? "GET";
 
-    if (method === "GET" && path === "/api/v1/auth/me") {
-      return jsonResponse({
-        id: "user-1",
-        email: "ml.engineer@example.com",
-        organization_id: "org-1",
-        permissions: ["projects:read"],
-      });
-    }
+      if (method === "GET" && path === "/api/v1/auth/me") {
+        return jsonResponse({
+          id: "user-1",
+          email: "ml.engineer@example.com",
+          organization_id: "org-1",
+          permissions: ["projects:read"],
+        });
+      }
 
-    if (method === "POST" && path === "/api/v1/auth/refresh") {
-      return jsonResponse({
-        access_token: "rotated-access-token",
-        refresh_token: "rotated-refresh-token",
-        token_type: "bearer",
-        expires_in: 900,
-      });
-    }
+      if (method === "POST" && path === "/api/v1/auth/refresh") {
+        return jsonResponse({
+          access_token: "rotated-access-token",
+          refresh_token: "rotated-refresh-token",
+          token_type: "bearer",
+          expires_in: 900,
+        });
+      }
 
-    if (method === "POST" && path === "/api/v1/auth/logout") {
-      return jsonResponse({ revoked: true });
-    }
+      if (method === "POST" && path === "/api/v1/auth/logout") {
+        return jsonResponse({ revoked: true });
+      }
 
-    return jsonResponse({ detail: `unexpected request: ${method} ${path}` }, false);
-  });
+      return jsonResponse(
+        { detail: `unexpected request: ${method} ${path}` },
+        false,
+      );
+    },
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }

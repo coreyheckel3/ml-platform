@@ -33,7 +33,7 @@ ForgeML is a modular monolith ML platform that stores control-plane metadata, mo
 | Unsafe model promotion | Training execution manifest validation, idempotent registry promotion, and approval gates before deployment revisions |
 | Data/schema corruption | Immutable dataset versions, validation runs, backups before migration |
 | Inference drift | Drift profiles, drift reports, alerting, and retraining policies |
-| Supply-chain compromise | CI lint/test/build gates and pinned runtime images where practical |
+| Supply-chain compromise | CI lint/test/build gates, production dependency audit gates, reduced frontend runtime dependency surface, and pinned runtime images where practical |
 
 ## Open Production Reviews
 

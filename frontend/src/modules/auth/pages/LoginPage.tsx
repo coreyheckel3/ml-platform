@@ -1,7 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock3, KeyRound, LogIn, ShieldCheck } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  CheckCircle2,
+  Clock3,
+  KeyRound,
+  LogIn,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { login } from "../api/auth";
 import {
@@ -13,6 +24,11 @@ import {
 import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+} from "../../../shared/routing/router";
 
 const seededDemoEmail = "admin@forgeml.dev";
 
@@ -24,7 +40,9 @@ export function LoginPage() {
   const [email, setEmail] = useState(seededDemoEmail);
   const [password, setPassword] = useState("");
   const [operationError, setOperationError] = useState<string | null>(null);
-  const [session, setSession] = useState<StoredSession | null>(() => readStoredSession());
+  const [session, setSession] = useState<StoredSession | null>(() =>
+    readStoredSession(),
+  );
   const sessionStatus = useMemo(() => getSessionStatus(session), [session]);
   const loginMutation = useMutation({
     mutationFn: login,
@@ -35,7 +53,9 @@ export function LoginPage() {
       navigate(redirectPath, { replace: true });
     },
     onError: (error) => {
-      setOperationError(error instanceof Error ? error.message : "Sign in failed.");
+      setOperationError(
+        error instanceof Error ? error.message : "Sign in failed.",
+      );
     },
   });
 
@@ -90,7 +110,11 @@ export function LoginPage() {
 
       <div className="mt-6 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <DataPanel title="Credential Exchange">
-          <form aria-label="Sign in" onSubmit={handleSubmit} className="grid gap-4">
+          <form
+            aria-label="Sign in"
+            onSubmit={handleSubmit}
+            className="grid gap-4"
+          >
             <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
               Email
               <input

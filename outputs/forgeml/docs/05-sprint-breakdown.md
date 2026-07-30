@@ -1090,3 +1090,35 @@ Implemented scope:
 - Audit metadata is rendered as key-value rows with stable wrapping for long IDs and nested values.
 - Action icons distinguish alert, deployment, retraining, training, and generic audit event families.
 - `SettingsPage` tests cover preset filtering, active-project filtering, detail metadata inspection, and existing workspace controls.
+
+## Sprint 35: Frontend Supply-Chain Hardening
+
+Goal: Remove vulnerable production frontend dependencies and make dependency auditing a release-blocking control.
+
+Deliverables:
+
+- Frontend production dependency audit
+- Removal of vulnerable React Router packages from the shipped bundle dependency graph
+- First-party browser routing abstraction for the app shell, navigation, login redirect, and tests
+- CI production dependency audit gate
+- Production-readiness supply-chain contract
+- Runbook and threat-model updates
+- Frontend router regression tests
+
+Acceptance criteria:
+
+- `npm --prefix frontend audit --omit=dev` reports zero production vulnerabilities.
+- CI runs the production dependency audit after installing frontend dependencies.
+- The production-readiness script verifies the audit gate exists.
+- The frontend lockfile does not include `react-router` or `react-router-dom`.
+- App navigation, active nav state, login redirects, and wildcard redirects continue to work.
+- Frontend tests cover routing, login redirect behavior, shell auth behavior, and app rendering.
+
+Implemented scope:
+
+- `react-router-dom` and transitive `react-router` were removed from production dependencies.
+- `frontend/src/shared/routing/router.tsx` provides ForgeML's narrow browser-routing contract over the History API.
+- App, shell, login, and tests now use the first-party routing abstraction.
+- GitHub Actions runs `npm --prefix frontend audit --omit=dev` in the frontend job.
+- `scripts/ci/production_readiness.py` validates the frontend supply-chain gate offline.
+- Runbook, threat model, README, and readiness tests document and enforce the new control.

@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { MemoryRouter, Route, Routes } from "../../../shared/routing/router";
 import {
   ACCESS_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
@@ -29,9 +29,13 @@ describe("LoginPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByRole("heading", { name: "Projects Landing" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Projects Landing" }),
+    ).toBeInTheDocument();
     expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBe("access-token");
-    expect(window.localStorage.getItem(REFRESH_TOKEN_KEY)).toBe("refresh-token");
+    expect(window.localStorage.getItem(REFRESH_TOKEN_KEY)).toBe(
+      "refresh-token",
+    );
     expect(window.localStorage.getItem(TOKEN_TYPE_KEY)).toBe("bearer");
     expect(window.localStorage.getItem(TOKEN_EXPIRES_AT_KEY)).toBeTruthy();
     const loginCall = findFetchCall(fetchMock, "/api/v1/auth/login", "POST");
@@ -51,7 +55,9 @@ describe("LoginPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
-    expect(await screen.findByText("ForgeML API request failed with 401")).toBeInTheDocument();
+    expect(
+      await screen.findByText("ForgeML API request failed with 401"),
+    ).toBeInTheDocument();
     expect(window.localStorage.getItem(ACCESS_TOKEN_KEY)).toBeNull();
     expect(window.localStorage.getItem(REFRESH_TOKEN_KEY)).toBeNull();
   });
@@ -75,25 +81,31 @@ function renderLoginPage(initialEntry: string) {
 }
 
 function mockLoginResponse(ok: boolean) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input);
-    const method = init?.method ?? "GET";
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const path = String(input);
+      const method = init?.method ?? "GET";
 
-    if (method === "POST" && path === "/api/v1/auth/login") {
+      if (method === "POST" && path === "/api/v1/auth/login") {
+        return jsonResponse(
+          {
+            access_token: "access-token",
+            refresh_token: "refresh-token",
+            token_type: "bearer",
+            expires_in: 900,
+          },
+          ok,
+          ok ? 200 : 401,
+        );
+      }
+
       return jsonResponse(
-        {
-          access_token: "access-token",
-          refresh_token: "refresh-token",
-          token_type: "bearer",
-          expires_in: 900,
-        },
-        ok,
-        ok ? 200 : 401,
+        { detail: `unexpected request: ${method} ${path}` },
+        false,
+        500,
       );
-    }
-
-    return jsonResponse({ detail: `unexpected request: ${method} ${path}` }, false, 500);
-  });
+    },
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }

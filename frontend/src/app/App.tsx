@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AlertsPage } from "../modules/alerts/pages/AlertsPage";
 import { LoginPage } from "../modules/auth/pages/LoginPage";
@@ -17,15 +16,21 @@ import { ProjectsPage } from "../modules/projects/pages/ProjectsPage";
 import { RetrainingPage } from "../modules/retraining/pages/RetrainingPage";
 import { SettingsPage } from "../modules/settings/pages/SettingsPage";
 import { TrainingRunsPage } from "../modules/training_runs/pages/TrainingRunsPage";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "../shared/routing/router";
 import { Shell } from "../shared/ui/Shell";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      refetchOnWindowFocus: false
-    }
-  }
+      refetchOnWindowFocus: false,
+    },
+  },
 });
 
 export function App() {

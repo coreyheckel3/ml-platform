@@ -1,10 +1,13 @@
 import { LogIn, LogOut, Menu, Search } from "lucide-react";
 import { type PropsWithChildren, useEffect, useMemo, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { navigationItems } from "../../app/navigation";
-import { getCurrentUser, logoutSession, refreshSession } from "../../modules/auth/api/auth";
+import {
+  getCurrentUser,
+  logoutSession,
+  refreshSession,
+} from "../../modules/auth/api/auth";
 import {
   clearStoredSession,
   readStoredSession,
@@ -12,11 +15,14 @@ import {
   type StoredSession,
   writeStoredSession,
 } from "../../modules/auth/session/sessionStore";
+import { Link, NavLink, useNavigate } from "../routing/router";
 
 export function Shell({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [session, setSession] = useState<StoredSession | null>(() => readStoredSession());
+  const [session, setSession] = useState<StoredSession | null>(() =>
+    readStoredSession(),
+  );
   const token = session?.accessToken ?? "";
   const currentUserQuery = useQuery({
     queryKey: ["current-user", token],
@@ -98,7 +104,7 @@ export function Shell({ children }: PropsWithChildren) {
                     "flex h-10 items-center gap-3 rounded px-3 text-sm font-medium transition",
                     isActive
                       ? "bg-ink text-white"
-                      : "text-steel hover:bg-field hover:text-ink"
+                      : "text-steel hover:bg-field hover:text-ink",
                   ].join(" ")
                 }
               >

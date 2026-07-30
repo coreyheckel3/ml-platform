@@ -68,6 +68,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_staging_terraform(repo_root),
         check_example_training_contract(repo_root),
         check_training_execution_contract(repo_root),
+        check_frontend_supply_chain_contract(repo_root),
     ]
 
 
@@ -283,6 +284,34 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
             "training execution runner is wired behind application contracts"
             if not missing
             else f"missing: {missing}"
+        ),
+    )
+
+
+def check_frontend_supply_chain_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    package_lock = json.loads(
+        (repo_root / "frontend/package-lock.json").read_text(encoding="utf-8")
+    )
+    packages = package_lock.get("packages", {})
+    package_names = set(packages) if isinstance(packages, dict) else set()
+    has_prod_audit_gate = "npm --prefix frontend audit --omit=dev" in ci_source
+    vulnerable_router_packages = sorted(
+        package_name
+        for package_name in package_names
+        if package_name in {"node_modules/react-router", "node_modules/react-router-dom"}
+    )
+    passed = has_prod_audit_gate and not vulnerable_router_packages
+    return ReadinessCheck(
+        name="frontend supply-chain contract",
+        passed=passed,
+        detail=(
+            "frontend production dependencies are audited in CI"
+            if passed
+            else (
+                f"has_prod_audit_gate={has_prod_audit_gate}, "
+                f"vulnerable_router_packages={vulnerable_router_packages}"
+            )
         ),
     )
 

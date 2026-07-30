@@ -37,3 +37,13 @@ def test_compose_file_mounts_observability_configuration() -> None:
     assert "../observability/grafana/provisioning:/etc/grafana/provisioning:ro" in compose
     assert "../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro" in compose
     assert "grafana-data:" in compose
+
+
+def test_frontend_supply_chain_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    package_lock = json.loads(Path("frontend/package-lock.json").read_text(encoding="utf-8"))
+    packages = package_lock["packages"]
+
+    assert "npm --prefix frontend audit --omit=dev" in workflow
+    assert "node_modules/react-router" not in packages
+    assert "node_modules/react-router-dom" not in packages
