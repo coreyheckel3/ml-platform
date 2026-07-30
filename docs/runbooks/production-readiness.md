@@ -13,6 +13,7 @@ npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
 npm --prefix frontend run test -- --run
 npm --prefix frontend run build
+python scripts/ci/check_frontend_bundle_budget.py
 docker compose -f infra/compose/docker-compose.yml --profile full config
 ```
 
@@ -26,6 +27,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 
 - CI run URL for backend, frontend, Docker, and production-readiness checks
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
+- Frontend bundle-budget result showing all JavaScript chunks below 500 KB
 - Alembic head revision included in the deployment artifact
 - Terraform plan reviewed for the target environment
 - k6 summary showing p95 latency below 500 ms for smoke traffic

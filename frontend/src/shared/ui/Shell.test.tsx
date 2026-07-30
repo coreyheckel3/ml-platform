@@ -9,14 +9,18 @@ import {
   TOKEN_EXPIRES_AT_KEY,
   TOKEN_TYPE_KEY,
 } from "../../modules/auth/session/sessionStore";
+import { preloadRoute } from "../../app/routes";
 import { MemoryRouter } from "../routing/router";
 import { Shell } from "./Shell";
 
 type FetchCall = [string, RequestInit | undefined];
 
+vi.mock("../../app/routes", () => ({ preloadRoute: vi.fn() }));
+
 describe("Shell", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.clearAllMocks();
     window.localStorage.clear();
   });
 
@@ -83,6 +87,25 @@ describe("Shell", () => {
     expect(JSON.parse(String(refreshCall[1]?.body))).toMatchObject({
       refresh_token: "refresh-token",
     });
+  });
+
+  it("preloads route chunks from navigation hover and focus", () => {
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <MemoryRouter>
+          <Shell>
+            <h1>Workspace</h1>
+          </Shell>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const projectsLink = screen.getByRole("link", { name: "Projects" });
+    fireEvent.mouseEnter(projectsLink);
+    fireEvent.focus(projectsLink);
+
+    expect(preloadRoute).toHaveBeenCalledWith("/projects");
+    expect(preloadRoute).toHaveBeenCalledTimes(2);
   });
 });
 

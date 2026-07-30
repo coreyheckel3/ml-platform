@@ -8,7 +8,9 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("ForgeML")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Dashboard" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Projects")).toBeInTheDocument();
     expect(screen.getByText("Examples")).toBeInTheDocument();
     expect(screen.getByText("Feature Store")).toBeInTheDocument();

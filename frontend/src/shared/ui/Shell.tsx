@@ -3,6 +3,7 @@ import { type PropsWithChildren, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { navigationItems } from "../../app/navigation";
+import { preloadRoute } from "../../app/routes";
 import {
   getCurrentUser,
   logoutSession,
@@ -99,6 +100,8 @@ export function Shell({ children }: PropsWithChildren) {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onFocus={() => preloadRoute(item.path)}
+                onMouseEnter={() => preloadRoute(item.path)}
                 className={({ isActive }) =>
                   [
                     "flex h-10 items-center gap-3 rounded px-3 text-sm font-medium transition",

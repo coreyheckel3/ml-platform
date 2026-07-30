@@ -47,6 +47,7 @@ REQUIRED_FILES = (
     "scripts/ops/backup_postgres.sh",
     "scripts/ops/restore_postgres.sh",
     "backend/tests/unit/ml/test_example_training_pipelines.py",
+    "scripts/ci/check_frontend_bundle_budget.py",
 )
 
 
@@ -69,6 +70,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_example_training_contract(repo_root),
         check_training_execution_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
+        check_frontend_performance_contract(repo_root),
     ]
 
 
@@ -204,8 +206,7 @@ def check_example_training_contract(repo_root: Path) -> ReadinessCheck:
         )
 
     trainer_sources = [
-        (path, (repo_root / path).read_text(encoding="utf-8"))
-        for path in trainer_paths
+        (path, (repo_root / path).read_text(encoding="utf-8")) for path in trainer_paths
     ]
     orchestrator = (repo_root / "scripts/examples/run_local_training.py").read_text(
         encoding="utf-8"
@@ -248,9 +249,9 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
     config_source = (repo_root / "backend/src/forgeml/platform/config.py").read_text(
         encoding="utf-8"
     )
-    routes_source = (
-        repo_root / "backend/src/forgeml/modules/training/api/routes.py"
-    ).read_text(encoding="utf-8")
+    routes_source = (repo_root / "backend/src/forgeml/modules/training/api/routes.py").read_text(
+        encoding="utf-8"
+    )
     runner_source = (
         repo_root / "backend/src/forgeml/modules/training/infrastructure/execution.py"
     ).read_text(encoding="utf-8")
@@ -270,9 +271,9 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
         "claim_training_run": (
             repo_root / "backend/src/forgeml/modules/training/repositories/interfaces.py"
         ).read_text(encoding="utf-8"),
-        "run_once": (
-            repo_root / "scripts/workers/run_training_worker.py"
-        ).read_text(encoding="utf-8"),
+        "run_once": (repo_root / "scripts/workers/run_training_worker.py").read_text(
+            encoding="utf-8"
+        ),
     }
     missing = [
         fragment for fragment, source in required_fragments.items() if fragment not in source
@@ -311,6 +312,29 @@ def check_frontend_supply_chain_contract(repo_root: Path) -> ReadinessCheck:
             else (
                 f"has_prod_audit_gate={has_prod_audit_gate}, "
                 f"vulnerable_router_packages={vulnerable_router_packages}"
+            )
+        ),
+    )
+
+
+def check_frontend_performance_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    app_source = (repo_root / "frontend/src/app/App.tsx").read_text(encoding="utf-8")
+    routes_source = (repo_root / "frontend/src/app/routes.tsx").read_text(encoding="utf-8")
+    has_budget_gate = "python scripts/ci/check_frontend_bundle_budget.py" in ci_source
+    uses_suspense_boundary = "<Suspense fallback={<RouteLoadingState />}" in app_source
+    lazy_route_imports = routes_source.count("lazy(() =>")
+    passed = has_budget_gate and uses_suspense_boundary and lazy_route_imports >= 10
+    return ReadinessCheck(
+        name="frontend performance contract",
+        passed=passed,
+        detail=(
+            "route-level code splitting and bundle budget gate are configured"
+            if passed
+            else (
+                f"has_budget_gate={has_budget_gate}, "
+                f"uses_suspense_boundary={uses_suspense_boundary}, "
+                f"lazy_route_imports={lazy_route_imports}"
             )
         ),
     )

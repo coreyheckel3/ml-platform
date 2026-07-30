@@ -47,3 +47,13 @@ def test_frontend_supply_chain_gate_is_enforced() -> None:
     assert "npm --prefix frontend audit --omit=dev" in workflow
     assert "node_modules/react-router" not in packages
     assert "node_modules/react-router-dom" not in packages
+
+
+def test_frontend_performance_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    app_source = Path("frontend/src/app/App.tsx").read_text(encoding="utf-8")
+    routes_source = Path("frontend/src/app/routes.tsx").read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_frontend_bundle_budget.py" in workflow
+    assert "<Suspense fallback={<RouteLoadingState />}" in app_source
+    assert routes_source.count("lazy(() =>") >= 10

@@ -1122,3 +1122,37 @@ Implemented scope:
 - GitHub Actions runs `npm --prefix frontend audit --omit=dev` in the frontend job.
 - `scripts/ci/production_readiness.py` validates the frontend supply-chain gate offline.
 - Runbook, threat model, README, and readiness tests document and enforce the new control.
+
+## Sprint 36: Frontend Performance Budgets
+
+Goal: Convert frontend bundle-size risk into a measured release gate while keeping the application shell responsive as ForgeML grows.
+
+Deliverables:
+
+- Route-level lazy loading for all primary ForgeML pages
+- Suspense-backed route loading state in the application shell
+- Sidebar route preloading on hover and keyboard focus
+- Frontend JavaScript chunk budget checker
+- CI bundle-budget gate after production build
+- Production-readiness performance contract
+- Frontend route contract and bundle-budget tests
+- Runbook and implementation-state documentation updates
+
+Acceptance criteria:
+
+- The app shell no longer statically imports every page module.
+- Each navigable page route is backed by a preloadable lazy import.
+- Unknown routes still redirect to the dashboard.
+- Keyboard and pointer navigation can warm route chunks before activation.
+- `npm --prefix frontend run build` produces JavaScript chunks below the 500 KB budget.
+- CI runs the bundle-budget checker after building the frontend.
+- Production-readiness checks verify route-level code splitting and the bundle-budget gate.
+
+Implemented scope:
+
+- `frontend/src/app/routes.tsx` centralizes lazy route definitions and route preloaders.
+- `App` renders routes behind a Suspense loading state.
+- `Shell` preloads route chunks on nav focus and hover.
+- `scripts/ci/check_frontend_bundle_budget.py` enforces the JavaScript chunk budget over built Vite assets.
+- GitHub Actions runs the bundle-budget check in the frontend job.
+- Backend ops tests cover the bundle-budget checker and readiness contract.
