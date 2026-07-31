@@ -218,3 +218,20 @@ Recommendation: Use a transactional outbox.
 
 Justification: ForgeML needs reliable workflow triggers and auditability without starting as a distributed system.
 
+## ADR-013: Enforce Production Runtime Configuration Guardrails at Startup
+
+Status: Accepted
+
+Decision: Validate production-like runtime settings during FastAPI app creation and fail fast when unsafe local defaults are present.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Startup validation plus CI contract | Catches unsafe deploys before the API accepts traffic, documents policy, and prevents contract drift | Requires explicit production settings for staging and production |
+| CI-only policy check | Easy to review and does not affect runtime boot | Can be bypassed by manual or external deployments |
+| Deployment checklist only | Low implementation cost | Relies on humans to remember security-critical settings |
+
+Recommendation: Use startup validation backed by a checked-in runtime config policy contract.
+
+Justification: Secrets, docs exposure, CORS, rate limiting, and backing service endpoints are security boundaries. A platform used by many ML engineers should fail closed in production-like environments while preserving fast local development.

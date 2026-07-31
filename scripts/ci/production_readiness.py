@@ -54,6 +54,9 @@ REQUIRED_FILES = (
     "contracts/security/api-authorization.v1.json",
     "scripts/ci/check_permission_catalog.py",
     "contracts/security/permission-catalog.v1.json",
+    "backend/src/forgeml/platform/config_policy.py",
+    "scripts/ci/check_runtime_config_policy.py",
+    "contracts/security/runtime-config-policy.v1.json",
 )
 
 
@@ -80,6 +83,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_openapi_contract(repo_root),
         check_api_authorization_contract(repo_root),
         check_permission_catalog_contract(repo_root),
+        check_runtime_config_policy_contract(repo_root),
     ]
 
 
@@ -457,6 +461,58 @@ def check_permission_catalog_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_ci_gate={has_ci_gate}, "
                 f"missing_permissions={missing_permissions}, "
                 f"missing_roles={missing_roles}"
+            )
+        ),
+    )
+
+
+def check_runtime_config_policy_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    policy_source = (repo_root / "backend/src/forgeml/platform/config_policy.py").read_text(
+        encoding="utf-8"
+    )
+    main_source = (repo_root / "backend/src/forgeml/main.py").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/security/runtime-config-policy.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    guardrails = {guardrail.get("code") for guardrail in contract.get("guardrails", [])}
+    required_guardrails = {
+        "jwt_secret_not_default",
+        "jwt_secret_minimum_length",
+        "docs_disabled",
+        "rate_limit_enabled",
+        "cors_origins_non_empty",
+        "cors_no_wildcard",
+        "cors_no_localhost",
+        "database_url_not_localhost",
+        "redis_url_not_localhost",
+        "object_storage_endpoint_not_localhost",
+        "mlflow_tracking_uri_not_localhost",
+        "airflow_base_url_not_localhost",
+    }
+    has_ci_gate = "python scripts/ci/check_runtime_config_policy.py" in ci_source
+    app_enforces_policy = "assert_runtime_config_safe(resolved_settings)" in main_source
+    production_like_declared = "PRODUCTION_LIKE_ENVIRONMENTS" in policy_source
+    missing_guardrails = sorted(required_guardrails - guardrails)
+    passed = (
+        has_ci_gate
+        and app_enforces_policy
+        and production_like_declared
+        and not missing_guardrails
+    )
+    return ReadinessCheck(
+        name="runtime config policy contract",
+        passed=passed,
+        detail=(
+            "production-like runtime guardrails are enforced at startup and checked in CI"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"app_enforces_policy={app_enforces_policy}, "
+                f"production_like_declared={production_like_declared}, "
+                f"missing_guardrails={missing_guardrails}"
             )
         ),
     )

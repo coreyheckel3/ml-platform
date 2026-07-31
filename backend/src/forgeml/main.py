@@ -23,12 +23,14 @@ from forgeml.platform.api.middleware import (
     SecurityHeadersMiddleware,
 )
 from forgeml.platform.config import Settings, get_settings
+from forgeml.platform.config_policy import assert_runtime_config_safe
 from forgeml.platform.database.session import configure_database
 from forgeml.platform.observability.metrics import metrics_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     resolved_settings = settings or get_settings()
+    assert_runtime_config_safe(resolved_settings)
     configure_database(resolved_settings)
 
     app = FastAPI(

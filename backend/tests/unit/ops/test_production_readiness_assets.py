@@ -99,3 +99,19 @@ def test_permission_catalog_gate_is_enforced() -> None:
     assert "inference:predict" in permissions
     assert "model_versions:review" in permissions
     assert {"platform_admin", "ml_engineer", "ml_operator", "ml_viewer"}.issubset(roles)
+
+
+def test_runtime_config_policy_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/security/runtime-config-policy.v1.json").read_text(encoding="utf-8")
+    )
+    guardrails = {guardrail["code"] for guardrail in contract["guardrails"]}
+
+    assert "python scripts/ci/check_runtime_config_policy.py" in workflow
+    assert "production" in contract["production_like_environments"]
+    assert "staging" in contract["production_like_environments"]
+    assert "jwt_secret_not_default" in guardrails
+    assert "docs_disabled" in guardrails
+    assert "cors_no_wildcard" in guardrails
+    assert "database_url_not_localhost" in guardrails

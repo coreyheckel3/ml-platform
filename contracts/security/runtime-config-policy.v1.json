@@ -1,0 +1,89 @@
+{
+  "generated_from": [
+    "forgeml.platform.config_policy"
+  ],
+  "guardrails": [
+    {
+      "code": "airflow_base_url_not_localhost",
+      "description": "Airflow base URL must not point at a local host in production-like runtimes.",
+      "setting": "airflow_base_url",
+      "severity": "critical"
+    },
+    {
+      "code": "cors_no_localhost",
+      "description": "CORS origins must not point at localhost in production-like runtimes.",
+      "setting": "cors_origins",
+      "severity": "critical"
+    },
+    {
+      "code": "cors_no_wildcard",
+      "description": "CORS must not allow wildcard origins with credentialed requests.",
+      "setting": "cors_origins",
+      "severity": "critical"
+    },
+    {
+      "code": "cors_origins_non_empty",
+      "description": "CORS must list at least one explicit allowed origin.",
+      "setting": "cors_origins",
+      "severity": "critical"
+    },
+    {
+      "code": "database_url_not_localhost",
+      "description": "Database URL must not point at a local host in production-like runtimes.",
+      "setting": "database_url",
+      "severity": "critical"
+    },
+    {
+      "code": "docs_disabled",
+      "description": "Interactive API documentation must be disabled in production-like runtimes.",
+      "setting": "enable_docs",
+      "severity": "critical"
+    },
+    {
+      "code": "jwt_secret_minimum_length",
+      "description": "JWT signing secret must be at least 32 characters.",
+      "setting": "jwt_secret",
+      "severity": "critical"
+    },
+    {
+      "code": "jwt_secret_not_default",
+      "description": "JWT signing secret must not use a local development default.",
+      "setting": "jwt_secret",
+      "severity": "critical"
+    },
+    {
+      "code": "mlflow_tracking_uri_not_localhost",
+      "description": "MLflow tracking URI must not point at a local host in production-like runtimes.",
+      "setting": "mlflow_tracking_uri",
+      "severity": "critical"
+    },
+    {
+      "code": "object_storage_endpoint_not_localhost",
+      "description": "Object storage endpoint must not point at a local host in production-like runtimes.",
+      "setting": "object_storage_endpoint",
+      "severity": "critical"
+    },
+    {
+      "code": "rate_limit_enabled",
+      "description": "API rate limiting must be enabled in production-like runtimes.",
+      "setting": "rate_limit_enabled",
+      "severity": "critical"
+    },
+    {
+      "code": "redis_url_not_localhost",
+      "description": "Redis URL must not point at a local host in production-like runtimes.",
+      "setting": "redis_url",
+      "severity": "critical"
+    }
+  ],
+  "production_like_environments": [
+    "prod",
+    "production",
+    "staging"
+  ],
+  "schema_version": "forgeml.runtime_config_policy.v1",
+  "summary": {
+    "guardrail_count": 12,
+    "required_guardrail_count": 12
+  }
+}

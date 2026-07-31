@@ -27,6 +27,7 @@ Required checks:
 | Docker build | API, frontend, worker, Airflow, training, inference images |
 | Terraform validate | Changed Terraform modules and environments |
 | Security scan | Dependencies and container images |
+| Runtime config policy | Production-like settings guardrails and contract freshness |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
 
 ## Main Branch Workflow
@@ -79,6 +80,7 @@ Each release should publish:
 - Git SHA
 - Image digests
 - OpenAPI schema
+- Security contracts for API authorization, permissions, and runtime config policy
 - Alembic migration revision
 - Terraform plan artifact when applicable
 - Test summary

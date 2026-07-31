@@ -35,3 +35,20 @@ Verify the checked-in catalog:
 ```bash
 PYTHONPATH=backend/src:. python scripts/ci/check_permission_catalog.py
 ```
+
+## Runtime Config Policy
+
+`runtime-config-policy.v1.json` captures production-like startup guardrails for
+secrets, docs exposure, rate limiting, CORS, and backing service endpoints.
+
+Regenerate after an intentional production configuration policy change:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_runtime_config_policy.py --write
+```
+
+Verify the checked-in policy:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_runtime_config_policy.py
+```

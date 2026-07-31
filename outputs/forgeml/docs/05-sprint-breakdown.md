@@ -1251,3 +1251,43 @@ Implemented scope:
 - `contracts/security/permission-catalog.v1.json` records the generated permission catalog contract.
 - GitHub Actions and production-readiness checks enforce permission catalog freshness.
 - Ops tests cover catalog coverage, role references, stale detection, and unknown permission violations.
+
+## Sprint 40: Runtime Configuration Safety
+
+Goal: Prevent ForgeML from booting production-like runtimes with local development
+defaults, exposed docs, wildcard CORS, disabled throttling, or localhost backing
+services.
+
+Deliverables:
+
+- Runtime configuration policy module enforced during FastAPI app creation
+- Production-like environment aliases for `production`, `prod`, and `staging`
+- Guardrails for JWT secrets, docs exposure, rate limiting, CORS, PostgreSQL, Redis,
+  object storage, MLflow, and Airflow
+- Generated runtime config security contract
+- CI runtime config policy gate
+- Production-readiness runtime config policy gate
+- Policy, app startup, contract, and readiness tests
+- Security, runbook, and implementation-state documentation updates
+
+Acceptance criteria:
+
+- Local development continues to support low-friction defaults.
+- Production-like environments fail fast when `FORGEML_JWT_SECRET` is default or too short.
+- Production-like environments fail fast when API docs are exposed.
+- Production-like environments fail fast when rate limiting is disabled.
+- Production-like environments require explicit non-local CORS origins.
+- Production-like environments reject localhost database, Redis, object storage, MLflow,
+  and Airflow endpoints.
+- The checked-in runtime config policy contract is deterministic and release-gated.
+- CI and production-readiness both run the runtime config policy checker.
+
+Implemented scope:
+
+- `forgeml.platform.config_policy` defines and enforces runtime guardrails.
+- `create_app` validates resolved settings before configuring database resources.
+- `contracts/security/runtime-config-policy.v1.json` records the generated policy contract.
+- `scripts/ci/check_runtime_config_policy.py` verifies guardrail coverage and contract freshness.
+- GitHub Actions and production-readiness checks enforce runtime config safety.
+- Unit and API tests cover local defaults, hardened production config, insecure production config,
+  startup enforcement, stale contracts, and contract shape.
