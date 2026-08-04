@@ -22,6 +22,7 @@ REQUIRED_GUARDRAILS = frozenset(
         "jwt_secret_minimum_length",
         "docs_disabled",
         "rate_limit_enabled",
+        "readiness_checks_enabled",
         "cors_origins_non_empty",
         "cors_no_wildcard",
         "cors_no_localhost",
@@ -117,6 +118,7 @@ def _hardened_production_settings() -> Settings:
         enable_docs=False,
         cors_origins=["https://app.forgeml.example"],
         rate_limit_enabled=True,
+        readiness_checks_enabled=True,
     )
 
 
@@ -129,6 +131,9 @@ def _insecure_fixture_settings_by_guardrail() -> dict[str, Settings]:
         "jwt_secret_minimum_length": base.model_copy(update={"jwt_secret": "short"}),
         "docs_disabled": base.model_copy(update={"enable_docs": True}),
         "rate_limit_enabled": base.model_copy(update={"rate_limit_enabled": False}),
+        "readiness_checks_enabled": base.model_copy(
+            update={"readiness_checks_enabled": False}
+        ),
         "cors_origins_non_empty": base.model_copy(update={"cors_origins": []}),
         "cors_no_wildcard": base.model_copy(update={"cors_origins": ["*"]}),
         "cors_no_localhost": base.model_copy(

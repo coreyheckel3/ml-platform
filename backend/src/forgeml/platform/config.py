@@ -52,6 +52,15 @@ class Settings(BaseSettings):
         ge=1,
         alias="FORGEML_RATE_LIMIT_WINDOW_SECONDS",
     )
+    readiness_checks_enabled: bool = Field(
+        default=False,
+        alias="FORGEML_READINESS_CHECKS_ENABLED",
+    )
+    readiness_timeout_seconds: float = Field(
+        default=1.0,
+        gt=0,
+        alias="FORGEML_READINESS_TIMEOUT_SECONDS",
+    )
     rate_limit_exempt_paths: list[str] = Field(
         default_factory=lambda: [
             "/health/live",

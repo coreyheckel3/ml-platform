@@ -114,4 +114,25 @@ def test_runtime_config_policy_gate_is_enforced() -> None:
     assert "jwt_secret_not_default" in guardrails
     assert "docs_disabled" in guardrails
     assert "cors_no_wildcard" in guardrails
+    assert "readiness_checks_enabled" in guardrails
     assert "database_url_not_localhost" in guardrails
+
+
+def test_readiness_probe_contract_is_enforced() -> None:
+    config_source = Path("backend/src/forgeml/platform/config.py").read_text(encoding="utf-8")
+    health_source = Path("backend/src/forgeml/platform/health.py").read_text(encoding="utf-8")
+    metrics_source = Path("backend/src/forgeml/platform/observability/metrics.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        Path("contracts/openapi/forgeml.v1.openapi.json").read_text(encoding="utf-8")
+    )
+    ready_responses = contract["paths"]["/health/ready"]["get"]["responses"]
+
+    assert "FORGEML_READINESS_CHECKS_ENABLED" in config_source
+    assert "ReadinessChecker" in health_source
+    assert "check_database_connection" in health_source
+    assert "check_redis_connection" in health_source
+    assert "forgeml_readiness_probe_status" in metrics_source
+    assert "forgeml_readiness_probe_duration_seconds" in metrics_source
+    assert "503" in ready_responses

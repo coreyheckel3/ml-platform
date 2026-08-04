@@ -3437,6 +3437,79 @@
         "title": "PromoteTrainingRunRequest",
         "type": "object"
       },
+      "ReadinessProbeResult": {
+        "properties": {
+          "latency_ms": {
+            "minimum": 0.0,
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "latency_ms"
+        ],
+        "title": "ReadinessProbeResult",
+        "type": "object"
+      },
+      "ReadinessReport": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessProbeResult"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "checks_enabled": {
+            "title": "Checks Enabled",
+            "type": "boolean"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "not_ready"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service",
+          "checks_enabled"
+        ],
+        "title": "ReadinessReport",
+        "type": "object"
+      },
       "RecordDeploymentHealthRequest": {
         "properties": {
           "details": {
@@ -9614,15 +9687,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Ready Health Ready Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ReadinessReport"
                 }
               }
             },
             "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessReport"
+                }
+              }
+            },
+            "description": "Service Unavailable"
           }
         },
         "summary": "Ready",

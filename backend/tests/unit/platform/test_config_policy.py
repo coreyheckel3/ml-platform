@@ -26,6 +26,7 @@ def test_production_runtime_rejects_insecure_defaults() -> None:
         "jwt_secret_not_default",
         "jwt_secret_minimum_length",
         "docs_disabled",
+        "readiness_checks_enabled",
         "cors_no_localhost",
         "database_url_not_localhost",
         "redis_url_not_localhost",
@@ -86,6 +87,7 @@ def _production_settings(**overrides: object) -> Settings:
         "enable_docs": False,
         "cors_origins": ["https://app.forgeml.example"],
         "rate_limit_enabled": True,
+        "readiness_checks_enabled": True,
     }
     values.update(overrides)
     return Settings(**values)

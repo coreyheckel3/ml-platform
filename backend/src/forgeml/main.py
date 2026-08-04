@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 
 from forgeml import __version__
 from forgeml.modules.administration.api.routes import router as administration_router
@@ -25,13 +26,19 @@ from forgeml.platform.api.middleware import (
 from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.config_policy import assert_runtime_config_safe
 from forgeml.platform.database.session import configure_database
+from forgeml.platform.health import ReadinessChecker, ReadinessReport, build_readiness_checker
 from forgeml.platform.observability.metrics import metrics_router
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    *,
+    readiness_checker: ReadinessChecker | None = None,
+) -> FastAPI:
     resolved_settings = settings or get_settings()
     assert_runtime_config_safe(resolved_settings)
     configure_database(resolved_settings)
+    resolved_readiness_checker = readiness_checker or build_readiness_checker(resolved_settings)
 
     app = FastAPI(
         title="ForgeML",
@@ -40,6 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url="/redoc" if resolved_settings.enable_docs else None,
     )
     app.state.settings = resolved_settings
+    app.state.readiness_checker = resolved_readiness_checker
 
     app.add_middleware(
         RateLimitMiddleware,
@@ -64,9 +72,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def live() -> dict[str, str]:
         return {"status": "live", "service": resolved_settings.service_name}
 
-    @app.get("/health/ready", tags=["health"])
-    def ready() -> dict[str, str]:
-        return {"status": "ready", "service": resolved_settings.service_name}
+    @app.get(
+        "/health/ready",
+        tags=["health"],
+        response_model=ReadinessReport,
+        responses={503: {"model": ReadinessReport}},
+    )
+    def ready() -> ReadinessReport | JSONResponse:
+        report = resolved_readiness_checker.run()
+        if report.status != "ready":
+            return JSONResponse(status_code=503, content=report.model_dump())
+        return report
 
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(administration_router, prefix="/api/v1")

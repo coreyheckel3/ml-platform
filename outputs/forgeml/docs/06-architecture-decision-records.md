@@ -235,3 +235,21 @@ Options considered:
 Recommendation: Use startup validation backed by a checked-in runtime config policy contract.
 
 Justification: Secrets, docs exposure, CORS, rate limiting, and backing service endpoints are security boundaries. A platform used by many ML engineers should fail closed in production-like environments while preserving fast local development.
+
+## ADR-014: Use Dependency-Aware Readiness for Traffic Admission
+
+Status: Accepted
+
+Decision: Make `/health/ready` execute typed dependency probes when readiness checks are enabled and return `503` when any required control-plane dependency is unavailable.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Dependency-aware readiness | Prevents unhealthy instances from receiving traffic and exposes probe metrics | Requires local opt-out for tests and lightweight demos |
+| Static readiness | Simple and always fast | Marks broken instances ready even when PostgreSQL or Redis is unavailable |
+| External-only health checks | Keeps app code small | Loses application-specific dependency context and sanitized failure semantics |
+
+Recommendation: Use app-level readiness probes for PostgreSQL and Redis, with production config policy requiring them in production-like environments.
+
+Justification: ForgeML is a control-plane-heavy platform. Routing traffic to an API that cannot reach metadata storage or cache infrastructure creates noisy failures across every ML workflow, so readiness should be a first-class platform contract.

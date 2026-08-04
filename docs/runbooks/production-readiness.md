@@ -34,6 +34,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - API authorization contract result proving only allowlisted routes are public
 - Permission catalog check result proving enforced permissions and role presets are cataloged
 - Runtime config policy result proving production-like environments reject unsafe defaults
+- `/health/ready` result from the target environment showing database and Redis probes passing
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend bundle-budget result showing all JavaScript chunks below 500 KB
 - Alembic head revision included in the deployment artifact

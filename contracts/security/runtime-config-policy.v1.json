@@ -70,6 +70,12 @@
       "severity": "critical"
     },
     {
+      "code": "readiness_checks_enabled",
+      "description": "Dependency readiness checks must be enabled in production-like runtimes.",
+      "setting": "readiness_checks_enabled",
+      "severity": "critical"
+    },
+    {
       "code": "redis_url_not_localhost",
       "description": "Redis URL must not point at a local host in production-like runtimes.",
       "setting": "redis_url",
@@ -83,7 +89,7 @@
   ],
   "schema_version": "forgeml.runtime_config_policy.v1",
   "summary": {
-    "guardrail_count": 12,
-    "required_guardrail_count": 12
+    "guardrail_count": 13,
+    "required_guardrail_count": 13
   }
 }

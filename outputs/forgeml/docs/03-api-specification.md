@@ -11,6 +11,7 @@ ForgeML exposes a versioned REST API under `/api/v1`. The API is resource-orient
 - Problem Details style error responses.
 - JWT bearer authentication.
 - Project-scoped authorization enforced in application services.
+- `/health/ready` returns typed readiness probe details and `503` when dependency checks fail.
 - OpenAPI generated from FastAPI and checked into `contracts/openapi`.
 
 ## Common Conventions

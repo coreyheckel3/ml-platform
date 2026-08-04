@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from forgeml.platform.config import Settings, get_settings
@@ -33,3 +33,12 @@ def get_session() -> Generator[Session, None, None]:
     finally:
         session.close()
 
+
+def check_database_connection() -> None:
+    if _engine is None:
+        configure_database()
+    if _engine is None:
+        raise RuntimeError("Database engine was not configured.")
+
+    with _engine.connect() as connection:
+        connection.execute(text("SELECT 1"))

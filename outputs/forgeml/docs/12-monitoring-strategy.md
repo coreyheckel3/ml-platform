@@ -21,6 +21,8 @@ ForgeML should be observable from the first implementation sprint. Monitoring mu
 - Error count
 - Error rate
 - Rate-limited request count
+- Readiness probe status by dependency
+- Readiness probe latency by dependency
 - Auth failures
 - Database query latency
 - External adapter latency
@@ -92,6 +94,8 @@ Metric names should be stable and low-cardinality:
 | --- | --- | --- |
 | `forgeml_api_request_duration_seconds` | Histogram | `route`, `method`, `status_code` |
 | `forgeml_api_requests_total` | Counter | `route`, `method`, `status_code` |
+| `forgeml_readiness_probe_status` | Gauge | `probe` |
+| `forgeml_readiness_probe_duration_seconds` | Histogram | `probe` |
 | `forgeml_training_job_duration_seconds` | Histogram | `project_id`, `algorithm`, `status` |
 | `forgeml_model_promotions_total` | Counter | `status` |
 | `forgeml_pipeline_failures_total` | Counter | `pipeline_type`, `project_id` |

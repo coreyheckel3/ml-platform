@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from forgeml.main import create_app
 from forgeml.platform.config import Settings
+from forgeml.platform.health import DependencyProbe, ReadinessChecker
 
 
 def test_health_endpoints_return_service_status() -> None:
@@ -14,6 +15,53 @@ def test_health_endpoints_return_service_status() -> None:
     assert ready.status_code == 200
     assert live.json()["status"] == "live"
     assert ready.json()["status"] == "ready"
+    assert ready.json()["checks_enabled"] is False
+    assert ready.json()["checks"] == []
+
+
+def test_ready_endpoint_returns_probe_results_when_dependency_checks_pass() -> None:
+    checker = ReadinessChecker(
+        service_name="forgeml-api",
+        checks_enabled=True,
+        probes=[
+            DependencyProbe(name="database", check=lambda: None),
+            DependencyProbe(name="redis", check=lambda: None),
+        ],
+    )
+    client = TestClient(create_app(readiness_checker=checker))
+
+    response = client.get("/health/ready")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["status"] == "ready"
+    assert payload["checks_enabled"] is True
+    assert [(check["name"], check["status"]) for check in payload["checks"]] == [
+        ("database", "pass"),
+        ("redis", "pass"),
+    ]
+
+
+def test_ready_endpoint_returns_503_when_dependency_check_fails() -> None:
+    def fail_database() -> None:
+        raise RuntimeError("postgresql://user:password@internal")
+
+    checker = ReadinessChecker(
+        service_name="forgeml-api",
+        checks_enabled=True,
+        probes=[DependencyProbe(name="database", check=fail_database)],
+    )
+    client = TestClient(create_app(readiness_checker=checker))
+
+    response = client.get("/health/ready")
+    payload = response.json()
+
+    assert response.status_code == 503
+    assert payload["status"] == "not_ready"
+    assert payload["checks"][0]["name"] == "database"
+    assert payload["checks"][0]["status"] == "fail"
+    assert payload["checks"][0]["message"] == "Probe raised RuntimeError."
+    assert "password" not in response.text
 
 
 def test_metrics_endpoint_exposes_http_request_metrics() -> None:

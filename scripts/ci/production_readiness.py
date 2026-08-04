@@ -39,6 +39,8 @@ REQUIRED_FILES = (
     "load/k6/api_smoke.js",
     "backend/src/forgeml/modules/training/infrastructure/execution.py",
     "backend/tests/unit/training/test_training_execution.py",
+    "backend/src/forgeml/platform/health.py",
+    "backend/tests/unit/platform/test_health.py",
     "scripts/workers/run_training_worker.py",
     "ml/examples/fraud_detection/train.py",
     "ml/examples/movie_recommendation/train.py",
@@ -80,6 +82,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_training_execution_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
+        check_readiness_probe_contract(repo_root),
         check_openapi_contract(repo_root),
         check_api_authorization_contract(repo_root),
         check_permission_catalog_contract(repo_root),
@@ -353,6 +356,49 @@ def check_frontend_performance_contract(repo_root: Path) -> ReadinessCheck:
     )
 
 
+def check_readiness_probe_contract(repo_root: Path) -> ReadinessCheck:
+    config_source = (repo_root / "backend/src/forgeml/platform/config.py").read_text(
+        encoding="utf-8"
+    )
+    health_source = (repo_root / "backend/src/forgeml/platform/health.py").read_text(
+        encoding="utf-8"
+    )
+    main_source = (repo_root / "backend/src/forgeml/main.py").read_text(encoding="utf-8")
+    metrics_source = (
+        repo_root / "backend/src/forgeml/platform/observability/metrics.py"
+    ).read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/openapi/forgeml.v1.openapi.json").read_text(encoding="utf-8")
+    )
+    ready_responses = contract["paths"]["/health/ready"]["get"].get("responses", {})
+    required_fragments = {
+        "FORGEML_READINESS_CHECKS_ENABLED": config_source,
+        "FORGEML_READINESS_TIMEOUT_SECONDS": config_source,
+        "DependencyProbe": health_source,
+        "ReadinessChecker": health_source,
+        "check_database_connection": health_source,
+        "check_redis_connection": health_source,
+        "readiness_probe_status": metrics_source,
+        "readiness_probe_duration_seconds": metrics_source,
+        "build_readiness_checker": main_source,
+        "status_code=503": main_source,
+    }
+    missing_fragments = [
+        fragment for fragment, source in required_fragments.items() if fragment not in source
+    ]
+    has_503_contract = "503" in ready_responses
+    passed = not missing_fragments and has_503_contract
+    return ReadinessCheck(
+        name="readiness probe contract",
+        passed=passed,
+        detail=(
+            "dependency readiness probes, metrics, and 503 API contract are configured"
+            if passed
+            else f"missing_fragments={missing_fragments}, has_503_contract={has_503_contract}"
+        ),
+    )
+
+
 def check_openapi_contract(repo_root: Path) -> ReadinessCheck:
     ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(
@@ -483,6 +529,7 @@ def check_runtime_config_policy_contract(repo_root: Path) -> ReadinessCheck:
         "jwt_secret_minimum_length",
         "docs_disabled",
         "rate_limit_enabled",
+        "readiness_checks_enabled",
         "cors_origins_non_empty",
         "cors_no_wildcard",
         "cors_no_localhost",

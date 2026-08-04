@@ -63,6 +63,11 @@ RUNTIME_CONFIG_GUARDRAILS = (
         description="API rate limiting must be enabled in production-like runtimes.",
     ),
     RuntimeConfigGuardrail(
+        code="readiness_checks_enabled",
+        setting="readiness_checks_enabled",
+        description="Dependency readiness checks must be enabled in production-like runtimes.",
+    ),
+    RuntimeConfigGuardrail(
         code="cors_origins_non_empty",
         setting="cors_origins",
         description="CORS must list at least one explicit allowed origin.",
@@ -152,6 +157,14 @@ def validate_runtime_config(settings: Settings) -> tuple[RuntimeConfigViolation,
                 code="rate_limit_enabled",
                 setting="rate_limit_enabled",
                 message="API rate limiting must be enabled outside local development.",
+            )
+        )
+    if not settings.readiness_checks_enabled:
+        violations.append(
+            RuntimeConfigViolation(
+                code="readiness_checks_enabled",
+                setting="readiness_checks_enabled",
+                message="Dependency readiness checks must be enabled outside local development.",
             )
         )
 

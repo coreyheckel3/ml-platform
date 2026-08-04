@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from starlette.responses import Response
 
 metrics_router = APIRouter(tags=["observability"])
@@ -23,6 +23,16 @@ model_promotions_total = Counter(
     "forgeml_model_promotions_total",
     "Total model version promotions from training runs.",
     ["status"],
+)
+readiness_probe_status = Gauge(
+    "forgeml_readiness_probe_status",
+    "Readiness probe status, where 1 is pass and 0 is fail.",
+    ["probe"],
+)
+readiness_probe_duration_seconds = Histogram(
+    "forgeml_readiness_probe_duration_seconds",
+    "Readiness probe duration.",
+    ["probe"],
 )
 
 

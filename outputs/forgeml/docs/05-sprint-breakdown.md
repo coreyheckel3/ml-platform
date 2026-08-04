@@ -1291,3 +1291,41 @@ Implemented scope:
 - GitHub Actions and production-readiness checks enforce runtime config safety.
 - Unit and API tests cover local defaults, hardened production config, insecure production config,
   startup enforcement, stale contracts, and contract shape.
+
+## Sprint 41: Dependency-Aware Readiness Probes
+
+Goal: Replace static readiness with typed dependency probes so deployment platforms can
+stop routing traffic to ForgeML API instances that cannot reach core control-plane
+dependencies.
+
+Deliverables:
+
+- Platform readiness checker with injectable dependency probes
+- Typed readiness response models for passing and failing probe states
+- Database readiness probe using the configured SQLAlchemy engine
+- Redis readiness probe with explicit socket timeouts
+- Prometheus metrics for readiness probe status and latency
+- `/health/ready` `503` response contract for failed dependency checks
+- Production config policy requirement for enabled readiness checks
+- Production-readiness gate for readiness wiring, metrics, and OpenAPI coverage
+- Unit and API tests for shallow readiness, passing probes, failing probes, metrics, and sanitized errors
+- Runbook, threat-model, monitoring, ADR, and sprint documentation updates
+
+Acceptance criteria:
+
+- Local development can keep shallow readiness for low-friction workflows.
+- Production-like environments must enable dependency readiness checks.
+- `/health/ready` returns `200` with probe details when enabled probes pass.
+- `/health/ready` returns `503` with sanitized probe details when any enabled probe fails.
+- Readiness probe status and latency are exposed as low-cardinality Prometheus metrics.
+- OpenAPI includes the `503` readiness response model.
+- Production-readiness checks verify readiness config, probes, metrics, and API contract wiring.
+
+Implemented scope:
+
+- `forgeml.platform.health` defines `ReadinessChecker`, `DependencyProbe`, and typed response models.
+- `forgeml.platform.database.session` exposes a narrow database ping using the configured engine.
+- `create_app` accepts an injectable readiness checker and wires `/health/ready` to the checker.
+- Runtime config policy now requires readiness checks in production-like environments.
+- OpenAPI and runtime config policy contracts were regenerated.
+- Unit and API tests cover readiness state transitions, metrics, Redis ping behavior, startup wiring, and sanitized failure payloads.
