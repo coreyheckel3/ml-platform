@@ -271,3 +271,21 @@ Options considered:
 Recommendation: Use application-emitted request logs with a versioned event schema and CI contract.
 
 Justification: Internal ML platforms need operational forensics across APIs, workers, deployments, and model workflows. A stable request log schema gives engineers traceability without coupling log consumers to incidental framework output.
+
+## ADR-016: Normalize API Errors with Problem Details
+
+Status: Accepted
+
+Decision: Normalize domain errors, request validation errors, HTTP exceptions, and unexpected exceptions into a versioned Problem Details envelope with trace IDs and sanitized details.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Contracted Problem Details envelope | Stable for frontend, SDKs, automation, and incident triage | Requires handler and contract maintenance |
+| Framework-default errors | Minimal implementation | Shape varies by exception type and can expose raw validation input |
+| Per-module error shapes | Local flexibility | Hard for clients to parse and hard to govern |
+
+Recommendation: Use one API-wide Problem Details envelope backed by a checked contract.
+
+Justification: ML platform clients need reliable failure semantics for automation, notebooks, SDKs, and UI workflows. A consistent trace-linked error envelope improves debugging while keeping sensitive input out of responses.

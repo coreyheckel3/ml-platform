@@ -9,6 +9,7 @@ Run these checks before a staging or production deployment:
 ```bash
 python scripts/ci/production_readiness.py
 python scripts/ci/generate_openapi_contract.py --check
+python scripts/ci/check_problem_details_contract.py
 python scripts/ci/check_api_authorization_contract.py
 python scripts/ci/check_permission_catalog.py
 python scripts/ci/check_runtime_config_policy.py
@@ -32,6 +33,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 
 - CI run URL for backend, frontend, Docker, and production-readiness checks
 - OpenAPI contract check result proving the checked-in schema matches the FastAPI app
+- Problem Details contract result proving API errors include trace IDs and sanitized validation details
 - API authorization contract result proving only allowlisted routes are public
 - Permission catalog check result proving enforced permissions and role presets are cataloged
 - Runtime config policy result proving production-like environments reject unsafe defaults

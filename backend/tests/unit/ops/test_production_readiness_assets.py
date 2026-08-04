@@ -72,6 +72,28 @@ def test_openapi_contract_gate_is_enforced() -> None:
     assert "/api/v1/inference-endpoints/{endpoint_id}/predict" in paths
 
 
+def test_problem_details_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(Path("contracts/api/problem-details.v1.json").read_text(encoding="utf-8"))
+    handlers_source = Path("backend/src/forgeml/platform/api/errors.py").read_text(
+        encoding="utf-8"
+    )
+    problem_source = Path("backend/src/forgeml/platform/api/problem_details.py").read_text(
+        encoding="utf-8"
+    )
+    domain_error_codes = {error["code"] for error in contract["domain_errors"]}
+
+    assert "python scripts/ci/check_problem_details_contract.py" in workflow
+    assert "trace_id" in contract["required_fields"]
+    assert "input" not in contract["validation_error_required_fields"]
+    assert {"validation_failed", "resource_not_found", "internal_error"}.issubset(
+        domain_error_codes
+    )
+    assert "RequestValidationError" in handlers_source
+    assert "StarletteHTTPException" in handlers_source
+    assert "INTERNAL_ERROR_DETAIL" in problem_source
+
+
 def test_api_authorization_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(

@@ -52,6 +52,12 @@ REQUIRED_FILES = (
     "scripts/ci/check_frontend_bundle_budget.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
+    "backend/src/forgeml/platform/api/problem_details.py",
+    "backend/tests/api/test_problem_details_api.py",
+    "backend/tests/unit/platform/test_problem_details.py",
+    "scripts/ci/check_problem_details_contract.py",
+    "contracts/api/README.md",
+    "contracts/api/problem-details.v1.json",
     "scripts/ci/check_api_authorization_contract.py",
     "contracts/security/api-authorization.v1.json",
     "scripts/ci/check_permission_catalog.py",
@@ -90,6 +96,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_frontend_performance_contract(repo_root),
         check_readiness_probe_contract(repo_root),
         check_openapi_contract(repo_root),
+        check_problem_details_contract(repo_root),
         check_api_authorization_contract(repo_root),
         check_permission_catalog_contract(repo_root),
         check_runtime_config_policy_contract(repo_root),
@@ -434,6 +441,84 @@ def check_openapi_contract(repo_root: Path) -> ReadinessCheck:
             "checked-in OpenAPI contract covers core API groups and is checked in CI"
             if passed
             else f"has_ci_gate={has_ci_gate}, missing_paths={missing_paths}"
+        ),
+    )
+
+
+def check_problem_details_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    handlers_source = (repo_root / "backend/src/forgeml/platform/api/errors.py").read_text(
+        encoding="utf-8"
+    )
+    problem_source = (
+        repo_root / "backend/src/forgeml/platform/api/problem_details.py"
+    ).read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/api/problem-details.v1.json").read_text(encoding="utf-8")
+    )
+    required_fields = set(contract.get("required_fields", []))
+    validation_fields = set(contract.get("validation_error_required_fields", []))
+    handled_exception_types = set(contract.get("handled_exception_types", []))
+    domain_error_codes = {error.get("code") for error in contract.get("domain_errors", [])}
+    required_fragments = {
+        "problem_details_response": handlers_source,
+        "validation_problem_details": handlers_source,
+        "http_problem_details": handlers_source,
+        "internal_problem_details": handlers_source,
+        "RequestValidationError": handlers_source,
+        "StarletteHTTPException": handlers_source,
+        "INTERNAL_ERROR_DETAIL": problem_source,
+        "normalize_validation_errors": problem_source,
+    }
+    missing_fragments = [
+        fragment for fragment, source in required_fragments.items() if fragment not in source
+    ]
+    has_ci_gate = "python scripts/ci/check_problem_details_contract.py" in ci_source
+    has_required_fields = {
+        "type",
+        "title",
+        "status",
+        "detail",
+        "trace_id",
+        "errors",
+    }.issubset(required_fields)
+    has_validation_fields = {"loc", "msg", "type"}.issubset(validation_fields)
+    has_exception_coverage = {
+        "ForgeMLError",
+        "RequestValidationError",
+        "StarletteHTTPException",
+        "Exception",
+    }.issubset(handled_exception_types)
+    has_domain_codes = {
+        "authentication_failed",
+        "permission_denied",
+        "resource_not_found",
+        "conflict",
+        "validation_failed",
+        "internal_error",
+    }.issubset(domain_error_codes)
+    passed = (
+        has_ci_gate
+        and not missing_fragments
+        and has_required_fields
+        and has_validation_fields
+        and has_exception_coverage
+        and has_domain_codes
+    )
+    return ReadinessCheck(
+        name="problem details contract",
+        passed=passed,
+        detail=(
+            "API error envelope, validation redaction, and exception handlers are checked in CI"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"missing_fragments={missing_fragments}, "
+                f"has_required_fields={has_required_fields}, "
+                f"has_validation_fields={has_validation_fields}, "
+                f"has_exception_coverage={has_exception_coverage}, "
+                f"has_domain_codes={has_domain_codes}"
+            )
         ),
     )
 

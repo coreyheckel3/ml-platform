@@ -1,0 +1,72 @@
+{
+  "domain_errors": [
+    {
+      "class_name": "AuthenticationFailedError",
+      "code": "authentication_failed",
+      "status_code": 401,
+      "type": "https://forgeml.dev/errors/authentication_failed"
+    },
+    {
+      "class_name": "ConflictError",
+      "code": "conflict",
+      "status_code": 409,
+      "type": "https://forgeml.dev/errors/conflict"
+    },
+    {
+      "class_name": "ForgeMLError",
+      "code": "internal_error",
+      "status_code": 500,
+      "type": "https://forgeml.dev/errors/internal_error"
+    },
+    {
+      "class_name": "PermissionDeniedError",
+      "code": "permission_denied",
+      "status_code": 403,
+      "type": "https://forgeml.dev/errors/permission_denied"
+    },
+    {
+      "class_name": "ResourceNotFoundError",
+      "code": "resource_not_found",
+      "status_code": 404,
+      "type": "https://forgeml.dev/errors/resource_not_found"
+    },
+    {
+      "class_name": "DomainValidationError",
+      "code": "validation_failed",
+      "status_code": 422,
+      "type": "https://forgeml.dev/errors/validation_failed"
+    }
+  ],
+  "generated_from": [
+    "forgeml.platform.api.problem_details",
+    "forgeml.platform.api.errors"
+  ],
+  "handled_exception_types": [
+    "ForgeMLError",
+    "RequestValidationError",
+    "StarletteHTTPException",
+    "Exception"
+  ],
+  "internal_error_detail": "An unexpected error occurred.",
+  "problem_details_schema_version": "forgeml.problem_details.v1",
+  "required_fields": [
+    "detail",
+    "errors",
+    "status",
+    "title",
+    "trace_id",
+    "type"
+  ],
+  "schema_version": "forgeml.problem_details_contract.v1",
+  "summary": {
+    "domain_error_code_count": 6,
+    "required_field_count": 6,
+    "validation_error_required_field_count": 3
+  },
+  "type_base_url": "https://forgeml.dev/errors",
+  "validation_error_required_fields": [
+    "loc",
+    "msg",
+    "type"
+  ]
+}

@@ -13,6 +13,7 @@ ForgeML exposes a versioned REST API under `/api/v1`. The API is resource-orient
 - Project-scoped authorization enforced in application services.
 - `/health/ready` returns typed readiness probe details and `503` when dependency checks fail.
 - OpenAPI generated from FastAPI and checked into `contracts/openapi`.
+- Problem Details error envelope checked into `contracts/api`.
 
 ## Common Conventions
 
@@ -47,6 +48,10 @@ Response:
   "errors": []
 }
 ```
+
+Implemented API error handlers normalize ForgeML domain errors, request validation errors,
+HTTP exceptions, and unexpected exceptions into the checked Problem Details envelope.
+Validation errors omit raw request input, and unexpected exceptions use a generic detail.
 
 ### Idempotency
 

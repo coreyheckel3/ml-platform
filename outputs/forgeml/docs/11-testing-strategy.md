@@ -120,6 +120,7 @@ ML workflows need tests beyond ordinary application checks:
 Contract tests should protect boundaries:
 
 - Backend OpenAPI contract consumed by frontend.
+- Problem Details API error envelope contract consumed by frontend and SDK clients.
 - Runtime configuration policy contract enforced before production-like API startup.
 - Structured request logging contract with sensitive query-parameter redaction.
 - MLflow adapter expected behavior.

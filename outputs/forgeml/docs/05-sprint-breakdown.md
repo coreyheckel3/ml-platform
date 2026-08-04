@@ -1367,3 +1367,41 @@ Implemented scope:
 - `contracts/observability/request-log-event.v1.json` captures the request logging contract.
 - GitHub Actions and production-readiness run the request logging contract gate.
 - Tests cover redaction, formatter serialization, middleware emission, disabling request logs, contract freshness, and production policy guardrails.
+
+## Sprint 43: API Problem Details Contract
+
+Goal: Make API failures stable, traceable, and safe for frontend, SDK, and automation clients by
+normalizing errors into a checked Problem Details envelope.
+
+Deliverables:
+
+- API-wide Problem Details response builder and typed response model
+- Normalized ForgeML domain error responses
+- Sanitized request validation error responses without raw input values
+- Normalized HTTP exception responses for framework-level errors
+- Generic internal-error handler with sanitized detail
+- Generated API Problem Details contract
+- CI Problem Details contract gate
+- Production-readiness Problem Details gate
+- Unit, API, contract, and readiness tests
+- API contract, runbook, threat-model, testing, CI, ADR, and implementation-state documentation updates
+
+Acceptance criteria:
+
+- All API error responses handled by the platform include `type`, `title`, `status`, `detail`,
+  `trace_id`, and `errors`.
+- Domain errors preserve their status codes, codes, messages, details, and trace IDs.
+- Request validation errors omit raw input values.
+- HTTP exceptions return the shared envelope.
+- Unexpected exceptions return a generic internal-error detail.
+- The checked API error contract is deterministic and release-gated.
+- CI and production-readiness both run the Problem Details checker.
+
+Implemented scope:
+
+- `forgeml.platform.api.problem_details` defines the Problem Details model, builders, and validation-error normalization.
+- `install_error_handlers` now covers ForgeML errors, request validation errors, HTTP exceptions, and unexpected exceptions.
+- `scripts/ci/check_problem_details_contract.py` verifies envelope shape, sanitized validation errors, domain error mappings, and contract freshness.
+- `contracts/api/problem-details.v1.json` captures the checked API error contract.
+- GitHub Actions and production-readiness run the Problem Details gate.
+- Tests cover response builders, domain errors, validation errors, HTTP exceptions, sanitized internal errors, contract freshness, and readiness wiring.

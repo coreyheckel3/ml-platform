@@ -27,6 +27,7 @@ Required checks:
 | Docker build | API, frontend, worker, Airflow, training, inference images |
 | Terraform validate | Changed Terraform modules and environments |
 | Security scan | Dependencies and container images |
+| Problem Details contract | API error envelope fields, handlers, and sanitized validation details |
 | Runtime config policy | Production-like settings guardrails and contract freshness |
 | Request logging contract | Structured HTTP log event fields and redaction policy |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
@@ -81,6 +82,7 @@ Each release should publish:
 - Git SHA
 - Image digests
 - OpenAPI schema
+- Problem Details API error contract
 - Security contracts for API authorization, permissions, and runtime config policy
 - Observability contracts for structured request logging
 - Alembic migration revision
