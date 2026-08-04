@@ -45,6 +45,15 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:5173"],
         alias="FORGEML_CORS_ORIGINS",
     )
+    log_level: str = Field(default="INFO", alias="FORGEML_LOG_LEVEL")
+    structured_logging_enabled: bool = Field(
+        default=True,
+        alias="FORGEML_STRUCTURED_LOGGING_ENABLED",
+    )
+    request_logging_enabled: bool = Field(
+        default=True,
+        alias="FORGEML_REQUEST_LOGGING_ENABLED",
+    )
     rate_limit_enabled: bool = Field(default=True, alias="FORGEML_RATE_LIMIT_ENABLED")
     rate_limit_requests: int = Field(default=120, ge=1, alias="FORGEML_RATE_LIMIT_REQUESTS")
     rate_limit_window_seconds: int = Field(

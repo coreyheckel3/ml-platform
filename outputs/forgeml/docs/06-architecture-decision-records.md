@@ -253,3 +253,21 @@ Options considered:
 Recommendation: Use app-level readiness probes for PostgreSQL and Redis, with production config policy requiring them in production-like environments.
 
 Justification: ForgeML is a control-plane-heavy platform. Routing traffic to an API that cannot reach metadata storage or cache infrastructure creates noisy failures across every ML workflow, so readiness should be a first-class platform contract.
+
+## ADR-015: Emit Contracted Structured Request Logs
+
+Status: Accepted
+
+Decision: Emit JSON-compatible HTTP request log events from the API middleware and gate the event shape with a checked observability contract.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Contracted structured request logs | Searchable, traceable, dashboard-ready, and stable for downstream tooling | Requires schema discipline and redaction tests |
+| Free-form access logs | Easy to emit | Hard to query consistently and easy to leak unsafe values |
+| External proxy logs only | Low app complexity | Misses application route names, trace IDs, and platform-specific redaction policy |
+
+Recommendation: Use application-emitted request logs with a versioned event schema and CI contract.
+
+Justification: Internal ML platforms need operational forensics across APIs, workers, deployments, and model workflows. A stable request log schema gives engineers traceability without coupling log consumers to incidental framework output.

@@ -1,0 +1,44 @@
+{
+  "event_schema_version": "forgeml.request_log.v1",
+  "generated_from": [
+    "forgeml.platform.observability.logging"
+  ],
+  "redaction": {
+    "replacement": "[redacted]",
+    "sensitive_field_markers": [
+      "api-key",
+      "api_key",
+      "authorization",
+      "cookie",
+      "passwd",
+      "password",
+      "secret",
+      "token",
+      "x-api-key"
+    ]
+  },
+  "required_http_fields": [
+    "client_host",
+    "duration_ms",
+    "method",
+    "path",
+    "query_params",
+    "route",
+    "status_class",
+    "status_code"
+  ],
+  "required_top_level_fields": [
+    "environment",
+    "event_name",
+    "http",
+    "schema_version",
+    "service",
+    "trace_id"
+  ],
+  "schema_version": "forgeml.request_logging_contract.v1",
+  "summary": {
+    "required_http_field_count": 8,
+    "required_top_level_field_count": 6,
+    "sensitive_field_marker_count": 9
+  }
+}

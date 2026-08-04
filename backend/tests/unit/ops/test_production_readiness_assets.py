@@ -136,3 +136,24 @@ def test_readiness_probe_contract_is_enforced() -> None:
     assert "forgeml_readiness_probe_status" in metrics_source
     assert "forgeml_readiness_probe_duration_seconds" in metrics_source
     assert "503" in ready_responses
+
+
+def test_request_logging_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/observability/request-log-event.v1.json").read_text(encoding="utf-8")
+    )
+    logging_source = Path("backend/src/forgeml/platform/observability/logging.py").read_text(
+        encoding="utf-8"
+    )
+    middleware_source = Path("backend/src/forgeml/platform/api/middleware.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_request_logging_contract.py" in workflow
+    assert "trace_id" in contract["required_top_level_fields"]
+    assert "duration_ms" in contract["required_http_fields"]
+    assert "token" in contract["redaction"]["sensitive_field_markers"]
+    assert "JsonLogFormatter" in logging_source
+    assert "redact_mapping" in logging_source
+    assert "log_http_request" in middleware_source

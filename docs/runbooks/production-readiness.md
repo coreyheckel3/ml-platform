@@ -12,6 +12,7 @@ python scripts/ci/generate_openapi_contract.py --check
 python scripts/ci/check_api_authorization_contract.py
 python scripts/ci/check_permission_catalog.py
 python scripts/ci/check_runtime_config_policy.py
+python scripts/ci/check_request_logging_contract.py
 python -m pytest backend/tests
 npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
@@ -34,6 +35,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - API authorization contract result proving only allowlisted routes are public
 - Permission catalog check result proving enforced permissions and role presets are cataloged
 - Runtime config policy result proving production-like environments reject unsafe defaults
+- Request logging contract result proving HTTP access logs include trace IDs and redaction policy
 - `/health/ready` result from the target environment showing database and Redis probes passing
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend bundle-budget result showing all JavaScript chunks below 500 KB

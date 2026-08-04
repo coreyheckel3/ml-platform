@@ -121,6 +121,7 @@ Contract tests should protect boundaries:
 
 - Backend OpenAPI contract consumed by frontend.
 - Runtime configuration policy contract enforced before production-like API startup.
+- Structured request logging contract with sensitive query-parameter redaction.
 - MLflow adapter expected behavior.
 - Airflow DAG trigger and status interface.
 - Inference runtime request/response schema.

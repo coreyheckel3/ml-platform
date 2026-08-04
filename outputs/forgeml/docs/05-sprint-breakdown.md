@@ -1329,3 +1329,41 @@ Implemented scope:
 - Runtime config policy now requires readiness checks in production-like environments.
 - OpenAPI and runtime config policy contracts were regenerated.
 - Unit and API tests cover readiness state transitions, metrics, Redis ping behavior, startup wiring, and sanitized failure payloads.
+
+## Sprint 42: Structured Request Logging Contract
+
+Goal: Make API request logging queryable, traceable, and safe for production operations by
+emitting contracted structured events with redaction before log emission.
+
+Deliverables:
+
+- Structured JSON log formatter for platform runtime logs
+- Versioned HTTP request log event builder
+- Request middleware emission with service, environment, trace ID, route, status, latency, client host, and sanitized query parameters
+- Sensitive field redaction for authorization, cookies, tokens, passwords, secrets, and API keys
+- Runtime config flags for structured logging and request logging
+- Production config policy guardrails requiring structured and request logging
+- Generated observability contract for request log event shape and redaction markers
+- CI request logging contract gate
+- Production-readiness request logging gate
+- Unit, API, contract, and readiness tests
+- Runbook, threat-model, monitoring, testing, CI, ADR, and implementation-state documentation updates
+
+Acceptance criteria:
+
+- API middleware emits `forgeml.request_log.v1` events with stable top-level and HTTP fields.
+- Request logs include the same trace ID returned to clients.
+- Sensitive query parameters are redacted before the event reaches the logger.
+- Request logging can be disabled for local workflows through explicit settings.
+- Production-like environments fail fast when structured logging or request logging is disabled.
+- The checked observability contract is deterministic and release-gated.
+- Production-readiness verifies logging config, middleware emission, redaction, and contract wiring.
+
+Implemented scope:
+
+- `forgeml.platform.observability.logging` defines the JSON formatter, event builder, redaction helpers, and request log schema constants.
+- `RequestContextMiddleware` now emits structured request events after metrics and trace headers.
+- `scripts/ci/check_request_logging_contract.py` verifies event shape, redaction, and checked-in contract freshness.
+- `contracts/observability/request-log-event.v1.json` captures the request logging contract.
+- GitHub Actions and production-readiness run the request logging contract gate.
+- Tests cover redaction, formatter serialization, middleware emission, disabling request logs, contract freshness, and production policy guardrails.

@@ -39,7 +39,8 @@ PYTHONPATH=backend/src:. python scripts/ci/check_permission_catalog.py
 ## Runtime Config Policy
 
 `runtime-config-policy.v1.json` captures production-like startup guardrails for
-secrets, docs exposure, rate limiting, readiness checks, CORS, and backing service endpoints.
+secrets, docs exposure, rate limiting, structured request logging, readiness checks,
+CORS, and backing service endpoints.
 
 Regenerate after an intentional production configuration policy change:
 

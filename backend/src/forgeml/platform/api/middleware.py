@@ -8,6 +8,10 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
+from forgeml.platform.observability.logging import (
+    build_http_request_log_event,
+    log_http_request,
+)
 from forgeml.platform.observability.metrics import (
     api_request_duration_seconds,
     api_requests_total,
@@ -24,6 +28,19 @@ SECURITY_HEADERS = {
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
+    def __init__(
+        self,
+        app,
+        *,
+        service_name: str = "forgeml-api",
+        environment: str = "local",
+        request_logging_enabled: bool = True,
+    ) -> None:
+        super().__init__(app)
+        self._service_name = service_name
+        self._environment = environment
+        self._request_logging_enabled = request_logging_enabled
+
     async def dispatch(
         self,
         request: Request,
@@ -32,7 +49,20 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         trace_id = request.headers.get("x-request-id", str(uuid4()))
         request.state.trace_id = trace_id
         started_at = perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration_seconds = perf_counter() - started_at
+            if self._request_logging_enabled:
+                self._log_request(
+                    request=request,
+                    trace_id=trace_id,
+                    status_code=500,
+                    duration_seconds=duration_seconds,
+                )
+            raise
+
+        duration_seconds = perf_counter() - started_at
         route = getattr(request.scope.get("route"), "path", request.url.path)
         api_requests_total.labels(
             route=route,
@@ -42,9 +72,40 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         api_request_duration_seconds.labels(
             route=route,
             method=request.method,
-        ).observe(perf_counter() - started_at)
+        ).observe(duration_seconds)
         response.headers["x-request-id"] = trace_id
+        if self._request_logging_enabled:
+            self._log_request(
+                request=request,
+                trace_id=trace_id,
+                status_code=response.status_code,
+                duration_seconds=duration_seconds,
+            )
         return response
+
+    def _log_request(
+        self,
+        *,
+        request: Request,
+        trace_id: str,
+        status_code: int,
+        duration_seconds: float,
+    ) -> None:
+        route = getattr(request.scope.get("route"), "path", request.url.path)
+        log_http_request(
+            build_http_request_log_event(
+                service=self._service_name,
+                environment=self._environment,
+                trace_id=trace_id,
+                method=request.method,
+                route=route,
+                path=request.url.path,
+                status_code=status_code,
+                duration_seconds=duration_seconds,
+                client_host=_client_host(request),
+                query_params=request.query_params.multi_items(),
+            )
+        )
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -145,11 +206,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return any(path == exempt or path.startswith(f"{exempt}/") for exempt in self._exempt_paths)
 
     def _client_key(self, request: Request) -> str:
-        forwarded_for = request.headers.get("x-forwarded-for")
-        if forwarded_for:
-            client_host = forwarded_for.split(",", maxsplit=1)[0].strip()
-        elif request.client:
-            client_host = request.client.host
-        else:
-            client_host = "unknown"
-        return f"{client_host}:{request.url.path}"
+        return f"{_client_host(request)}:{request.url.path}"
+
+
+def _client_host(request: Request) -> str:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",", maxsplit=1)[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"

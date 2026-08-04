@@ -27,6 +27,7 @@ from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.config_policy import assert_runtime_config_safe
 from forgeml.platform.database.session import configure_database
 from forgeml.platform.health import ReadinessChecker, ReadinessReport, build_readiness_checker
+from forgeml.platform.observability.logging import configure_structured_logging
 from forgeml.platform.observability.metrics import metrics_router
 
 
@@ -37,6 +38,10 @@ def create_app(
 ) -> FastAPI:
     resolved_settings = settings or get_settings()
     assert_runtime_config_safe(resolved_settings)
+    configure_structured_logging(
+        enabled=resolved_settings.structured_logging_enabled,
+        level=resolved_settings.log_level,
+    )
     configure_database(resolved_settings)
     resolved_readiness_checker = readiness_checker or build_readiness_checker(resolved_settings)
 
@@ -57,7 +62,12 @@ def create_app(
         exempt_paths=resolved_settings.rate_limit_exempt_paths,
     )
     app.add_middleware(SecurityHeadersMiddleware, environment=resolved_settings.environment)
-    app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(
+        RequestContextMiddleware,
+        service_name=resolved_settings.service_name,
+        environment=resolved_settings.environment,
+        request_logging_enabled=resolved_settings.request_logging_enabled,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings.cors_origins,

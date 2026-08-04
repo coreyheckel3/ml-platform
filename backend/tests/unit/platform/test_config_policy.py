@@ -47,6 +47,22 @@ def test_production_runtime_rejects_disabled_rate_limit() -> None:
     assert "rate_limit_enabled" in {violation.code for violation in violations}
 
 
+def test_production_runtime_rejects_disabled_structured_logging() -> None:
+    settings = _production_settings(structured_logging_enabled=False)
+
+    violations = validate_runtime_config(settings)
+
+    assert "structured_logging_enabled" in {violation.code for violation in violations}
+
+
+def test_production_runtime_rejects_disabled_request_logging() -> None:
+    settings = _production_settings(request_logging_enabled=False)
+
+    violations = validate_runtime_config(settings)
+
+    assert "request_logging_enabled" in {violation.code for violation in violations}
+
+
 def test_production_runtime_rejects_wildcard_cors() -> None:
     settings = _production_settings(cors_origins=["*"])
 

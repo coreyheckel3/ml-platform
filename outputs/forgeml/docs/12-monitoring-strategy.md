@@ -118,6 +118,7 @@ All services should emit structured JSON logs with:
 - Environment
 - Trace ID
 - Request ID
+- HTTP route, method, status code, status class, latency, and sanitized query parameters
 - Actor ID where safe
 - Project ID where relevant
 - Event name
@@ -130,6 +131,10 @@ Sensitive data must not be logged:
 - API keys
 - Raw prediction payloads unless explicitly sampled and redacted
 - Secrets
+
+Implemented request logging emits `forgeml.request_log.v1` events from the API middleware.
+The checked observability contract records required fields and redaction markers under
+`contracts/observability/request-log-event.v1.json`.
 
 ## Tracing
 

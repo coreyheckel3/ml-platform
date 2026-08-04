@@ -22,6 +22,8 @@ REQUIRED_GUARDRAILS = frozenset(
         "jwt_secret_minimum_length",
         "docs_disabled",
         "rate_limit_enabled",
+        "structured_logging_enabled",
+        "request_logging_enabled",
         "readiness_checks_enabled",
         "cors_origins_non_empty",
         "cors_no_wildcard",
@@ -131,6 +133,10 @@ def _insecure_fixture_settings_by_guardrail() -> dict[str, Settings]:
         "jwt_secret_minimum_length": base.model_copy(update={"jwt_secret": "short"}),
         "docs_disabled": base.model_copy(update={"enable_docs": True}),
         "rate_limit_enabled": base.model_copy(update={"rate_limit_enabled": False}),
+        "structured_logging_enabled": base.model_copy(
+            update={"structured_logging_enabled": False}
+        ),
+        "request_logging_enabled": base.model_copy(update={"request_logging_enabled": False}),
         "readiness_checks_enabled": base.model_copy(
             update={"readiness_checks_enabled": False}
         ),

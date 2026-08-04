@@ -28,6 +28,7 @@ Required checks:
 | Terraform validate | Changed Terraform modules and environments |
 | Security scan | Dependencies and container images |
 | Runtime config policy | Production-like settings guardrails and contract freshness |
+| Request logging contract | Structured HTTP log event fields and redaction policy |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
 
 ## Main Branch Workflow
@@ -81,6 +82,7 @@ Each release should publish:
 - Image digests
 - OpenAPI schema
 - Security contracts for API authorization, permissions, and runtime config policy
+- Observability contracts for structured request logging
 - Alembic migration revision
 - Terraform plan artifact when applicable
 - Test summary

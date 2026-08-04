@@ -63,6 +63,16 @@ RUNTIME_CONFIG_GUARDRAILS = (
         description="API rate limiting must be enabled in production-like runtimes.",
     ),
     RuntimeConfigGuardrail(
+        code="structured_logging_enabled",
+        setting="structured_logging_enabled",
+        description="Structured JSON logging must be enabled in production-like runtimes.",
+    ),
+    RuntimeConfigGuardrail(
+        code="request_logging_enabled",
+        setting="request_logging_enabled",
+        description="HTTP request logging must be enabled in production-like runtimes.",
+    ),
+    RuntimeConfigGuardrail(
         code="readiness_checks_enabled",
         setting="readiness_checks_enabled",
         description="Dependency readiness checks must be enabled in production-like runtimes.",
@@ -157,6 +167,22 @@ def validate_runtime_config(settings: Settings) -> tuple[RuntimeConfigViolation,
                 code="rate_limit_enabled",
                 setting="rate_limit_enabled",
                 message="API rate limiting must be enabled outside local development.",
+            )
+        )
+    if not settings.structured_logging_enabled:
+        violations.append(
+            RuntimeConfigViolation(
+                code="structured_logging_enabled",
+                setting="structured_logging_enabled",
+                message="Structured JSON logging must be enabled outside local development.",
+            )
+        )
+    if not settings.request_logging_enabled:
+        violations.append(
+            RuntimeConfigViolation(
+                code="request_logging_enabled",
+                setting="request_logging_enabled",
+                message="HTTP request logging must be enabled outside local development.",
             )
         )
     if not settings.readiness_checks_enabled:

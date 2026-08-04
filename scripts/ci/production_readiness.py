@@ -59,6 +59,12 @@ REQUIRED_FILES = (
     "backend/src/forgeml/platform/config_policy.py",
     "scripts/ci/check_runtime_config_policy.py",
     "contracts/security/runtime-config-policy.v1.json",
+    "backend/src/forgeml/platform/observability/logging.py",
+    "backend/tests/unit/observability/test_logging.py",
+    "backend/tests/api/test_request_logging_api.py",
+    "scripts/ci/check_request_logging_contract.py",
+    "contracts/observability/README.md",
+    "contracts/observability/request-log-event.v1.json",
 )
 
 
@@ -87,6 +93,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_api_authorization_contract(repo_root),
         check_permission_catalog_contract(repo_root),
         check_runtime_config_policy_contract(repo_root),
+        check_request_logging_contract(repo_root),
     ]
 
 
@@ -529,6 +536,8 @@ def check_runtime_config_policy_contract(repo_root: Path) -> ReadinessCheck:
         "jwt_secret_minimum_length",
         "docs_disabled",
         "rate_limit_enabled",
+        "structured_logging_enabled",
+        "request_logging_enabled",
         "readiness_checks_enabled",
         "cors_origins_non_empty",
         "cors_no_wildcard",
@@ -560,6 +569,78 @@ def check_runtime_config_policy_contract(repo_root: Path) -> ReadinessCheck:
                 f"app_enforces_policy={app_enforces_policy}, "
                 f"production_like_declared={production_like_declared}, "
                 f"missing_guardrails={missing_guardrails}"
+            )
+        ),
+    )
+
+
+def check_request_logging_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    config_source = (repo_root / "backend/src/forgeml/platform/config.py").read_text(
+        encoding="utf-8"
+    )
+    middleware_source = (
+        repo_root / "backend/src/forgeml/platform/api/middleware.py"
+    ).read_text(encoding="utf-8")
+    logging_source = (
+        repo_root / "backend/src/forgeml/platform/observability/logging.py"
+    ).read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/observability/request-log-event.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    required_top_level_fields = set(contract.get("required_top_level_fields", []))
+    required_http_fields = set(contract.get("required_http_fields", []))
+    has_ci_gate = "python scripts/ci/check_request_logging_contract.py" in ci_source
+    required_fragments = {
+        "FORGEML_STRUCTURED_LOGGING_ENABLED": config_source,
+        "FORGEML_REQUEST_LOGGING_ENABLED": config_source,
+        "RequestContextMiddleware": middleware_source,
+        "build_http_request_log_event": middleware_source,
+        "log_http_request": middleware_source,
+        "JsonLogFormatter": logging_source,
+        "redact_mapping": logging_source,
+        "REQUEST_LOG_SCHEMA_VERSION": logging_source,
+    }
+    missing_fragments = [
+        fragment for fragment, source in required_fragments.items() if fragment not in source
+    ]
+    has_required_event_fields = {
+        "schema_version",
+        "event_name",
+        "service",
+        "environment",
+        "trace_id",
+        "http",
+    }.issubset(required_top_level_fields)
+    has_required_http_fields = {
+        "method",
+        "route",
+        "path",
+        "status_code",
+        "status_class",
+        "duration_ms",
+        "client_host",
+        "query_params",
+    }.issubset(required_http_fields)
+    passed = (
+        has_ci_gate
+        and not missing_fragments
+        and has_required_event_fields
+        and has_required_http_fields
+    )
+    return ReadinessCheck(
+        name="request logging contract",
+        passed=passed,
+        detail=(
+            "structured request logging, redaction, and contract gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"missing_fragments={missing_fragments}, "
+                f"has_required_event_fields={has_required_event_fields}, "
+                f"has_required_http_fields={has_required_http_fields}"
             )
         ),
     )
