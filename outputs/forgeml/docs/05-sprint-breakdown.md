@@ -1467,3 +1467,29 @@ Implemented scope:
 - Migration `202607190013_schema_contract_indexes.py` adds indexes for refresh-session replacement lineage and feature-pipeline source dataset lookups.
 - GitHub Actions and production-readiness run the SQLAlchemy schema contract gate.
 - Tests cover valid metadata, contract drift, required-table coverage, naming policy, foreign-key index coverage, readiness wiring, and deterministic serialization.
+
+## Sprint 46: Browser E2E Platform Flows
+
+Goal: Add browser-level confidence that ForgeML's control-plane UI can drive the core ML lifecycle without requiring live infrastructure in every frontend CI run.
+
+Deliverables:
+
+- Stateful Playwright ForgeML API mock that preserves project, dataset, training, registry, deployment, inference, monitoring, and alert state across pages
+- Browser lifecycle spec covering login, project creation, dataset validation, training result capture, model approval, deployment release, endpoint probing, metric snapshots, and alert evaluation
+- GitHub Actions frontend E2E gate
+- Production-readiness E2E contract check
+- README, readiness runbook, testing strategy, CI strategy, and ADR updates
+
+Acceptance criteria:
+
+- `npm --prefix frontend run e2e` exercises the primary ML platform workflow through user-facing pages.
+- The E2E fixture intercepts network requests at the browser boundary instead of replacing application code.
+- CI fails if the browser lifecycle spec is removed from the frontend job.
+- Production-readiness verifies the E2E suite and stateful mock remain checked in.
+
+Implemented scope:
+
+- `frontend/tests/e2e/fixtures/forgemlApiMock.ts` implements a stateful API surface for auth, projects, datasets, training, model registry, deployments, inference, monitoring, and alerting.
+- `frontend/tests/e2e/platform-lifecycle.spec.ts` drives a realistic chargeback-risk workflow across ForgeML pages.
+- GitHub Actions runs the Playwright E2E suite in the frontend job.
+- `scripts/ci/production_readiness.py` validates the E2E contract and CI wiring.

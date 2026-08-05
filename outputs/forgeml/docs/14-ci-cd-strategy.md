@@ -23,7 +23,7 @@ Required checks:
 | Frontend format | TypeScript and CSS formatting |
 | Frontend lint | React and TypeScript lint rules |
 | Frontend tests | Unit and component tests |
-| Playwright smoke | Critical browser flow |
+| Playwright E2E | Browser lifecycle flow with stateful ForgeML API mocks |
 | Docker build | API, frontend, worker, Airflow, training, inference images |
 | Terraform validate | Changed Terraform modules and environments |
 | Security scan | Dependencies and container images |

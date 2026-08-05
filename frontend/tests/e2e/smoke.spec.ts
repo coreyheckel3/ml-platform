@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 test("opens dashboard and navigates to projects", async ({ page }) => {
+  await page.route("**/health/ready", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ready", service: "forgeml-api" })
+    })
+  );
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await page.getByRole("link", { name: "Sign in" }).click();

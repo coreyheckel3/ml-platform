@@ -325,3 +325,21 @@ Options considered:
 Recommendation: Use a checked SQLAlchemy metadata contract alongside the Alembic migration topology contract.
 
 Justification: Alembic governs how schema changes are applied, while SQLAlchemy metadata governs what the application believes exists. ForgeML needs both contracts because a modular monolith can otherwise ship with valid migrations but incomplete application metadata registration or under-indexed query paths.
+
+## ADR-019: Use Stateful Browser API Mocks for Control-Plane E2E Coverage
+
+Status: Accepted
+
+Decision: Run Playwright against the Vite app with network-level ForgeML API mocks that preserve lifecycle state across pages.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Stateful browser API mocks | Fast, deterministic, catches real route/form/API-contract drift in the UI | Does not prove deployed backend infrastructure is reachable |
+| Full-stack E2E for every frontend CI run | Highest fidelity for integrated services | Slower, more fragile, and duplicates backend API/integration coverage |
+| Component tests only | Fast and already deterministic | Misses shell navigation, route state, local storage context, and cross-page workflows |
+
+Recommendation: Use stateful browser API mocks for frontend CI, then reserve full-stack smoke tests for release candidates and local operator validation.
+
+Justification: ForgeML's UI is a control plane over many backend modules. Browser-level coverage should prove an engineer can move through the lifecycle, while backend API tests continue to prove persistence and domain behavior. This split keeps feedback fast without reducing architectural confidence.

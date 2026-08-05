@@ -78,6 +78,8 @@ jobs:
         run: npm --prefix frontend run lint
       - name: Test frontend
         run: npm --prefix frontend run test -- --run
+      - name: Test frontend e2e
+        run: npm --prefix frontend run e2e
       - name: Build frontend
         run: npm --prefix frontend run build
       - name: Enforce frontend bundle budget

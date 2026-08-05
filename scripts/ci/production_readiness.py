@@ -99,6 +99,8 @@ REQUIRED_FILES = (
     "scripts/ci/check_request_logging_contract.py",
     "contracts/observability/README.md",
     "contracts/observability/request-log-event.v1.json",
+    "frontend/tests/e2e/platform-lifecycle.spec.ts",
+    "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
 )
 
 
@@ -124,6 +126,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_sqlalchemy_schema_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
+        check_frontend_e2e_contract(repo_root),
         check_readiness_probe_contract(repo_root),
         check_openapi_contract(repo_root),
         check_problem_details_contract(repo_root),
@@ -516,6 +519,75 @@ def check_frontend_performance_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_budget_gate={has_budget_gate}, "
                 f"uses_suspense_boundary={uses_suspense_boundary}, "
                 f"lazy_route_imports={lazy_route_imports}"
+            )
+        ),
+    )
+
+
+def check_frontend_e2e_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    spec_source = (
+        repo_root / "frontend/tests/e2e/platform-lifecycle.spec.ts"
+    ).read_text(encoding="utf-8")
+    fixture_source = (
+        repo_root / "frontend/tests/e2e/fixtures/forgemlApiMock.ts"
+    ).read_text(encoding="utf-8")
+    config_source = (repo_root / "frontend/playwright.config.ts").read_text(
+        encoding="utf-8"
+    )
+    has_ci_gate = "npm --prefix frontend run e2e" in ci_source
+    required_ui_steps = {
+        "Create project",
+        "Create dataset",
+        "Finalize version",
+        "Start run",
+        "Record result",
+        "Promote",
+        "Request approval",
+        "Approve v1",
+        "Create revision",
+        "Probe endpoint",
+        "Record snapshot",
+        "Evaluate rule",
+    }
+    required_api_fragments = {
+        "/api/v1/auth/login",
+        "/api/v1/projects",
+        "training-runs",
+        "promote-training-run",
+        "deployment-revisions",
+        "inference-endpoints",
+        "monitoring/inference-endpoints",
+        "alert-rules",
+    }
+    missing_ui_steps = sorted(step for step in required_ui_steps if step not in spec_source)
+    missing_api_fragments = sorted(
+        fragment
+        for fragment in required_api_fragments
+        if fragment not in fixture_source and fragment.replace("/", "\\/") not in fixture_source
+    )
+    uses_isolated_server = (
+        "5174" in config_source
+        and "--strictPort" in config_source
+        and "reuseExistingServer: false" in config_source
+    )
+    passed = (
+        has_ci_gate
+        and not missing_ui_steps
+        and not missing_api_fragments
+        and uses_isolated_server
+    )
+    return ReadinessCheck(
+        name="frontend e2e contract",
+        passed=passed,
+        detail=(
+            "Playwright lifecycle coverage is checked in CI with stateful API mocks"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"missing_ui_steps={missing_ui_steps}, "
+                f"missing_api_fragments={missing_api_fragments}, "
+                f"uses_isolated_server={uses_isolated_server}"
             )
         ),
     )

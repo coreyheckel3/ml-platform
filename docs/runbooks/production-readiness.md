@@ -20,6 +20,7 @@ python -m pytest backend/tests
 npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
 npm --prefix frontend run test -- --run
+npm --prefix frontend run e2e
 npm --prefix frontend run build
 python scripts/ci/check_frontend_bundle_budget.py
 docker compose -f infra/compose/docker-compose.yml --profile full config
@@ -44,6 +45,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Request logging contract result proving HTTP access logs include trace IDs and redaction policy
 - `/health/ready` result from the target environment showing database and Redis probes passing
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
+- Frontend Playwright E2E result proving login, project context, dataset validation, training, model approval, deployment, inference, monitoring, and alert evaluation workflows
 - Frontend bundle-budget result showing all JavaScript chunks below 500 KB
 - Alembic migration contract, SQLAlchemy schema contract, and head revision included in the deployment artifact
 - Terraform plan reviewed for the target environment

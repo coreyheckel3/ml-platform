@@ -102,6 +102,12 @@ Critical flows:
 - Roll back deployment
 - View monitoring and alerts
 
+Implementation guidance:
+
+- Use network-level ForgeML API mocks for frontend CI so browser workflows stay deterministic and do not require Postgres, Redis, or object storage.
+- Keep mocks stateful across pages so training success can feed model promotion, model approval can feed deployment, and inference snapshots can feed monitoring.
+- Reserve live full-stack browser smoke tests for local operator validation and release-candidate environments.
+
 ## ML Workflow Tests
 
 ML workflows need tests beyond ordinary application checks:
@@ -146,7 +152,7 @@ Every pull request should run:
 - Frontend lint
 - Frontend type check
 - Frontend unit tests
-- Playwright smoke test
+- Playwright lifecycle E2E test
 - Docker build
 - Terraform format and validate when infra changes
 
