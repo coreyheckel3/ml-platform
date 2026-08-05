@@ -59,6 +59,8 @@ jobs:
         run: python scripts/ci/check_request_logging_contract.py
       - name: Check release smoke contract
         run: python scripts/ci/check_release_smoke_contract.py
+      - name: Check release manifest contract
+        run: python scripts/ci/check_release_manifest_contract.py
 
   frontend:
     runs-on: ubuntu-latest

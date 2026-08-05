@@ -1,0 +1,177 @@
+{
+  "artifact_definitions": [
+    {
+      "kind": "api_contract",
+      "name": "openapi_contract",
+      "path": "contracts/openapi/forgeml.v1.openapi.json",
+      "required": true
+    },
+    {
+      "kind": "api_contract",
+      "name": "problem_details_contract",
+      "path": "contracts/api/problem-details.v1.json",
+      "required": true
+    },
+    {
+      "kind": "security_contract",
+      "name": "api_authorization_contract",
+      "path": "contracts/security/api-authorization.v1.json",
+      "required": true
+    },
+    {
+      "kind": "security_contract",
+      "name": "permission_catalog",
+      "path": "contracts/security/permission-catalog.v1.json",
+      "required": true
+    },
+    {
+      "kind": "security_contract",
+      "name": "runtime_config_policy",
+      "path": "contracts/security/runtime-config-policy.v1.json",
+      "required": true
+    },
+    {
+      "kind": "observability_contract",
+      "name": "request_log_event_contract",
+      "path": "contracts/observability/request-log-event.v1.json",
+      "required": true
+    },
+    {
+      "kind": "database_contract",
+      "name": "alembic_migration_contract",
+      "path": "contracts/database/alembic-migrations.v1.json",
+      "required": true
+    },
+    {
+      "kind": "database_contract",
+      "name": "sqlalchemy_schema_contract",
+      "path": "contracts/database/sqlalchemy-schema.v1.json",
+      "required": true
+    },
+    {
+      "kind": "operations_contract",
+      "name": "release_smoke_contract",
+      "path": "contracts/ops/release-smoke.v1.json",
+      "required": true
+    },
+    {
+      "kind": "operations_contract",
+      "name": "release_manifest_contract",
+      "path": "contracts/ops/release-manifest.v1.json",
+      "required": true
+    },
+    {
+      "kind": "runbook",
+      "name": "production_readiness_runbook",
+      "path": "docs/runbooks/production-readiness.md",
+      "required": true
+    },
+    {
+      "kind": "ci_workflow",
+      "name": "github_actions_ci",
+      "path": ".github/workflows/ci.yml",
+      "required": true
+    },
+    {
+      "kind": "deployment_config",
+      "name": "docker_compose",
+      "path": "infra/compose/docker-compose.yml",
+      "required": true
+    },
+    {
+      "kind": "infrastructure_plan",
+      "name": "staging_terraform_main",
+      "path": "infra/terraform/environments/staging/main.tf",
+      "required": true
+    },
+    {
+      "kind": "infrastructure_plan",
+      "name": "staging_terraform_variables",
+      "path": "infra/terraform/environments/staging/variables.tf",
+      "required": true
+    }
+  ],
+  "evidence_types": [
+    "ci_run",
+    "production_readiness_result",
+    "release_smoke_result",
+    "terraform_plan",
+    "docker_image_digest"
+  ],
+  "generated_from": [
+    "scripts.ops.build_release_manifest"
+  ],
+  "image_targets": [
+    {
+      "context": ".",
+      "dockerfile": "infra/docker/backend.Dockerfile",
+      "name": "backend",
+      "required": true
+    },
+    {
+      "context": ".",
+      "dockerfile": "infra/docker/frontend.Dockerfile",
+      "name": "frontend",
+      "required": true
+    },
+    {
+      "context": ".",
+      "dockerfile": "infra/docker/training.Dockerfile",
+      "name": "training",
+      "required": true
+    },
+    {
+      "context": ".",
+      "dockerfile": "infra/docker/inference.Dockerfile",
+      "name": "inference",
+      "required": true
+    },
+    {
+      "context": ".",
+      "dockerfile": "infra/docker/airflow.Dockerfile",
+      "name": "airflow",
+      "required": true
+    }
+  ],
+  "manifest_schema_version": "forgeml.release_manifest.v1",
+  "operator_command": "PYTHONPATH=. python scripts/ops/build_release_manifest.py --output /tmp/forgeml-release-manifest.json --image-digest backend=sha256:BACKEND_IMAGE_DIGEST",
+  "quality_gates": [
+    "backend_lint",
+    "backend_tests",
+    "example_training_smoke",
+    "frontend_lint",
+    "frontend_tests",
+    "frontend_e2e",
+    "frontend_bundle_budget",
+    "docker_build",
+    "production_readiness",
+    "release_smoke_contract",
+    "release_manifest_contract"
+  ],
+  "required_release_fields": [
+    "version",
+    "created_at",
+    "ci_run_url"
+  ],
+  "required_source_fields": [
+    "git_sha",
+    "git_branch",
+    "dirty"
+  ],
+  "required_top_level_fields": [
+    "schema_version",
+    "release",
+    "source",
+    "artifacts",
+    "images",
+    "evidence",
+    "quality_gates"
+  ],
+  "schema_version": "forgeml.release_manifest_contract.v1",
+  "summary": {
+    "evidence_type_count": 5,
+    "image_target_count": 5,
+    "quality_gate_count": 11,
+    "required_artifact_count": 15
+  }
+}

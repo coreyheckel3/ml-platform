@@ -344,7 +344,7 @@ Recommendation: Use stateful browser API mocks for frontend CI, then reserve ful
 
 Justification: ForgeML's UI is a control plane over many backend modules. Browser-level coverage should prove an engineer can move through the lifecycle, while backend API tests continue to prove persistence and domain behavior. This split keeps feedback fast without reducing architectural confidence.
 
-### ADR-019: Release Candidate Smoke Governance
+## ADR-020: Release Candidate Smoke Governance
 
 Status: Accepted
 
@@ -361,3 +361,21 @@ Options considered:
 Recommendation: Use a read-only API smoke harness for release-candidate and local operator validation, while CI gates the harness contract rather than standing up every dependency for each pull request.
 
 Justification: ForgeML already has backend API tests and browser-level lifecycle coverage. The remaining gap is release evidence against a live target. A contracted smoke runner proves health, auth, project context, and ML platform control-plane surfaces without turning ordinary CI into an unreliable staging clone.
+
+## ADR-021: Release Manifest Provenance
+
+Status: Accepted
+
+Decision: Build a versioned release manifest that records source revision, required contract hashes, Docker image targets, quality gates, and release evidence.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Versioned release manifest | Makes releases reviewable, reproducible, and easy to audit across contracts, images, and smoke evidence | Requires updating manifest contracts when release evidence changes |
+| CI logs as release evidence | Already available from GitHub Actions | Hard to consume programmatically and incomplete without artifact hashes |
+| Manual release notes only | Flexible for humans | Weak provenance and no deterministic connection to checked contracts |
+
+Recommendation: Generate a JSON release manifest and gate the manifest contract in CI plus production-readiness.
+
+Justification: ForgeML is accumulating production contracts across APIs, schemas, security, observability, and operations. A release manifest ties those contracts to a source revision and deployable image set, giving reviewers a compact evidence packet instead of scattered CI logs and ad hoc release notes.

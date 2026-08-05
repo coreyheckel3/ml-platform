@@ -1519,3 +1519,29 @@ Implemented scope:
 - `contracts/ops/release-smoke.v1.json` records required release smoke stages and runtime requirements.
 - `scripts/ci/check_release_smoke_contract.py` validates contract freshness, required stage depth, read-only posture, and CI wiring.
 - Backend ops tests cover smoke execution behavior, contract drift, and production-readiness wiring.
+
+## Sprint 48: Release Manifest Provenance
+
+Goal: Make every ForgeML release reviewable by producing a signed-off manifest of source revision, required contract hashes, Docker image targets, quality gates, and smoke evidence.
+
+Deliverables:
+
+- Release manifest builder for local, CI, and staging release evidence
+- Versioned operations contract for manifest structure, required artifacts, image targets, evidence types, and quality gates
+- CI contract checker and production-readiness gate
+- Unit tests for manifest hashing, image target provenance, smoke evidence ingestion, missing required artifacts, stale contracts, and CI wiring
+- README, readiness runbook, operations contract documentation, testing strategy, CI strategy, and ADR updates
+
+Acceptance criteria:
+
+- The manifest records Git SHA, branch, worktree cleanliness, release version, CI URL, required artifact SHA-256 hashes, Docker image targets, quality gates, and optional release smoke evidence.
+- The checked operations contract is deterministic and release-gated in CI.
+- Production-readiness verifies the manifest builder, contract, runbook command, required artifacts, image targets, quality gates, and hashing behavior.
+- The release runbook tells operators how to build the manifest after smoke and CI evidence are available.
+
+Implemented scope:
+
+- `scripts/ops/build_release_manifest.py` builds versioned release provenance manifests with deterministic file hashing and optional smoke-result evidence.
+- `contracts/ops/release-manifest.v1.json` records required manifest fields, release artifacts, image targets, quality gates, and evidence types.
+- `scripts/ci/check_release_manifest_contract.py` validates contract freshness, required artifact coverage, image target coverage, quality gates, and CI wiring.
+- Backend ops tests cover manifest behavior, contract drift, and production-readiness wiring.

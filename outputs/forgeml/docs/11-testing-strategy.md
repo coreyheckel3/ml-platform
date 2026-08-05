@@ -132,6 +132,7 @@ Contract tests should protect boundaries:
 - Runtime configuration policy contract enforced before production-like API startup.
 - Structured request logging contract with sensitive query-parameter redaction.
 - Release smoke operations contract for the live API surfaces required during release-candidate validation.
+- Release manifest operations contract for release artifact hashes, image targets, evidence types, and quality gates.
 - MLflow adapter expected behavior.
 - Airflow DAG trigger and status interface.
 
@@ -144,6 +145,16 @@ Release smoke tests should run after local seeding and against staging release c
 - Emit and archive the JSON report as release evidence.
 - Cover health, auth, project context, datasets, feature store, experiments, training, training logs, registry, deployment, inference, monitoring, alerts, drift, and retraining.
 - Keep CI focused on the checked operations contract; run live smoke in local operator validation and release-candidate environments.
+
+## Release Manifest Tests
+
+Release manifest tests should protect provenance and evidence quality:
+
+- Hash every required checked contract and deployment artifact with SHA-256.
+- Record source revision, branch, and worktree cleanliness.
+- Capture Docker image targets and image digests when a promotion workflow provides them.
+- Ingest release smoke JSON evidence when it is available.
+- Keep the manifest contract checked in CI and production-readiness.
 - Inference runtime request/response schema.
 - Event payload schemas under `contracts/events`.
 

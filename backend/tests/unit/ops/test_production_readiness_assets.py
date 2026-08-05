@@ -231,3 +231,24 @@ def test_release_smoke_contract_gate_is_enforced() -> None:
     assert contract["summary"]["required_stage_count"] >= 16
     assert "training_logs_surface" in stage_codes
     assert "/api/v1/projects/{project_id}/monitoring/summary" in smoke_source
+
+
+def test_release_manifest_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-manifest.v1.json").read_text(encoding="utf-8")
+    )
+    manifest_source = Path("scripts/ops/build_release_manifest.py").read_text(encoding="utf-8")
+    artifact_paths = {artifact["path"] for artifact in contract["artifact_definitions"]}
+    image_names = {image["name"] for image in contract["image_targets"]}
+
+    assert "python scripts/ci/check_release_manifest_contract.py" in workflow
+    assert "scripts/ops/build_release_manifest.py --output" in runbook
+    assert contract["schema_version"] == "forgeml.release_manifest_contract.v1"
+    assert contract["manifest_schema_version"] == "forgeml.release_manifest.v1"
+    assert contract["summary"]["required_artifact_count"] >= 14
+    assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
+    assert "contracts/ops/release-smoke.v1.json" in artifact_paths
+    assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
+    assert "_sha256_file" in manifest_source

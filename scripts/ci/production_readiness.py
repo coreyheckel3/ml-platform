@@ -16,6 +16,9 @@ try:
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
     )
+    from scripts.ci.check_release_manifest_contract import (
+        check_release_manifest_contract as verify_release_manifest_contract,
+    )
     from scripts.ci.check_release_smoke_contract import (
         check_release_smoke_contract as verify_release_smoke_contract,
     )
@@ -25,6 +28,9 @@ try:
 except ModuleNotFoundError:
     from check_alembic_migration_contract import (  # type: ignore[no-redef]
         check_migration_contract as verify_alembic_migration_contract,
+    )
+    from check_release_manifest_contract import (  # type: ignore[no-redef]
+        check_release_manifest_contract as verify_release_manifest_contract,
     )
     from check_release_smoke_contract import (  # type: ignore[no-redef]
         check_release_smoke_contract as verify_release_smoke_contract,
@@ -107,12 +113,17 @@ REQUIRED_FILES = (
     "contracts/observability/request-log-event.v1.json",
     "contracts/ops/README.md",
     "contracts/ops/release-smoke.v1.json",
+    "contracts/ops/release-manifest.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
     "scripts/ops/release_smoke.py",
+    "scripts/ops/build_release_manifest.py",
     "scripts/ci/check_release_smoke_contract.py",
+    "scripts/ci/check_release_manifest_contract.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
+    "backend/tests/unit/ops/test_release_manifest.py",
+    "backend/tests/unit/ops/test_release_manifest_contract.py",
 )
 
 
@@ -147,6 +158,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_runtime_config_policy_contract(repo_root),
         check_request_logging_contract(repo_root),
         check_release_smoke_contract(repo_root),
+        check_release_manifest_contract(repo_root),
     ]
 
 
@@ -1038,6 +1050,89 @@ def check_release_smoke_contract(repo_root: Path) -> ReadinessCheck:
                 f"emits_versioned_report={emits_versioned_report}, "
                 f"includes_training_logs={includes_training_logs}, "
                 f"missing_stages={missing_stages}"
+            )
+        ),
+    )
+
+
+def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/production-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/release-manifest.v1.json").read_text(encoding="utf-8")
+    )
+    artifact_paths = {
+        artifact.get("path") for artifact in contract.get("artifact_definitions", [])
+    }
+    image_names = {image.get("name") for image in contract.get("image_targets", [])}
+    quality_gates = set(contract.get("quality_gates", []))
+    required_artifacts = {
+        "contracts/openapi/forgeml.v1.openapi.json",
+        "contracts/database/alembic-migrations.v1.json",
+        "contracts/database/sqlalchemy-schema.v1.json",
+        "contracts/security/api-authorization.v1.json",
+        "contracts/observability/request-log-event.v1.json",
+        "contracts/ops/release-smoke.v1.json",
+        "contracts/ops/release-manifest.v1.json",
+    }
+    required_images = {"backend", "frontend", "training", "inference", "airflow"}
+    required_gates = {
+        "backend_tests",
+        "frontend_e2e",
+        "docker_build",
+        "production_readiness",
+        "release_smoke_contract",
+        "release_manifest_contract",
+    }
+    missing_artifacts = sorted(required_artifacts - artifact_paths)
+    missing_images = sorted(required_images - image_names)
+    missing_gates = sorted(required_gates - quality_gates)
+    has_ci_gate = "python scripts/ci/check_release_manifest_contract.py" in ci_source
+    contract_current, contract_detail = verify_release_manifest_contract(
+        repo_root / "contracts/ops/release-manifest.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_artifact_depth = contract.get("summary", {}).get("required_artifact_count", 0) >= 14
+    has_image_depth = contract.get("summary", {}).get("image_target_count", 0) >= 5
+    has_live_command = "scripts/ops/build_release_manifest.py --output" in runbook_source
+    emits_versioned_manifest = "forgeml.release_manifest.v1" in manifest_source
+    includes_file_hashing = "sha256" in manifest_source and "_sha256_file" in manifest_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_artifact_depth
+        and has_image_depth
+        and has_live_command
+        and emits_versioned_manifest
+        and includes_file_hashing
+        and not missing_artifacts
+        and not missing_images
+        and not missing_gates
+    )
+    return ReadinessCheck(
+        name="release manifest contract",
+        passed=passed,
+        detail=(
+            "release manifest provenance contract, builder, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_artifact_depth={has_artifact_depth}, "
+                f"has_image_depth={has_image_depth}, "
+                f"has_live_command={has_live_command}, "
+                f"emits_versioned_manifest={emits_versioned_manifest}, "
+                f"includes_file_hashing={includes_file_hashing}, "
+                f"missing_artifacts={missing_artifacts}, "
+                f"missing_images={missing_images}, "
+                f"missing_gates={missing_gates}"
             )
         ),
     )
