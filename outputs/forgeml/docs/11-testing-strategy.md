@@ -133,6 +133,9 @@ Contract tests should protect boundaries:
 - Structured request logging contract with sensitive query-parameter redaction.
 - Release smoke operations contract for the live API surfaces required during release-candidate validation.
 - Release manifest operations contract for release artifact hashes, image targets, evidence types, and quality gates.
+- Release evidence workflow contract for CI manifest publication behavior.
+- Inference runtime request/response schema.
+- Event payload schemas under `contracts/events`.
 - MLflow adapter expected behavior.
 - Airflow DAG trigger and status interface.
 
@@ -155,8 +158,17 @@ Release manifest tests should protect provenance and evidence quality:
 - Capture Docker image targets and image digests when a promotion workflow provides them.
 - Ingest release smoke JSON evidence when it is available.
 - Keep the manifest contract checked in CI and production-readiness.
-- Inference runtime request/response schema.
-- Event payload schemas under `contracts/events`.
+
+## Release Evidence Workflow Tests
+
+Release evidence workflow tests should ensure CI does not silently stop publishing
+release evidence:
+
+- Require the release evidence job to depend on backend, frontend, Docker, and production-readiness jobs.
+- Require manifest generation from `scripts/ops/build_release_manifest.py`.
+- Require artifact upload through `actions/upload-artifact`.
+- Fail when the manifest artifact path is missing.
+- Keep workflow publication behavior captured in a checked operations contract.
 
 ## CI Gates
 

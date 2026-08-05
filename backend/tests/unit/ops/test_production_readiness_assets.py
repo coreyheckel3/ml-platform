@@ -252,3 +252,21 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
     assert "_sha256_file" in manifest_source
+
+
+def test_release_evidence_workflow_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-evidence-workflow.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert "python scripts/ci/check_release_evidence_workflow.py" in workflow
+    assert "release-evidence:" in workflow
+    assert "needs: [backend, frontend, docker, production-readiness]" in workflow
+    assert "actions/upload-artifact@v4" in workflow
+    assert "if-no-files-found: error" in workflow
+    assert contract["schema_version"] == "forgeml.release_evidence_workflow.v1"
+    assert contract["artifact_name"] == "forgeml-release-manifest"
+    assert contract["manifest_path"] == "dist/release/forgeml-release-manifest.json"

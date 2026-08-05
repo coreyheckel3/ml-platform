@@ -379,3 +379,21 @@ Options considered:
 Recommendation: Generate a JSON release manifest and gate the manifest contract in CI plus production-readiness.
 
 Justification: ForgeML is accumulating production contracts across APIs, schemas, security, observability, and operations. A release manifest ties those contracts to a source revision and deployable image set, giving reviewers a compact evidence packet instead of scattered CI logs and ad hoc release notes.
+
+## ADR-022: Publish Release Evidence From CI
+
+Status: Accepted
+
+Decision: Add a main-branch CI job that builds the ForgeML release manifest after backend, frontend, Docker, and production-readiness gates pass, then uploads it as a workflow artifact.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| CI-published release manifest artifact | Gives every successful main run a durable evidence bundle tied to the workflow URL | Adds one workflow job and artifact retention dependency |
+| Operator-only manifest generation | Flexible and works outside GitHub Actions | Easy to forget and harder to prove for portfolio review |
+| Release notes without artifact upload | Human-readable | Weak evidence chain and no machine-readable provenance |
+
+Recommendation: Publish the release manifest from CI and keep the workflow behavior under an operations contract.
+
+Justification: ForgeML already generates the manifest locally. Publishing it from CI turns provenance into an automatic release artifact attached to the exact run that validated the platform, which is closer to how mature internal ML platforms handle promotion evidence.

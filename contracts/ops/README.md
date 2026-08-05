@@ -49,3 +49,21 @@ Build a release manifest:
 ```bash
 PYTHONPATH=. python scripts/ops/build_release_manifest.py --output /tmp/forgeml-release-manifest.json
 ```
+
+## Release Evidence Workflow
+
+`release-evidence-workflow.v1.json` records the CI workflow requirements for
+building and uploading the release manifest after backend, frontend, Docker, and
+production-readiness gates pass on `main`.
+
+Regenerate after an intentional release-evidence workflow change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_workflow.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_workflow.py
+```

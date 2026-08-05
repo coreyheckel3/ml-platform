@@ -16,6 +16,9 @@ try:
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
     )
+    from scripts.ci.check_release_evidence_workflow import (
+        check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
+    )
     from scripts.ci.check_release_manifest_contract import (
         check_release_manifest_contract as verify_release_manifest_contract,
     )
@@ -28,6 +31,9 @@ try:
 except ModuleNotFoundError:
     from check_alembic_migration_contract import (  # type: ignore[no-redef]
         check_migration_contract as verify_alembic_migration_contract,
+    )
+    from check_release_evidence_workflow import (  # type: ignore[no-redef]
+        check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
     )
     from check_release_manifest_contract import (  # type: ignore[no-redef]
         check_release_manifest_contract as verify_release_manifest_contract,
@@ -114,16 +120,19 @@ REQUIRED_FILES = (
     "contracts/ops/README.md",
     "contracts/ops/release-smoke.v1.json",
     "contracts/ops/release-manifest.v1.json",
+    "contracts/ops/release-evidence-workflow.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
     "scripts/ops/release_smoke.py",
     "scripts/ops/build_release_manifest.py",
     "scripts/ci/check_release_smoke_contract.py",
     "scripts/ci/check_release_manifest_contract.py",
+    "scripts/ci/check_release_evidence_workflow.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
     "backend/tests/unit/ops/test_release_manifest.py",
     "backend/tests/unit/ops/test_release_manifest_contract.py",
+    "backend/tests/unit/ops/test_release_evidence_workflow_contract.py",
 )
 
 
@@ -159,6 +168,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_request_logging_contract(repo_root),
         check_release_smoke_contract(repo_root),
         check_release_manifest_contract(repo_root),
+        check_release_evidence_workflow_contract(repo_root),
     ]
 
 
@@ -1133,6 +1143,62 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
                 f"missing_artifacts={missing_artifacts}, "
                 f"missing_images={missing_images}, "
                 f"missing_gates={missing_gates}"
+            )
+        ),
+    )
+
+
+def check_release_evidence_workflow_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/ops/release-evidence-workflow.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    required_fragments = set(contract.get("required_fragments", []))
+    missing_fragments = sorted(
+        fragment for fragment in required_fragments if fragment not in ci_source
+    )
+    has_backend_gate = "python scripts/ci/check_release_evidence_workflow.py" in ci_source
+    contract_current, contract_detail = verify_release_evidence_workflow_contract(
+        repo_root / "contracts/ops/release-evidence-workflow.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+    )
+    required_needs = set(contract.get("required_needs", []))
+    has_required_needs = {
+        "backend",
+        "frontend",
+        "docker",
+        "production-readiness",
+    }.issubset(required_needs)
+    has_manifest_artifact = (
+        contract.get("artifact_name") == "forgeml-release-manifest"
+        and contract.get("manifest_path") == "dist/release/forgeml-release-manifest.json"
+    )
+    has_contract_docs = "release-evidence-workflow.v1.json" in contracts_source
+    passed = (
+        has_backend_gate
+        and contract_current
+        and has_required_needs
+        and has_manifest_artifact
+        and has_contract_docs
+        and not missing_fragments
+    )
+    return ReadinessCheck(
+        name="release evidence workflow contract",
+        passed=passed,
+        detail=(
+            "CI publishes the release manifest artifact after required release gates"
+            if passed
+            else (
+                f"has_backend_gate={has_backend_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_required_needs={has_required_needs}, "
+                f"has_manifest_artifact={has_manifest_artifact}, "
+                f"has_contract_docs={has_contract_docs}, "
+                f"missing_fragments={missing_fragments}"
             )
         ),
     )

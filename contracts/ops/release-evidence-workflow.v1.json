@@ -1,0 +1,35 @@
+{
+  "artifact_name": "forgeml-release-manifest",
+  "generated_from": [
+    ".github/workflows/ci.yml",
+    "scripts.ops.build_release_manifest"
+  ],
+  "job_name": "release-evidence",
+  "manifest_path": "dist/release/forgeml-release-manifest.json",
+  "required_fragments": [
+    "release-evidence:",
+    "needs: [backend, frontend, docker, production-readiness]",
+    "github.event_name == 'push'",
+    "github.ref == 'refs/heads/main'",
+    "python scripts/ops/build_release_manifest.py",
+    "--output dist/release/forgeml-release-manifest.json",
+    "--git-sha \"$GITHUB_SHA\"",
+    "--git-branch \"$GITHUB_REF_NAME\"",
+    "--ci-run-url \"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"",
+    "actions/upload-artifact@v4",
+    "name: forgeml-release-manifest",
+    "path: dist/release/forgeml-release-manifest.json",
+    "if-no-files-found: error"
+  ],
+  "required_needs": [
+    "backend",
+    "frontend",
+    "docker",
+    "production-readiness"
+  ],
+  "schema_version": "forgeml.release_evidence_workflow.v1",
+  "summary": {
+    "required_fragment_count": 13,
+    "required_need_count": 4
+  }
+}

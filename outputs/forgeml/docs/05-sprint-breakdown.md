@@ -1545,3 +1545,30 @@ Implemented scope:
 - `contracts/ops/release-manifest.v1.json` records required manifest fields, release artifacts, image targets, quality gates, and evidence types.
 - `scripts/ci/check_release_manifest_contract.py` validates contract freshness, required artifact coverage, image target coverage, quality gates, and CI wiring.
 - Backend ops tests cover manifest behavior, contract drift, and production-readiness wiring.
+
+## Sprint 49: CI Release Evidence Publication
+
+Goal: Make the release manifest automatically available from successful main-branch CI runs so reviewers and operators do not have to reconstruct release evidence by hand.
+
+Deliverables:
+
+- Main-branch `release-evidence` GitHub Actions job that runs after backend, frontend, Docker, and production-readiness jobs
+- Release manifest artifact upload with `if-no-files-found: error`
+- Versioned operations contract for release evidence workflow requirements
+- CI checker and production-readiness gate for release evidence publication
+- Unit tests for workflow fragments, stale contracts, checked-in contract freshness, and production-readiness wiring
+- README, readiness runbook, operations contract documentation, testing strategy, CI strategy, and ADR updates
+
+Acceptance criteria:
+
+- CI builds `dist/release/forgeml-release-manifest.json` after required release gates pass.
+- CI uploads the manifest as the `forgeml-release-manifest` artifact on pushes to `main`.
+- The checked workflow contract is deterministic and release-gated in CI.
+- Production-readiness verifies the evidence job, dependencies, manifest path, upload behavior, and contract documentation.
+
+Implemented scope:
+
+- `.github/workflows/ci.yml` now includes a `release-evidence` job gated on backend, frontend, Docker, and production-readiness success.
+- `contracts/ops/release-evidence-workflow.v1.json` records required workflow fragments, dependencies, manifest path, and artifact name.
+- `scripts/ci/check_release_evidence_workflow.py` validates workflow contract freshness and CI publication behavior.
+- Backend ops tests cover workflow validation, contract drift, and production-readiness wiring.
