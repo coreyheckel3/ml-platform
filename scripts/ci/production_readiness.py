@@ -536,6 +536,9 @@ def check_frontend_e2e_contract(repo_root: Path) -> ReadinessCheck:
         encoding="utf-8"
     )
     has_ci_gate = "npm --prefix frontend run e2e" in ci_source
+    has_browser_install = (
+        "npm --prefix frontend exec playwright install --with-deps chromium" in ci_source
+    )
     required_ui_steps = {
         "Create project",
         "Create dataset",
@@ -573,6 +576,7 @@ def check_frontend_e2e_contract(repo_root: Path) -> ReadinessCheck:
     )
     passed = (
         has_ci_gate
+        and has_browser_install
         and not missing_ui_steps
         and not missing_api_fragments
         and uses_isolated_server
@@ -585,6 +589,7 @@ def check_frontend_e2e_contract(repo_root: Path) -> ReadinessCheck:
             if passed
             else (
                 f"has_ci_gate={has_ci_gate}, "
+                f"has_browser_install={has_browser_install}, "
                 f"missing_ui_steps={missing_ui_steps}, "
                 f"missing_api_fragments={missing_api_fragments}, "
                 f"uses_isolated_server={uses_isolated_server}"
