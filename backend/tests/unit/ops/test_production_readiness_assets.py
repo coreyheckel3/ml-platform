@@ -215,3 +215,19 @@ def test_request_logging_contract_gate_is_enforced() -> None:
     assert "JsonLogFormatter" in logging_source
     assert "redact_mapping" in logging_source
     assert "log_http_request" in middleware_source
+
+
+def test_release_smoke_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(Path("contracts/ops/release-smoke.v1.json").read_text(encoding="utf-8"))
+    smoke_source = Path("scripts/ops/release_smoke.py").read_text(encoding="utf-8")
+    stage_codes = {stage["code"] for stage in contract["stages"]}
+
+    assert "python scripts/ci/check_release_smoke_contract.py" in workflow
+    assert "scripts/ops/release_smoke.py --base-url" in runbook
+    assert contract["schema_version"] == "forgeml.release_smoke_contract.v1"
+    assert contract["runtime_requirements"]["mutates_data"] is False
+    assert contract["summary"]["required_stage_count"] >= 16
+    assert "training_logs_surface" in stage_codes
+    assert "/api/v1/projects/{project_id}/monitoring/summary" in smoke_source

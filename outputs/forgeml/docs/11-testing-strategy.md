@@ -131,8 +131,19 @@ Contract tests should protect boundaries:
 - SQLAlchemy schema metadata contract for registered tables, column shape, keys, constraints, and foreign-key index coverage.
 - Runtime configuration policy contract enforced before production-like API startup.
 - Structured request logging contract with sensitive query-parameter redaction.
+- Release smoke operations contract for the live API surfaces required during release-candidate validation.
 - MLflow adapter expected behavior.
 - Airflow DAG trigger and status interface.
+
+## Release Smoke Tests
+
+Release smoke tests should run after local seeding and against staging release candidates:
+
+- Use `scripts/ops/release_smoke.py` for live API validation.
+- Keep the smoke runner non-mutating so it can be repeated safely.
+- Emit and archive the JSON report as release evidence.
+- Cover health, auth, project context, datasets, feature store, experiments, training, training logs, registry, deployment, inference, monitoring, alerts, drift, and retraining.
+- Keep CI focused on the checked operations contract; run live smoke in local operator validation and release-candidate environments.
 - Inference runtime request/response schema.
 - Event payload schemas under `contracts/events`.
 

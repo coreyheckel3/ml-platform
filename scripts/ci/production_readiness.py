@@ -16,12 +16,18 @@ try:
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
     )
+    from scripts.ci.check_release_smoke_contract import (
+        check_release_smoke_contract as verify_release_smoke_contract,
+    )
     from scripts.ci.check_sqlalchemy_schema_contract import (
         check_schema_contract as verify_sqlalchemy_schema_contract,
     )
 except ModuleNotFoundError:
     from check_alembic_migration_contract import (  # type: ignore[no-redef]
         check_migration_contract as verify_alembic_migration_contract,
+    )
+    from check_release_smoke_contract import (  # type: ignore[no-redef]
+        check_release_smoke_contract as verify_release_smoke_contract,
     )
     from check_sqlalchemy_schema_contract import (  # type: ignore[no-redef]
         check_schema_contract as verify_sqlalchemy_schema_contract,
@@ -99,8 +105,14 @@ REQUIRED_FILES = (
     "scripts/ci/check_request_logging_contract.py",
     "contracts/observability/README.md",
     "contracts/observability/request-log-event.v1.json",
+    "contracts/ops/README.md",
+    "contracts/ops/release-smoke.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
+    "scripts/ops/release_smoke.py",
+    "scripts/ci/check_release_smoke_contract.py",
+    "backend/tests/unit/ops/test_release_smoke.py",
+    "backend/tests/unit/ops/test_release_smoke_contract.py",
 )
 
 
@@ -134,6 +146,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_permission_catalog_contract(repo_root),
         check_runtime_config_policy_contract(repo_root),
         check_request_logging_contract(repo_root),
+        check_release_smoke_contract(repo_root),
     ]
 
 
@@ -954,6 +967,77 @@ def check_request_logging_contract(repo_root: Path) -> ReadinessCheck:
                 f"missing_fragments={missing_fragments}, "
                 f"has_required_event_fields={has_required_event_fields}, "
                 f"has_required_http_fields={has_required_http_fields}"
+            )
+        ),
+    )
+
+
+def check_release_smoke_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/production-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    smoke_source = (repo_root / "scripts/ops/release_smoke.py").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/ops/release-smoke.v1.json").read_text(encoding="utf-8")
+    )
+    stages = {stage.get("code") for stage in contract.get("stages", [])}
+    required_stages = {
+        "health_ready",
+        "auth_login",
+        "auth_identity",
+        "project_inventory",
+        "dataset_inventory",
+        "feature_store_inventory",
+        "experiment_inventory",
+        "training_inventory",
+        "model_registry_inventory",
+        "deployment_inventory",
+        "inference_endpoint_inventory",
+        "monitoring_summary",
+        "alert_rule_inventory",
+        "alert_event_inventory",
+        "drift_report_inventory",
+        "retraining_policy_inventory",
+        "retraining_run_inventory",
+    }
+    missing_stages = sorted(required_stages - stages)
+    has_ci_gate = "python scripts/ci/check_release_smoke_contract.py" in ci_source
+    contract_current, contract_detail = verify_release_smoke_contract(
+        repo_root / "contracts/ops/release-smoke.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+    )
+    has_required_stage_depth = contract.get("summary", {}).get("required_stage_count", 0) >= 16
+    is_read_only = contract.get("runtime_requirements", {}).get("mutates_data") is False
+    has_live_command = "scripts/ops/release_smoke.py --base-url" in runbook_source
+    emits_versioned_report = "forgeml.release_smoke_result.v1" in smoke_source
+    includes_training_logs = "/api/v1/training-runs/{training_run_id}/logs" in smoke_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_required_stage_depth
+        and is_read_only
+        and has_live_command
+        and emits_versioned_report
+        and includes_training_logs
+        and not missing_stages
+    )
+    return ReadinessCheck(
+        name="release smoke contract",
+        passed=passed,
+        detail=(
+            "release-candidate smoke contract, operator script, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_required_stage_depth={has_required_stage_depth}, "
+                f"is_read_only={is_read_only}, "
+                f"has_live_command={has_live_command}, "
+                f"emits_versioned_report={emits_versioned_report}, "
+                f"includes_training_logs={includes_training_logs}, "
+                f"missing_stages={missing_stages}"
             )
         ),
     )

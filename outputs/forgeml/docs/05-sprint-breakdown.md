@@ -1493,3 +1493,29 @@ Implemented scope:
 - `frontend/tests/e2e/platform-lifecycle.spec.ts` drives a realistic chargeback-risk workflow across ForgeML pages.
 - GitHub Actions runs the Playwright E2E suite in the frontend job.
 - `scripts/ci/production_readiness.py` validates the E2E contract and CI wiring.
+
+## Sprint 47: Release Candidate Smoke Governance
+
+Goal: Give operators and reviewers a deterministic way to prove a ForgeML release can reach the real API control plane end to end without mutating target data.
+
+Deliverables:
+
+- Non-mutating release smoke runner for live local or staging APIs
+- Versioned operations contract for required smoke stages
+- CI contract checker and production-readiness gate
+- Unit tests for successful smoke runs, auth failure, missing project context, optional training-log coverage, stale contracts, and CI wiring
+- README, readiness runbook, testing strategy, CI strategy, operations contract documentation, and ADR updates
+
+Acceptance criteria:
+
+- The smoke runner logs in and verifies health, identity, projects, datasets, features, experiments, training, training logs when available, model registry, deployments, inference endpoints, monitoring, alerts, drift, and retraining surfaces.
+- The runner emits a versioned JSON report suitable for release evidence.
+- The checked operations contract is deterministic and release-gated in CI.
+- Production-readiness verifies the smoke script, contract, runbook command, and required stage coverage.
+
+Implemented scope:
+
+- `scripts/ops/release_smoke.py` implements a read-only live API smoke harness with injectable transport for tests.
+- `contracts/ops/release-smoke.v1.json` records required release smoke stages and runtime requirements.
+- `scripts/ci/check_release_smoke_contract.py` validates contract freshness, required stage depth, read-only posture, and CI wiring.
+- Backend ops tests cover smoke execution behavior, contract drift, and production-readiness wiring.

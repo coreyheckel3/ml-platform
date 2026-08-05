@@ -343,3 +343,21 @@ Options considered:
 Recommendation: Use stateful browser API mocks for frontend CI, then reserve full-stack smoke tests for release candidates and local operator validation.
 
 Justification: ForgeML's UI is a control plane over many backend modules. Browser-level coverage should prove an engineer can move through the lifecycle, while backend API tests continue to prove persistence and domain behavior. This split keeps feedback fast without reducing architectural confidence.
+
+### ADR-019: Release Candidate Smoke Governance
+
+Status: Accepted
+
+Decision: Maintain a non-mutating release smoke runner plus a versioned operations contract that is checked in CI and production-readiness.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Contracted live smoke runner | Gives operators real API evidence, stays repeatable, and avoids data mutation in shared environments | Requires a seeded user and at least one project context |
+| Mandatory full-stack browser smoke in every PR | Highest fidelity for UI plus API integration | Slower and more fragile than the existing mocked browser E2E gate |
+| Manual checklist only | Flexible and easy to change | Hard to review, hard to automate, and likely to drift from the product surface |
+
+Recommendation: Use a read-only API smoke harness for release-candidate and local operator validation, while CI gates the harness contract rather than standing up every dependency for each pull request.
+
+Justification: ForgeML already has backend API tests and browser-level lifecycle coverage. The remaining gap is release evidence against a live target. A contracted smoke runner proves health, auth, project context, and ML platform control-plane surfaces without turning ordinary CI into an unreliable staging clone.

@@ -1,0 +1,182 @@
+{
+  "generated_from": [
+    "scripts.ops.release_smoke"
+  ],
+  "operator_command": "PYTHONPATH=. python scripts/ops/release_smoke.py --base-url http://127.0.0.1:8001",
+  "runtime_requirements": {
+    "mutates_data": false,
+    "requires_project_context": true,
+    "requires_running_api": true,
+    "requires_seeded_user": true
+  },
+  "schema_version": "forgeml.release_smoke_contract.v1",
+  "stages": [
+    {
+      "code": "health_ready",
+      "description": "Confirms the API process is ready to serve traffic.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/health/ready",
+      "required": true
+    },
+    {
+      "code": "auth_login",
+      "description": "Authenticates the seeded smoke-test user and obtains an access token.",
+      "expected_status_code": 200,
+      "method": "POST",
+      "mutates_data": false,
+      "path_template": "/api/v1/auth/login",
+      "required": true
+    },
+    {
+      "code": "auth_identity",
+      "description": "Verifies the issued token is accepted by a protected route.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/auth/me",
+      "required": true
+    },
+    {
+      "code": "project_inventory",
+      "description": "Lists projects and selects the target project context.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects",
+      "required": true
+    },
+    {
+      "code": "dataset_inventory",
+      "description": "Verifies dataset registry access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/datasets",
+      "required": true
+    },
+    {
+      "code": "feature_store_inventory",
+      "description": "Verifies feature store metadata access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/feature-sets",
+      "required": true
+    },
+    {
+      "code": "experiment_inventory",
+      "description": "Verifies experiment tracking access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/experiments",
+      "required": true
+    },
+    {
+      "code": "training_inventory",
+      "description": "Verifies training run inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/training-runs",
+      "required": true
+    },
+    {
+      "code": "training_logs_surface",
+      "description": "Verifies training logs are readable when the project has a training run.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/training-runs/{training_run_id}/logs",
+      "required": false
+    },
+    {
+      "code": "model_registry_inventory",
+      "description": "Verifies registered model inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/models",
+      "required": true
+    },
+    {
+      "code": "deployment_inventory",
+      "description": "Verifies deployment inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/deployments",
+      "required": true
+    },
+    {
+      "code": "inference_endpoint_inventory",
+      "description": "Verifies inference endpoint inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/inference-endpoints",
+      "required": true
+    },
+    {
+      "code": "monitoring_summary",
+      "description": "Verifies project monitoring summaries are available.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/monitoring/summary",
+      "required": true
+    },
+    {
+      "code": "alert_rule_inventory",
+      "description": "Verifies alert rule inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/alert-rules",
+      "required": true
+    },
+    {
+      "code": "alert_event_inventory",
+      "description": "Verifies alert event inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/alert-events",
+      "required": true
+    },
+    {
+      "code": "drift_report_inventory",
+      "description": "Verifies drift report inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/drift-reports",
+      "required": true
+    },
+    {
+      "code": "retraining_policy_inventory",
+      "description": "Verifies retraining policy inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/retraining-policies",
+      "required": true
+    },
+    {
+      "code": "retraining_run_inventory",
+      "description": "Verifies retraining run inventory access for the selected project.",
+      "expected_status_code": 200,
+      "method": "GET",
+      "mutates_data": false,
+      "path_template": "/api/v1/projects/{project_id}/retraining-runs",
+      "required": true
+    }
+  ],
+  "summary": {
+    "mutating_stage_count": 0,
+    "required_stage_count": 17,
+    "stage_count": 18
+  }
+}

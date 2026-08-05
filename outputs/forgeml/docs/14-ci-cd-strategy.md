@@ -32,6 +32,7 @@ Required checks:
 | Problem Details contract | API error envelope fields, handlers, and sanitized validation details |
 | Runtime config policy | Production-like settings guardrails and contract freshness |
 | Request logging contract | Structured HTTP log event fields and redaction policy |
+| Release smoke contract | Required live API smoke stages, read-only posture, and operator command |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
 
 ## Main Branch Workflow
@@ -43,7 +44,7 @@ After merge:
 3. Generate OpenAPI contract artifact.
 4. Run database migration dry-run against staging clone where available.
 5. Deploy to staging.
-6. Run API smoke tests and k6 smoke load tests against staging.
+6. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
 7. Publish build summary and artifact digests.
 
 ## Production Deployment Workflow
@@ -87,6 +88,7 @@ Each release should publish:
 - Problem Details API error contract
 - Security contracts for API authorization, permissions, and runtime config policy
 - Observability contracts for structured request logging
+- Operations contracts for release smoke validation
 - Alembic migration topology contract, SQLAlchemy schema contract, and head revision
 - Terraform plan artifact when applicable
 - Test summary
