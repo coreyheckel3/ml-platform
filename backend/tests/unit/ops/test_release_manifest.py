@@ -107,7 +107,9 @@ def test_release_manifest_includes_release_smoke_evidence(tmp_path: Path) -> Non
         ),
     )
 
-    evidence = manifest["evidence"][0]
+    evidence = next(
+        item for item in manifest["evidence"] if item["kind"] == "release_smoke_result"
+    )
 
     assert evidence["kind"] == "release_smoke_result"
     assert evidence["status"] == "passed"
