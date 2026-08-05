@@ -136,6 +136,11 @@ def _write_valid_manifest(
             else {}
         ),
     )
+    if ci_run_url is None:
+        manifest["release"]["ci_run_url"] = None
+        manifest["evidence"] = [
+            record for record in manifest["evidence"] if record["kind"] != "ci_run"
+        ]
     manifest_path = repo_root / "release-manifest.json"
     write_release_manifest(manifest, manifest_path)
     return manifest_path
