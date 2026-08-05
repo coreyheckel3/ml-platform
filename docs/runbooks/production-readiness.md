@@ -8,6 +8,7 @@ Run these checks before a staging or production deployment:
 
 ```bash
 python scripts/ci/production_readiness.py
+python scripts/ci/check_alembic_migration_contract.py
 python scripts/ci/generate_openapi_contract.py --check
 python scripts/ci/check_problem_details_contract.py
 python scripts/ci/check_api_authorization_contract.py
@@ -32,6 +33,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 ## Required Evidence
 
 - CI run URL for backend, frontend, Docker, and production-readiness checks
+- Alembic migration contract result proving the release has one base, one head, and reversible migrations
 - OpenAPI contract check result proving the checked-in schema matches the FastAPI app
 - Problem Details contract result proving API errors include trace IDs and sanitized validation details
 - API authorization contract result proving only allowlisted routes are public
@@ -41,7 +43,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - `/health/ready` result from the target environment showing database and Redis probes passing
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend bundle-budget result showing all JavaScript chunks below 500 KB
-- Alembic head revision included in the deployment artifact
+- Alembic migration contract and head revision included in the deployment artifact
 - Terraform plan reviewed for the target environment
 - k6 summary showing p95 latency below 500 ms for smoke traffic
 - Grafana dashboard screenshot or link showing API request rate, p95 latency, error rate, and rate-limited requests

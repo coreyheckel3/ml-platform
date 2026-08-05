@@ -1405,3 +1405,32 @@ Implemented scope:
 - `contracts/api/problem-details.v1.json` captures the checked API error contract.
 - GitHub Actions and production-readiness run the Problem Details gate.
 - Tests cover response builders, domain errors, validation errors, HTTP exceptions, sanitized internal errors, contract freshness, and readiness wiring.
+
+## Sprint 44: Alembic Migration Governance
+
+Goal: Make database schema evolution explicit, reviewable, and release-gated by
+publishing a checked Alembic migration topology contract.
+
+Deliverables:
+
+- Alembic migration graph extractor that parses migration metadata without importing migrations
+- Deterministic database contract under `contracts/database`
+- CI gate for duplicate revisions, unknown parent revisions, multiple heads, and stale contracts
+- Production-readiness gate for migration contract freshness and reversible migration hooks
+- Unit tests for graph extraction, stale contracts, duplicate revisions, unknown parents, multiple heads, missing downgrades, deterministic serialization, and checked-in contract freshness
+- Database contract documentation, production-readiness runbook updates, testing strategy updates, CI strategy updates, schema strategy updates, ADR, and README updates
+
+Acceptance criteria:
+
+- The checked contract records the current base revision, head revision, migration count, branch points, merge revisions, migration files, and topological order.
+- The repository has exactly one Alembic base revision and exactly one Alembic head revision.
+- Every migration defines both `upgrade()` and `downgrade()`.
+- Future migration changes fail CI unless the checked contract is regenerated.
+- Production-readiness runs the same migration contract check used by CI.
+
+Implemented scope:
+
+- `scripts/ci/check_alembic_migration_contract.py` parses Alembic migration files with `ast`, validates graph topology, writes contracts, and checks contract freshness.
+- `contracts/database/alembic-migrations.v1.json` captures the current twelve-revision migration chain from `202607180001` to `202607190012`.
+- GitHub Actions and production-readiness run the Alembic migration contract gate.
+- Tests cover valid topology, graph violations, checked-in contract freshness, readiness wiring, and deterministic serialization.

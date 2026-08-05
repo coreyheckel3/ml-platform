@@ -121,6 +121,7 @@ Contract tests should protect boundaries:
 
 - Backend OpenAPI contract consumed by frontend.
 - Problem Details API error envelope contract consumed by frontend and SDK clients.
+- Alembic migration topology contract for base revision, head revision, parent links, and reversible migration hooks.
 - Runtime configuration policy contract enforced before production-like API startup.
 - Structured request logging contract with sensitive query-parameter redaction.
 - MLflow adapter expected behavior.
@@ -138,6 +139,7 @@ Every pull request should run:
 - Backend unit tests
 - Backend integration tests
 - API tests
+- Alembic migration contract check
 - Frontend formatting check
 - Frontend lint
 - Frontend type check

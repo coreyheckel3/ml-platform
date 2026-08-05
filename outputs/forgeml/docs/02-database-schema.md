@@ -226,6 +226,8 @@ Retention policies should be configurable per environment:
 
 - All schema changes go through Alembic.
 - Migrations are reviewed in pull requests.
+- The Alembic migration topology contract is regenerated for intentional schema changes.
+- CI rejects duplicate revisions, unknown parents, multiple heads, stale contracts, and missing downgrade hooks.
 - Destructive migrations require a backfill and rollback plan.
 - Enum changes are additive first, then cleanup in a later migration.
 - Large table changes use expand-and-contract migrations.

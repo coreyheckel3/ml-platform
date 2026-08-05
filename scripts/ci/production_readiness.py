@@ -5,6 +5,15 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+try:
+    from scripts.ci.check_alembic_migration_contract import (
+        check_migration_contract as verify_alembic_migration_contract,
+    )
+except ModuleNotFoundError:
+    from check_alembic_migration_contract import (  # type: ignore[no-redef]
+        check_migration_contract as verify_alembic_migration_contract,
+    )
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BANNED_TOKENS = ("TO" + "DO", "T" + "BD", "FIX" + "ME", "place" + "holder")
 SCAN_ROOTS = (
@@ -50,6 +59,10 @@ REQUIRED_FILES = (
     "scripts/ops/restore_postgres.sh",
     "backend/tests/unit/ml/test_example_training_pipelines.py",
     "scripts/ci/check_frontend_bundle_budget.py",
+    "scripts/ci/check_alembic_migration_contract.py",
+    "contracts/database/README.md",
+    "contracts/database/alembic-migrations.v1.json",
+    "backend/tests/unit/ops/test_alembic_migration_contract.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -92,6 +105,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_staging_terraform(repo_root),
         check_example_training_contract(repo_root),
         check_training_execution_contract(repo_root),
+        check_alembic_migration_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_readiness_probe_contract(repo_root),
@@ -315,6 +329,60 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
             "training execution runner is wired behind application contracts"
             if not missing
             else f"missing: {missing}"
+        ),
+    )
+
+
+def check_alembic_migration_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/database/alembic-migrations.v1.json"
+    versions_dir = repo_root / "backend/alembic/versions"
+    has_ci_gate = "python scripts/ci/check_alembic_migration_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="alembic migration contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    summary = contract.get("summary", {})
+    migrations = contract.get("migrations", [])
+    contract_current, contract_detail = verify_alembic_migration_contract(
+        contract_path,
+        versions_dir,
+        repo_root,
+    )
+    has_single_base = summary.get("base_count") == 1 and bool(summary.get("base_revision"))
+    has_single_head = summary.get("head_count") == 1 and bool(summary.get("head_revision"))
+    has_migration_depth = summary.get("migration_count", 0) >= 12
+    has_reversible_migrations = all(
+        migration.get("has_upgrade") and migration.get("has_downgrade")
+        for migration in migrations
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_single_base
+        and has_single_head
+        and has_migration_depth
+        and has_reversible_migrations
+    )
+    return ReadinessCheck(
+        name="alembic migration contract",
+        passed=passed,
+        detail=(
+            "Alembic topology, single head, reversible migrations, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_single_base={has_single_base}, "
+                f"has_single_head={has_single_head}, "
+                f"has_migration_depth={has_migration_depth}, "
+                f"has_reversible_migrations={has_reversible_migrations}"
+            )
         ),
     )
 

@@ -72,6 +72,22 @@ def test_openapi_contract_gate_is_enforced() -> None:
     assert "/api/v1/inference-endpoints/{endpoint_id}/predict" in paths
 
 
+def test_alembic_migration_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/database/alembic-migrations.v1.json").read_text(encoding="utf-8")
+    )
+    migrations = contract["migrations"]
+
+    assert "python scripts/ci/check_alembic_migration_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.alembic_migrations.v1"
+    assert contract["summary"]["base_revision"] == "202607180001"
+    assert contract["summary"]["head_revision"] == "202607190012"
+    assert contract["summary"]["head_count"] == 1
+    assert len(migrations) >= 12
+    assert all(migration["has_upgrade"] and migration["has_downgrade"] for migration in migrations)
+
+
 def test_problem_details_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(Path("contracts/api/problem-details.v1.json").read_text(encoding="utf-8"))

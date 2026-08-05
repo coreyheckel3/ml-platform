@@ -1,0 +1,145 @@
+{
+  "bases": [
+    "202607180001"
+  ],
+  "branch_points": [],
+  "generated_from": [
+    "backend/alembic/versions"
+  ],
+  "heads": [
+    "202607190012"
+  ],
+  "linearized_revision_order": [
+    "202607180001",
+    "202607180002",
+    "202607180003",
+    "202607180004",
+    "202607180005",
+    "202607190006",
+    "202607190007",
+    "202607190008",
+    "202607190009",
+    "202607190010",
+    "202607190011",
+    "202607190012"
+  ],
+  "merge_revisions": [],
+  "migrations": [
+    {
+      "down_revisions": [],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607180001_initial_control_plane.py",
+      "revision": "202607180001"
+    },
+    {
+      "down_revisions": [
+        "202607180001"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607180002_dataset_registry.py",
+      "revision": "202607180002"
+    },
+    {
+      "down_revisions": [
+        "202607180002"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607180003_feature_store.py",
+      "revision": "202607180003"
+    },
+    {
+      "down_revisions": [
+        "202607180003"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607180004_experiments_training.py",
+      "revision": "202607180004"
+    },
+    {
+      "down_revisions": [
+        "202607180004"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607180005_model_registry.py",
+      "revision": "202607180005"
+    },
+    {
+      "down_revisions": [
+        "202607180005"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190006_deployments.py",
+      "revision": "202607190006"
+    },
+    {
+      "down_revisions": [
+        "202607190006"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190007_inference.py",
+      "revision": "202607190007"
+    },
+    {
+      "down_revisions": [
+        "202607190007"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190008_alerting.py",
+      "revision": "202607190008"
+    },
+    {
+      "down_revisions": [
+        "202607190008"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190009_drift_detection.py",
+      "revision": "202607190009"
+    },
+    {
+      "down_revisions": [
+        "202607190009"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190010_retraining.py",
+      "revision": "202607190010"
+    },
+    {
+      "down_revisions": [
+        "202607190010"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190011_auth_refresh_sessions.py",
+      "revision": "202607190011"
+    },
+    {
+      "down_revisions": [
+        "202607190011"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190012_training_run_logs.py",
+      "revision": "202607190012"
+    }
+  ],
+  "schema_version": "forgeml.alembic_migrations.v1",
+  "summary": {
+    "base_count": 1,
+    "base_revision": "202607180001",
+    "branch_point_count": 0,
+    "head_count": 1,
+    "head_revision": "202607190012",
+    "merge_revision_count": 0,
+    "migration_count": 12
+  }
+}

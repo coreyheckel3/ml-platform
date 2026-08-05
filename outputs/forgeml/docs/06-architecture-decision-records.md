@@ -289,3 +289,21 @@ Options considered:
 Recommendation: Use one API-wide Problem Details envelope backed by a checked contract.
 
 Justification: ML platform clients need reliable failure semantics for automation, notebooks, SDKs, and UI workflows. A consistent trace-linked error envelope improves debugging while keeping sensitive input out of responses.
+
+## ADR-017: Govern Schema Evolution with an Alembic Topology Contract
+
+Status: Accepted
+
+Decision: Publish a versioned Alembic migration contract and gate CI plus production-readiness on migration graph validity and contract freshness.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Checked Alembic topology contract | Makes schema lineage reviewable, catches duplicate heads early, and documents release state | Requires regeneration for intentional migration changes |
+| Rely on Alembic at deploy time | Uses existing migration tooling | Finds graph mistakes late, often during release pressure |
+| Manual migration checklist | Easy to start | Inconsistent and hard to audit across many contributors |
+
+Recommendation: Use a checked migration topology contract generated from Alembic files.
+
+Justification: ForgeML's modules share a PostgreSQL control plane, so schema drift can break authentication, datasets, training, registry, deployment, inference, and retraining workflows at once. A deterministic contract catches unsafe migration graph changes in review and gives release operators an explicit schema artifact.
