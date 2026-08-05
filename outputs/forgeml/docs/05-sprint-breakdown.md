@@ -1572,3 +1572,33 @@ Implemented scope:
 - `contracts/ops/release-evidence-workflow.v1.json` records required workflow fragments, dependencies, manifest path, and artifact name.
 - `scripts/ci/check_release_evidence_workflow.py` validates workflow contract freshness and CI publication behavior.
 - Backend ops tests cover workflow validation, contract drift, and production-readiness wiring.
+
+## Sprint 50: Release Manifest Verification
+
+Goal: Make every release manifest independently verifiable so operators and
+reviewers can prove the CI artifact still matches the checked source tree and
+release governance contracts.
+
+Deliverables:
+
+- Release manifest verifier CLI for local, CI, and staging evidence checks
+- Versioned operations contract for verifier behavior and required checks
+- CI gate for verifier contract freshness and release-evidence job execution
+- Release-evidence job verification before artifact upload
+- Unit tests for successful verification, artifact hash tampering, missing quality gates, CI evidence linkage, image digest requirements, stale contracts, and readiness wiring
+- README, readiness runbook, operations contract documentation, testing strategy, CI strategy, and ADR updates
+
+Acceptance criteria:
+
+- The verifier checks manifest schema version, release metadata, source metadata, artifact hashes, Dockerfile hashes, image digest shape, quality gate coverage, CI evidence linkage, and release smoke evidence integrity.
+- CI verifies `dist/release/forgeml-release-manifest.json` before uploading the `forgeml-release-manifest` artifact.
+- The checked verifier contract is deterministic and release-gated in CI.
+- Production-readiness verifies the verifier CLI, contract, runbook command, CI wiring, and hash-validation behavior.
+
+Implemented scope:
+
+- `scripts/ops/verify_release_manifest.py` emits versioned verification reports and fails on release evidence integrity violations.
+- `contracts/ops/release-manifest-verification.v1.json` records required verifier checks, CLI flags, and report schema version.
+- `scripts/ci/check_release_manifest_verifier_contract.py` validates verifier contract freshness and CI wiring.
+- `.github/workflows/ci.yml` now verifies the release manifest before upload from the `release-evidence` job.
+- The release manifest contract now includes release evidence workflow and verifier contracts as required operations artifacts.

@@ -397,3 +397,21 @@ Options considered:
 Recommendation: Publish the release manifest from CI and keep the workflow behavior under an operations contract.
 
 Justification: ForgeML already generates the manifest locally. Publishing it from CI turns provenance into an automatic release artifact attached to the exact run that validated the platform, which is closer to how mature internal ML platforms handle promotion evidence.
+
+## ADR-023: Verify Release Manifests Before Promotion
+
+Status: Accepted
+
+Decision: Maintain a release manifest verifier CLI and checked operations contract, and run the verifier inside the release-evidence CI job before artifact upload.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Contracted manifest verifier | Proves artifact hashes, Dockerfile hashes, quality gates, and CI evidence linkage from a downloaded manifest | Adds another release governance contract to maintain |
+| Trust the manifest builder only | Simple and already automated | Does not catch artifact mutation, stale source checkout evidence, or invalid downloaded evidence |
+| Manual review only | Familiar and flexible | Hard to repeat and weak for machine-readable release evidence |
+
+Recommendation: Verify manifests with a deterministic CLI and gate verifier behavior in CI plus production-readiness.
+
+Justification: Release provenance should not stop at generating JSON. Internal ML platforms need promotion evidence that can be rechecked by operators, auditors, and interview reviewers without trusting memory or screenshots. A verifier closes the loop between CI output and source-controlled contracts.

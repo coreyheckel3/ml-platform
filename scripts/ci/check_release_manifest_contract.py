@@ -128,6 +128,8 @@ def validate_release_manifest_definition(repo_root: Path = REPO_ROOT) -> tuple[s
         "production_readiness",
         "release_manifest_contract",
         "release_smoke_contract",
+        "release_evidence_workflow_contract",
+        "release_manifest_verifier_contract",
     }
     missing_gates = sorted(required_gates - set(REQUIRED_QUALITY_GATES))
     if missing_gates:

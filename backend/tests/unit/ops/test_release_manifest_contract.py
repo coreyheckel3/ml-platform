@@ -68,4 +68,8 @@ def test_release_manifest_contract_shape() -> None:
     assert "sha256" in parsed["operator_command"]
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
+    assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
+    assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
+    assert "release_evidence_workflow_contract" in parsed["quality_gates"]
+    assert "release_manifest_verifier_contract" in parsed["quality_gates"]

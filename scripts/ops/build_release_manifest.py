@@ -107,6 +107,18 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="release_evidence_workflow_contract",
+        kind="operations_contract",
+        path="contracts/ops/release-evidence-workflow.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="release_manifest_verification_contract",
+        kind="operations_contract",
+        path="contracts/ops/release-manifest-verification.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="production_readiness_runbook",
         kind="runbook",
         path="docs/runbooks/production-readiness.md",
@@ -183,6 +195,8 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "production_readiness",
     "release_smoke_contract",
     "release_manifest_contract",
+    "release_evidence_workflow_contract",
+    "release_manifest_verifier_contract",
 )
 
 RELEASE_EVIDENCE_TYPES: tuple[str, ...] = (

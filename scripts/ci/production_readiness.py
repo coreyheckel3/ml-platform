@@ -22,6 +22,9 @@ try:
     from scripts.ci.check_release_manifest_contract import (
         check_release_manifest_contract as verify_release_manifest_contract,
     )
+    from scripts.ci.check_release_manifest_verifier_contract import (
+        check_release_manifest_verifier_contract as verify_release_manifest_verifier_contract,
+    )
     from scripts.ci.check_release_smoke_contract import (
         check_release_smoke_contract as verify_release_smoke_contract,
     )
@@ -37,6 +40,9 @@ except ModuleNotFoundError:
     )
     from check_release_manifest_contract import (  # type: ignore[no-redef]
         check_release_manifest_contract as verify_release_manifest_contract,
+    )
+    from check_release_manifest_verifier_contract import (  # type: ignore[no-redef]
+        check_release_manifest_verifier_contract as verify_release_manifest_verifier_contract,
     )
     from check_release_smoke_contract import (  # type: ignore[no-redef]
         check_release_smoke_contract as verify_release_smoke_contract,
@@ -121,18 +127,23 @@ REQUIRED_FILES = (
     "contracts/ops/release-smoke.v1.json",
     "contracts/ops/release-manifest.v1.json",
     "contracts/ops/release-evidence-workflow.v1.json",
+    "contracts/ops/release-manifest-verification.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
     "scripts/ops/release_smoke.py",
     "scripts/ops/build_release_manifest.py",
+    "scripts/ops/verify_release_manifest.py",
     "scripts/ci/check_release_smoke_contract.py",
     "scripts/ci/check_release_manifest_contract.py",
     "scripts/ci/check_release_evidence_workflow.py",
+    "scripts/ci/check_release_manifest_verifier_contract.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
     "backend/tests/unit/ops/test_release_manifest.py",
     "backend/tests/unit/ops/test_release_manifest_contract.py",
     "backend/tests/unit/ops/test_release_evidence_workflow_contract.py",
+    "backend/tests/unit/ops/test_release_manifest_verification.py",
+    "backend/tests/unit/ops/test_release_manifest_verifier_contract.py",
 )
 
 
@@ -169,6 +180,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_smoke_contract(repo_root),
         check_release_manifest_contract(repo_root),
         check_release_evidence_workflow_contract(repo_root),
+        check_release_manifest_verifier_contract(repo_root),
     ]
 
 
@@ -1089,6 +1101,8 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/observability/request-log-event.v1.json",
         "contracts/ops/release-smoke.v1.json",
         "contracts/ops/release-manifest.v1.json",
+        "contracts/ops/release-evidence-workflow.v1.json",
+        "contracts/ops/release-manifest-verification.v1.json",
     }
     required_images = {"backend", "frontend", "training", "inference", "airflow"}
     required_gates = {
@@ -1098,6 +1112,8 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "production_readiness",
         "release_smoke_contract",
         "release_manifest_contract",
+        "release_evidence_workflow_contract",
+        "release_manifest_verifier_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)
@@ -1199,6 +1215,74 @@ def check_release_evidence_workflow_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_manifest_artifact={has_manifest_artifact}, "
                 f"has_contract_docs={has_contract_docs}, "
                 f"missing_fragments={missing_fragments}"
+            )
+        ),
+    )
+
+
+def check_release_manifest_verifier_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/production-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    verifier_source = (repo_root / "scripts/ops/verify_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/release-manifest-verification.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    required_checks = set(contract.get("required_checks", []))
+    expected_checks = {
+        "manifest_schema_version",
+        "artifact_hash_integrity",
+        "dockerfile_hash_integrity",
+        "quality_gate_coverage",
+        "ci_evidence_linkage",
+    }
+    missing_checks = sorted(expected_checks - required_checks)
+    has_backend_gate = "python scripts/ci/check_release_manifest_verifier_contract.py" in ci_source
+    has_release_job_verification = (
+        "python scripts/ops/verify_release_manifest.py" in ci_source
+        and "--require-ci-evidence" in ci_source
+    )
+    contract_current, contract_detail = verify_release_manifest_verifier_contract(
+        repo_root / "contracts/ops/release-manifest-verification.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_live_command = "scripts/ops/verify_release_manifest.py --manifest" in runbook_source
+    emits_versioned_report = "forgeml.release_manifest_verification.v1" in verifier_source
+    includes_file_hashing = "sha256" in verifier_source and "_sha256_file" in verifier_source
+    has_contract_docs = "release-manifest-verification.v1.json" in contracts_source
+    passed = (
+        has_backend_gate
+        and has_release_job_verification
+        and contract_current
+        and has_live_command
+        and emits_versioned_report
+        and includes_file_hashing
+        and has_contract_docs
+        and not missing_checks
+    )
+    return ReadinessCheck(
+        name="release manifest verifier contract",
+        passed=passed,
+        detail=(
+            "release manifest verification contract, CLI, and CI gate are configured"
+            if passed
+            else (
+                f"has_backend_gate={has_backend_gate}, "
+                f"has_release_job_verification={has_release_job_verification}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_live_command={has_live_command}, "
+                f"emits_versioned_report={emits_versioned_report}, "
+                f"includes_file_hashing={includes_file_hashing}, "
+                f"has_contract_docs={has_contract_docs}, "
+                f"missing_checks={missing_checks}"
             )
         ),
     )

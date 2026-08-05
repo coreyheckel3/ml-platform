@@ -35,6 +35,7 @@ Required checks:
 | Release smoke contract | Required live API smoke stages, read-only posture, and operator command |
 | Release manifest contract | Required artifact hashes, image targets, evidence types, and quality gates |
 | Release evidence workflow | Manifest generation and artifact upload after required release gates |
+| Release manifest verifier | Artifact integrity, Dockerfile integrity, quality gates, and CI evidence linkage |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
 
 ## Main Branch Workflow
@@ -47,7 +48,7 @@ After merge:
 4. Run database migration dry-run against staging clone where available.
 5. Deploy to staging.
 6. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
-7. Build and publish the release manifest artifact with contract hashes, image targets, CI evidence, and smoke evidence.
+7. Build, verify, and publish the release manifest artifact with contract hashes, image targets, CI evidence, and smoke evidence.
 
 ## Production Deployment Workflow
 
@@ -90,8 +91,9 @@ Each release should publish:
 - Problem Details API error contract
 - Security contracts for API authorization, permissions, and runtime config policy
 - Observability contracts for structured request logging
-- Operations contracts for release smoke validation and release manifest provenance
+- Operations contracts for release smoke validation, release manifest provenance, CI evidence publication, and manifest verification
 - CI release manifest artifact from the successful main-branch workflow run
+- Release manifest verification report showing artifact hashes and CI evidence linkage are valid
 - Alembic migration topology contract, SQLAlchemy schema contract, and head revision
 - Terraform plan artifact when applicable
 - Test summary

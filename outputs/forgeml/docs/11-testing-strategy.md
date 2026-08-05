@@ -134,6 +134,7 @@ Contract tests should protect boundaries:
 - Release smoke operations contract for the live API surfaces required during release-candidate validation.
 - Release manifest operations contract for release artifact hashes, image targets, evidence types, and quality gates.
 - Release evidence workflow contract for CI manifest publication behavior.
+- Release manifest verification contract for artifact integrity and evidence linkage.
 - Inference runtime request/response schema.
 - Event payload schemas under `contracts/events`.
 - MLflow adapter expected behavior.
@@ -169,6 +170,17 @@ release evidence:
 - Require artifact upload through `actions/upload-artifact`.
 - Fail when the manifest artifact path is missing.
 - Keep workflow publication behavior captured in a checked operations contract.
+
+## Release Manifest Verification Tests
+
+Release manifest verification tests should prove release evidence can be checked
+after it is created:
+
+- Verify schema version, release metadata, source revision metadata, artifact hashes, Dockerfile hashes, quality gates, and CI evidence linkage.
+- Fail when an artifact hash is tampered with.
+- Fail when required quality gates are missing from the manifest.
+- Optionally require Docker image digests for promotion workflows that publish immutable images.
+- Keep verifier behavior captured in a checked operations contract.
 
 ## CI Gates
 

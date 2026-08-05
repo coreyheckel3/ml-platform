@@ -1,0 +1,31 @@
+{
+  "generated_from": [
+    "scripts.ops.verify_release_manifest",
+    "scripts.ops.build_release_manifest"
+  ],
+  "operator_command": "PYTHONPATH=. python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json --require-ci-evidence",
+  "required_checks": [
+    "manifest_schema_version",
+    "release_metadata_shape",
+    "source_revision_shape",
+    "artifact_hash_integrity",
+    "dockerfile_hash_integrity",
+    "image_digest_shape",
+    "quality_gate_coverage",
+    "ci_evidence_linkage",
+    "release_smoke_evidence_integrity"
+  ],
+  "required_cli_flags": [
+    "--manifest",
+    "--require-ci-evidence",
+    "--require-image-digests"
+  ],
+  "schema_version": "forgeml.release_manifest_verification_contract.v1",
+  "summary": {
+    "image_target_count": 5,
+    "quality_gate_count": 13,
+    "required_artifact_count": 17,
+    "required_check_count": 9
+  },
+  "verification_schema_version": "forgeml.release_manifest_verification.v1"
+}

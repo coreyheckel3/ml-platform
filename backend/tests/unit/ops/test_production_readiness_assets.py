@@ -250,6 +250,8 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert contract["summary"]["required_artifact_count"] >= 14
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
+    assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
+    assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
     assert "_sha256_file" in manifest_source
 
@@ -270,3 +272,26 @@ def test_release_evidence_workflow_contract_gate_is_enforced() -> None:
     assert contract["schema_version"] == "forgeml.release_evidence_workflow.v1"
     assert contract["artifact_name"] == "forgeml-release-manifest"
     assert contract["manifest_path"] == "dist/release/forgeml-release-manifest.json"
+
+
+def test_release_manifest_verifier_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-manifest-verification.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    verifier_source = Path("scripts/ops/verify_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_release_manifest_verifier_contract.py" in workflow
+    assert "python scripts/ops/verify_release_manifest.py" in workflow
+    assert "--require-ci-evidence" in workflow
+    assert "scripts/ops/verify_release_manifest.py --manifest" in runbook
+    assert contract["schema_version"] == "forgeml.release_manifest_verification_contract.v1"
+    assert contract["verification_schema_version"] == "forgeml.release_manifest_verification.v1"
+    assert "artifact_hash_integrity" in contract["required_checks"]
+    assert "dockerfile_hash_integrity" in contract["required_checks"]
+    assert "_sha256_file" in verifier_source

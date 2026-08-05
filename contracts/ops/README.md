@@ -67,3 +67,28 @@ Verify the checked-in contract:
 ```bash
 PYTHONPATH=. python scripts/ci/check_release_evidence_workflow.py
 ```
+
+## Release Manifest Verification
+
+`release-manifest-verification.v1.json` records the required verifier behavior for
+release manifests: manifest schema checks, source metadata checks, artifact hash
+verification, Dockerfile hash verification, image digest shape checks, quality
+gate coverage, CI evidence linkage, and release smoke evidence verification.
+
+Regenerate after an intentional release manifest verifier change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_manifest_verifier_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_manifest_verifier_contract.py
+```
+
+Verify a release manifest:
+
+```bash
+PYTHONPATH=. python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json --require-ci-evidence
+```
