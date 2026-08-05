@@ -99,6 +99,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install backend
+        run: python -m pip install -e .
       - name: Run production-readiness checks
         run: python scripts/ci/production_readiness.py
       - name: Validate full compose profile

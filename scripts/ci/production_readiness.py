@@ -5,6 +5,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_SRC = REPO_ROOT / "backend/src"
+for import_path in (REPO_ROOT, BACKEND_SRC):
+    import_path_value = str(import_path)
+    if import_path_value not in sys.path:
+        sys.path.insert(0, import_path_value)
+
 try:
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
@@ -20,7 +27,6 @@ except ModuleNotFoundError:
         check_schema_contract as verify_sqlalchemy_schema_contract,
     )
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
 BANNED_TOKENS = ("TO" + "DO", "T" + "BD", "FIX" + "ME", "place" + "holder")
 SCAN_ROOTS = (
     "backend/src",
