@@ -19,3 +19,21 @@ Verify the checked-in contract:
 ```bash
 PYTHONPATH=backend/src:. python scripts/ci/check_alembic_migration_contract.py
 ```
+
+## SQLAlchemy Schema
+
+`sqlalchemy-schema.v1.json` records the checked application metadata contract,
+including tables, columns, primary keys, foreign keys, indexes, and unique
+constraints compiled for PostgreSQL.
+
+Regenerate after an intentional ORM schema change:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_sqlalchemy_schema_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_sqlalchemy_schema_contract.py
+```

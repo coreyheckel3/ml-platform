@@ -16,9 +16,9 @@ def test_migration_contract_extracts_checked_in_topology() -> None:
     migrations = extract_migration_revisions(Path("backend/alembic/versions"))
     contract = build_migration_contract()
 
-    assert len(migrations) >= 12
+    assert len(migrations) >= 13
     assert contract["summary"]["base_revision"] == "202607180001"
-    assert contract["summary"]["head_revision"] == "202607190012"
+    assert contract["summary"]["head_revision"] == "202607190013"
     assert contract["summary"]["head_count"] == 1
     assert contract["summary"]["base_count"] == 1
     assert validate_migration_graph(migrations) == ()

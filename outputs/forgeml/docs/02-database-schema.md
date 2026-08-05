@@ -227,7 +227,9 @@ Retention policies should be configurable per environment:
 - All schema changes go through Alembic.
 - Migrations are reviewed in pull requests.
 - The Alembic migration topology contract is regenerated for intentional schema changes.
+- The SQLAlchemy schema contract is regenerated for intentional ORM metadata changes.
 - CI rejects duplicate revisions, unknown parents, multiple heads, stale contracts, and missing downgrade hooks.
+- CI rejects unregistered metadata tables, missing core tables, non-snake-case table or column names, and unindexed foreign-key columns that are not primary keys.
 - Destructive migrations require a backfill and rollback plan.
 - Enum changes are additive first, then cleanup in a later migration.
 - Large table changes use expand-and-contract migrations.

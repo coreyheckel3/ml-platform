@@ -307,3 +307,21 @@ Options considered:
 Recommendation: Use a checked migration topology contract generated from Alembic files.
 
 Justification: ForgeML's modules share a PostgreSQL control plane, so schema drift can break authentication, datasets, training, registry, deployment, inference, and retraining workflows at once. A deterministic contract catches unsafe migration graph changes in review and gives release operators an explicit schema artifact.
+
+## ADR-018: Publish SQLAlchemy Metadata as a Schema Contract
+
+Status: Accepted
+
+Decision: Generate a deterministic SQLAlchemy schema contract from `Base.metadata` and gate CI plus production-readiness on contract freshness and metadata invariants.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Checked SQLAlchemy metadata contract | Catches unregistered tables, column drift, missing indexes, and review-time schema changes | Requires regeneration for intentional ORM changes |
+| Alembic topology only | Confirms migration graph health | Does not prove application metadata is complete |
+| Runtime database inspection only | Verifies deployed database state | Too late for pull-request review and requires infrastructure |
+
+Recommendation: Use a checked SQLAlchemy metadata contract alongside the Alembic migration topology contract.
+
+Justification: Alembic governs how schema changes are applied, while SQLAlchemy metadata governs what the application believes exists. ForgeML needs both contracts because a modular monolith can otherwise ship with valid migrations but incomplete application metadata registration or under-indexed query paths.

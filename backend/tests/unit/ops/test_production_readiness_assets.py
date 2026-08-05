@@ -82,10 +82,30 @@ def test_alembic_migration_contract_gate_is_enforced() -> None:
     assert "python scripts/ci/check_alembic_migration_contract.py" in workflow
     assert contract["schema_version"] == "forgeml.alembic_migrations.v1"
     assert contract["summary"]["base_revision"] == "202607180001"
-    assert contract["summary"]["head_revision"] == "202607190012"
+    assert contract["summary"]["head_revision"] == "202607190013"
     assert contract["summary"]["head_count"] == 1
-    assert len(migrations) >= 12
+    assert len(migrations) >= 13
     assert all(migration["has_upgrade"] and migration["has_downgrade"] for migration in migrations)
+
+
+def test_sqlalchemy_schema_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/database/sqlalchemy-schema.v1.json").read_text(encoding="utf-8")
+    )
+    table_names = {table["name"] for table in contract["tables"]}
+
+    assert "python scripts/ci/check_sqlalchemy_schema_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.sqlalchemy_schema.v1"
+    assert contract["summary"]["table_count"] >= 38
+    assert contract["summary"]["foreign_key_count"] >= 60
+    assert {
+        "audit_log",
+        "projects",
+        "training_runs",
+        "model_versions",
+        "retraining_runs",
+    }.issubset(table_names)
 
 
 def test_problem_details_contract_gate_is_enforced() -> None:

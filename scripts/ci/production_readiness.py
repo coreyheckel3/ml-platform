@@ -9,9 +9,15 @@ try:
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
     )
+    from scripts.ci.check_sqlalchemy_schema_contract import (
+        check_schema_contract as verify_sqlalchemy_schema_contract,
+    )
 except ModuleNotFoundError:
     from check_alembic_migration_contract import (  # type: ignore[no-redef]
         check_migration_contract as verify_alembic_migration_contract,
+    )
+    from check_sqlalchemy_schema_contract import (  # type: ignore[no-redef]
+        check_schema_contract as verify_sqlalchemy_schema_contract,
     )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -63,6 +69,9 @@ REQUIRED_FILES = (
     "contracts/database/README.md",
     "contracts/database/alembic-migrations.v1.json",
     "backend/tests/unit/ops/test_alembic_migration_contract.py",
+    "scripts/ci/check_sqlalchemy_schema_contract.py",
+    "contracts/database/sqlalchemy-schema.v1.json",
+    "backend/tests/unit/ops/test_sqlalchemy_schema_contract.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -106,6 +115,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_example_training_contract(repo_root),
         check_training_execution_contract(repo_root),
         check_alembic_migration_contract(repo_root),
+        check_sqlalchemy_schema_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_readiness_probe_contract(repo_root),
@@ -382,6 +392,73 @@ def check_alembic_migration_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_single_head={has_single_head}, "
                 f"has_migration_depth={has_migration_depth}, "
                 f"has_reversible_migrations={has_reversible_migrations}"
+            )
+        ),
+    )
+
+
+def check_sqlalchemy_schema_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/database/sqlalchemy-schema.v1.json"
+    has_ci_gate = "python scripts/ci/check_sqlalchemy_schema_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="sqlalchemy schema contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    summary = contract.get("summary", {})
+    tables = contract.get("tables", [])
+    table_names = {table.get("name") for table in tables}
+    required_tables = {
+        "audit_log",
+        "projects",
+        "datasets",
+        "training_runs",
+        "model_versions",
+        "deployment_revisions",
+        "inference_request_logs",
+        "drift_reports",
+        "retraining_runs",
+    }
+    contract_current, contract_detail = verify_sqlalchemy_schema_contract(contract_path)
+    has_table_depth = summary.get("table_count", 0) >= 38
+    has_column_depth = summary.get("column_count", 0) >= 390
+    has_foreign_key_depth = summary.get("foreign_key_count", 0) >= 60
+    missing_tables = sorted(required_tables - table_names)
+    has_indexed_foreign_keys = all(
+        not column.get("foreign_keys")
+        or column.get("index")
+        or column.get("primary_key")
+        for table in tables
+        for column in table.get("columns", [])
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_table_depth
+        and has_column_depth
+        and has_foreign_key_depth
+        and not missing_tables
+        and has_indexed_foreign_keys
+    )
+    return ReadinessCheck(
+        name="sqlalchemy schema contract",
+        passed=passed,
+        detail=(
+            "SQLAlchemy metadata contract, required tables, and indexed foreign keys are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_table_depth={has_table_depth}, "
+                f"has_column_depth={has_column_depth}, "
+                f"has_foreign_key_depth={has_foreign_key_depth}, "
+                f"missing_tables={missing_tables}, "
+                f"has_indexed_foreign_keys={has_indexed_foreign_keys}"
             )
         ),
     )

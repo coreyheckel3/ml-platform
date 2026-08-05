@@ -1,0 +1,5898 @@
+{
+  "dialect": "postgresql",
+  "generated_from": [
+    "forgeml.platform.database.models",
+    "forgeml.platform.database.base.Base.metadata"
+  ],
+  "schema_version": "forgeml.sqlalchemy_schema.v1",
+  "summary": {
+    "column_count": 394,
+    "foreign_key_count": 65,
+    "index_count": 105,
+    "table_count": 38,
+    "unique_constraint_count": 15
+  },
+  "tables": [
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "alert_rules.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "alert_rule_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "inference_endpoints.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "endpoint_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "severity",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "message",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "observed_value",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "threshold",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "acknowledged_by",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "acknowledged_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "resolved_by",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "resolved_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "triggered_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "alert_rule_id->alert_rules.id",
+        "endpoint_id->inference_endpoints.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "alert_rule_id"
+          ],
+          "name": "ix_alert_events_alert_rule_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "endpoint_id"
+          ],
+          "name": "ix_alert_events_endpoint_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_alert_events_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_alert_events_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_alert_events_status",
+          "unique": false
+        }
+      ],
+      "name": "alert_events",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "severity",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "metric",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "operator",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(16)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "threshold",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "window_seconds",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "enabled",
+          "nullable": false,
+          "primary_key": false,
+          "type": "BOOLEAN",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_alert_rules_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_alert_rules_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_alert_rules_slug",
+          "unique": false
+        }
+      ],
+      "name": "alert_rules",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "actor_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "actor_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "action",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "resource_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "resource_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_audit_log_organization_id",
+          "unique": false
+        }
+      ],
+      "name": "audit_log",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "users.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "user_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "token_hash",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": true
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "issued_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "expires_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "revoked_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "auth_refresh_sessions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "replaced_by_session_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "replaced_by_session_id->auth_refresh_sessions.id",
+        "user_id->users.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "expires_at"
+          ],
+          "name": "ix_auth_refresh_sessions_expires_at",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_auth_refresh_sessions_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "replaced_by_session_id"
+          ],
+          "name": "ix_auth_refresh_sessions_replaced_by_session_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "token_hash"
+          ],
+          "name": "ix_auth_refresh_sessions_token_hash",
+          "unique": true
+        },
+        {
+          "columns": [
+            "user_id"
+          ],
+          "name": "ix_auth_refresh_sessions_user_id",
+          "unique": false
+        }
+      ],
+      "name": "auth_refresh_sessions",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [
+            "dataset_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "dataset_version_id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "fields_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "inferred",
+          "nullable": false,
+          "primary_key": false,
+          "type": "BOOLEAN",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "schema_hash",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "dataset_version_id->dataset_versions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "schema_hash"
+          ],
+          "name": "ix_dataset_schemas_schema_hash",
+          "unique": false
+        }
+      ],
+      "name": "dataset_schemas",
+      "primary_key": [
+        "dataset_version_id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "dataset_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "dataset_version_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "report_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "dataset_version_id->dataset_versions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "dataset_version_id"
+          ],
+          "name": "ix_dataset_validation_runs_dataset_version_id",
+          "unique": false
+        }
+      ],
+      "name": "dataset_validation_runs",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "datasets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "dataset_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "version",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "object_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "content_hash",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "row_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "size_bytes",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "dataset_id->datasets.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "dataset_id"
+          ],
+          "name": "ix_dataset_versions_dataset_id",
+          "unique": false
+        }
+      ],
+      "name": "dataset_versions",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "source_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_datasets_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_datasets_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_datasets_slug",
+          "unique": false
+        }
+      ],
+      "name": "datasets",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployment_revisions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_revision_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "event_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "message",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_id->deployments.id",
+        "deployment_revision_id->deployment_revisions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_id"
+          ],
+          "name": "ix_deployment_events_deployment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "deployment_revision_id"
+          ],
+          "name": "ix_deployment_events_deployment_revision_id",
+          "unique": false
+        }
+      ],
+      "name": "deployment_events",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployment_revisions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_revision_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "latency_ms",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_rate",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "details_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_revision_id->deployment_revisions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_revision_id"
+          ],
+          "name": "ix_deployment_health_checks_deployment_revision_id",
+          "unique": false
+        }
+      ],
+      "name": "deployment_health_checks",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "model_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "model_version_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "revision",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "serving_image",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "runtime_config_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "traffic_percentage",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "orchestrator_deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_id->deployments.id",
+        "model_version_id->model_versions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_id"
+          ],
+          "name": "ix_deployment_revisions_deployment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "model_version_id"
+          ],
+          "name": "ix_deployment_revisions_model_version_id",
+          "unique": false
+        }
+      ],
+      "name": "deployment_revisions",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "environment",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_deployments_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_deployments_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_deployments_slug",
+          "unique": false
+        }
+      ],
+      "name": "deployments",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "drift_reports.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "drift_report_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "feature_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "drift_score",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "threshold",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "drift_detected",
+          "nullable": false,
+          "primary_key": false,
+          "type": "BOOLEAN",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "statistics_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "drift_report_id->drift_reports.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "drift_report_id"
+          ],
+          "name": "ix_drift_feature_results_drift_report_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "feature_name"
+          ],
+          "name": "ix_drift_feature_results_feature_name",
+          "unique": false
+        }
+      ],
+      "name": "drift_feature_results",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "model_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "model_version_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "dataset_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "dataset_version_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "baseline_profile_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "dataset_version_id->dataset_versions.id",
+        "model_version_id->model_versions.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "dataset_version_id"
+          ],
+          "name": "ix_drift_profiles_dataset_version_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "model_version_id"
+          ],
+          "name": "ix_drift_profiles_model_version_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_drift_profiles_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_drift_profiles_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_drift_profiles_slug",
+          "unique": false
+        }
+      ],
+      "name": "drift_profiles",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "drift_profiles.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "drift_profile_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "inference_endpoints.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "endpoint_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployment_revisions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_revision_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "drift_score",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "drifted_feature_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "evaluated_feature_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "window_seconds",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "drift_threshold",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "summary_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "report_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_id->deployments.id",
+        "deployment_revision_id->deployment_revisions.id",
+        "drift_profile_id->drift_profiles.id",
+        "endpoint_id->inference_endpoints.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_id"
+          ],
+          "name": "ix_drift_reports_deployment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "deployment_revision_id"
+          ],
+          "name": "ix_drift_reports_deployment_revision_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "drift_profile_id"
+          ],
+          "name": "ix_drift_reports_drift_profile_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "endpoint_id"
+          ],
+          "name": "ix_drift_reports_endpoint_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_drift_reports_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_drift_reports_project_id",
+          "unique": false
+        }
+      ],
+      "name": "drift_reports",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "experiment_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "experiment_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "experiment_run_id->experiment_runs.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "experiment_run_id"
+          ],
+          "name": "ix_experiment_artifacts_experiment_run_id",
+          "unique": false
+        }
+      ],
+      "name": "experiment_artifacts",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "experiments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "experiment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "run_name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(160)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "model_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "started_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "dataset_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "dataset_version_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_sets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_set_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "parameters_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metrics_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "evaluation_report_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "dataset_version_id->dataset_versions.id",
+        "experiment_id->experiments.id",
+        "feature_set_id->feature_sets.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "dataset_version_id"
+          ],
+          "name": "ix_experiment_runs_dataset_version_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "experiment_id"
+          ],
+          "name": "ix_experiment_runs_experiment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "feature_set_id"
+          ],
+          "name": "ix_experiment_runs_feature_set_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_experiment_runs_project_id",
+          "unique": false
+        }
+      ],
+      "name": "experiment_runs",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "owner_user_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_experiments_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_experiments_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_experiments_slug",
+          "unique": false
+        }
+      ],
+      "name": "experiments",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_sets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_set_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "dtype",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(1000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "nullable",
+          "nullable": false,
+          "primary_key": false,
+          "type": "BOOLEAN",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "constraints_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "feature_set_id->feature_sets.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "feature_set_id"
+          ],
+          "name": "ix_feature_definitions_feature_set_id",
+          "unique": false
+        }
+      ],
+      "name": "feature_definitions",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "feature_set_id",
+            "name"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_sets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_set_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "upstream_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "upstream_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "feature_set_id->feature_sets.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "feature_set_id"
+          ],
+          "name": "ix_feature_lineage_feature_set_id",
+          "unique": false
+        }
+      ],
+      "name": "feature_lineage",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_sets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_set_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_pipelines.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "pipeline_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "version",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "offline_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "online_ref",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "orchestrator_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "feature_set_id->feature_sets.id",
+        "pipeline_id->feature_pipelines.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "feature_set_id"
+          ],
+          "name": "ix_feature_materializations_feature_set_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "pipeline_id"
+          ],
+          "name": "ix_feature_materializations_pipeline_id",
+          "unique": false
+        }
+      ],
+      "name": "feature_materializations",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "feature_set_id",
+            "version"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_sets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_set_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "datasets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "source_dataset_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "code_ref",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "schedule_cron",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "feature_set_id->feature_sets.id",
+        "source_dataset_id->datasets.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "feature_set_id"
+          ],
+          "name": "ix_feature_pipelines_feature_set_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "source_dataset_id"
+          ],
+          "name": "ix_feature_pipelines_source_dataset_id",
+          "unique": false
+        }
+      ],
+      "name": "feature_pipelines",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "feature_set_id",
+            "name"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "entity_key",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_feature_sets_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_feature_sets_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_feature_sets_slug",
+          "unique": false
+        }
+      ],
+      "name": "feature_sets",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployment_revisions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_revision_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "route_path",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(160)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_id->deployments.id",
+        "deployment_revision_id->deployment_revisions.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_id"
+          ],
+          "name": "ix_inference_endpoints_deployment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "deployment_revision_id"
+          ],
+          "name": "ix_inference_endpoints_deployment_revision_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_inference_endpoints_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_inference_endpoints_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "route_path"
+          ],
+          "name": "ix_inference_endpoints_route_path",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_inference_endpoints_slug",
+          "unique": false
+        }
+      ],
+      "name": "inference_endpoints",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "route_path"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "inference_endpoints.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "endpoint_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "window_seconds",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "prediction_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "p50_latency_ms",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "p95_latency_ms",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "endpoint_id->inference_endpoints.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "endpoint_id"
+          ],
+          "name": "ix_inference_metric_snapshots_endpoint_id",
+          "unique": false
+        }
+      ],
+      "name": "inference_metric_snapshots",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "inference_endpoints.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "endpoint_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployment_revisions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_revision_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "request_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "latency_ms",
+          "nullable": false,
+          "primary_key": false,
+          "type": "FLOAT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "input_payload_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "output_payload_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_revision_id->deployment_revisions.id",
+        "endpoint_id->inference_endpoints.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_revision_id"
+          ],
+          "name": "ix_inference_request_logs_deployment_revision_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "endpoint_id"
+          ],
+          "name": "ix_inference_request_logs_endpoint_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "request_id"
+          ],
+          "name": "ix_inference_request_logs_request_id",
+          "unique": false
+        }
+      ],
+      "name": "inference_request_logs",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "endpoint_id",
+            "request_id"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "model_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "model_version_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "requested_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "reviewer_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "comment",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "policy_snapshot_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "model_version_id->model_versions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "model_version_id"
+          ],
+          "name": "ix_model_approvals_model_version_id",
+          "unique": false
+        }
+      ],
+      "name": "model_approvals",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "model_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "model_version_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "source_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "source_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "model_version_id->model_versions.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "model_version_id"
+          ],
+          "name": "ix_model_lineage_model_version_id",
+          "unique": false
+        }
+      ],
+      "name": "model_lineage",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "registered_models.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "registered_model_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "version",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "training_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "training_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "experiment_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "experiment_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "model_format",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "signature_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metrics_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "experiment_run_id->experiment_runs.id",
+        "registered_model_id->registered_models.id",
+        "training_run_id->training_runs.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "experiment_run_id"
+          ],
+          "name": "ix_model_versions_experiment_run_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "registered_model_id"
+          ],
+          "name": "ix_model_versions_registered_model_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "training_run_id"
+          ],
+          "name": "ix_model_versions_training_run_id",
+          "unique": false
+        }
+      ],
+      "name": "model_versions",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "registered_model_id",
+            "training_run_id"
+          ],
+          "name": ""
+        },
+        {
+          "columns": [
+            "registered_model_id",
+            "version"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(200)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": true
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_organizations_slug",
+          "unique": true
+        }
+      ],
+      "name": "organizations",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "owner_user_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_projects_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_projects_slug",
+          "unique": false
+        }
+      ],
+      "name": "projects",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "task_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "owner_user_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_registered_models_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_registered_models_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_registered_models_slug",
+          "unique": false
+        }
+      ],
+      "name": "registered_models",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "slug",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(80)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "description",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "trigger_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "trigger_config_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "training_template_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "cooldown_seconds",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "max_runs_per_day",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "approval_required",
+          "nullable": false,
+          "primary_key": false,
+          "type": "BOOLEAN",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "enabled",
+          "nullable": false,
+          "primary_key": false,
+          "type": "BOOLEAN",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "created_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "deployment_id->deployments.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "deployment_id"
+          ],
+          "name": "ix_retraining_policies_deployment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_retraining_policies_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_retraining_policies_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "slug"
+          ],
+          "name": "ix_retraining_policies_slug",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_retraining_policies_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "trigger_type"
+          ],
+          "name": "ix_retraining_policies_trigger_type",
+          "unique": false
+        }
+      ],
+      "name": "retraining_policies",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "organization_id",
+            "project_id",
+            "slug"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "retraining_policies.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "policy_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "deployments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "deployment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "trigger_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "drift_reports.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "drift_report_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "alert_events.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "alert_event_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "training_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "training_run_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "reason",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "training_config_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "decision_metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "requested_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "approved_by",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "rejected_by",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "alert_event_id->alert_events.id",
+        "deployment_id->deployments.id",
+        "drift_report_id->drift_reports.id",
+        "policy_id->retraining_policies.id",
+        "project_id->projects.id",
+        "training_run_id->training_runs.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "alert_event_id"
+          ],
+          "name": "ix_retraining_runs_alert_event_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "deployment_id"
+          ],
+          "name": "ix_retraining_runs_deployment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "drift_report_id"
+          ],
+          "name": "ix_retraining_runs_drift_report_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_retraining_runs_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "policy_id"
+          ],
+          "name": "ix_retraining_runs_policy_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_retraining_runs_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_retraining_runs_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "training_run_id"
+          ],
+          "name": "ix_retraining_runs_training_run_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "trigger_type"
+          ],
+          "name": "ix_retraining_runs_trigger_type",
+          "unique": false
+        }
+      ],
+      "name": "retraining_runs",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "training_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "training_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "event_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "message",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "training_run_id->training_runs.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "training_run_id"
+          ],
+          "name": "ix_training_run_events_training_run_id",
+          "unique": false
+        }
+      ],
+      "name": "training_run_events",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "training_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "training_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "sequence",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "level",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(16)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "logger",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "message",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(4000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metadata_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "training_run_id->training_runs.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "level"
+          ],
+          "name": "ix_training_run_logs_level",
+          "unique": false
+        },
+        {
+          "columns": [
+            "training_run_id"
+          ],
+          "name": "ix_training_run_logs_training_run_id",
+          "unique": false
+        }
+      ],
+      "name": "training_run_logs",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": [
+        {
+          "columns": [
+            "training_run_id",
+            "sequence"
+          ],
+          "name": ""
+        }
+      ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "projects.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "project_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "experiments.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "experiment_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "experiment_runs.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "experiment_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "dataset_versions.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "dataset_version_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "feature_sets.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "feature_set_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "algorithm",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "model_type",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "objective_metric_name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "hyperparameters_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "requested_by",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "orchestrator_run_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "metrics_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(2000)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "dataset_version_id->dataset_versions.id",
+        "experiment_id->experiments.id",
+        "experiment_run_id->experiment_runs.id",
+        "feature_set_id->feature_sets.id",
+        "project_id->projects.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "dataset_version_id"
+          ],
+          "name": "ix_training_runs_dataset_version_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "experiment_id"
+          ],
+          "name": "ix_training_runs_experiment_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "experiment_run_id"
+          ],
+          "name": "ix_training_runs_experiment_run_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "feature_set_id"
+          ],
+          "name": "ix_training_runs_feature_set_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_training_runs_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "project_id"
+          ],
+          "name": "ix_training_runs_project_id",
+          "unique": false
+        }
+      ],
+      "name": "training_runs",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "email",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(320)",
+          "unique": true
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "display_name",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(200)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "password_hash",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "permissions_csv",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "last_login_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "updated_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "columns": [
+            "email"
+          ],
+          "name": "ix_users_email",
+          "unique": true
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_users_organization_id",
+          "unique": false
+        }
+      ],
+      "name": "users",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
+    }
+  ]
+}

@@ -49,6 +49,7 @@ class RefreshSessionModel(Base):
         Uuid,
         ForeignKey("auth_refresh_sessions.id"),
         nullable=True,
+        index=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

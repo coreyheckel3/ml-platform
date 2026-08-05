@@ -85,6 +85,7 @@ class FeaturePipelineModel(Base):
         Uuid,
         ForeignKey("datasets.id"),
         nullable=True,
+        index=True,
     )
     code_ref: Mapped[str] = mapped_column(String(512), nullable=False)
     schedule_cron: Mapped[str | None] = mapped_column(String(120), nullable=True)

@@ -28,6 +28,7 @@ Required checks:
 | Terraform validate | Changed Terraform modules and environments |
 | Security scan | Dependencies and container images |
 | Alembic migration contract | Migration graph topology, single head, parent links, and rollback hooks |
+| SQLAlchemy schema contract | Registered metadata, required tables, columns, keys, indexes, and constraints |
 | Problem Details contract | API error envelope fields, handlers, and sanitized validation details |
 | Runtime config policy | Production-like settings guardrails and contract freshness |
 | Request logging contract | Structured HTTP log event fields and redaction policy |
@@ -86,7 +87,7 @@ Each release should publish:
 - Problem Details API error contract
 - Security contracts for API authorization, permissions, and runtime config policy
 - Observability contracts for structured request logging
-- Alembic migration topology contract and head revision
+- Alembic migration topology contract, SQLAlchemy schema contract, and head revision
 - Terraform plan artifact when applicable
 - Test summary
 - Deployment environment

@@ -1431,6 +1431,39 @@ Acceptance criteria:
 Implemented scope:
 
 - `scripts/ci/check_alembic_migration_contract.py` parses Alembic migration files with `ast`, validates graph topology, writes contracts, and checks contract freshness.
-- `contracts/database/alembic-migrations.v1.json` captures the current twelve-revision migration chain from `202607180001` to `202607190012`.
+- `contracts/database/alembic-migrations.v1.json` captures the checked migration chain from `202607180001` through the current head.
 - GitHub Actions and production-readiness run the Alembic migration contract gate.
 - Tests cover valid topology, graph violations, checked-in contract freshness, readiness wiring, and deterministic serialization.
+
+## Sprint 45: SQLAlchemy Schema Contract Governance
+
+Goal: Make the application-owned database metadata explicit and release-gated so ORM
+schema changes cannot drift from the platform contract.
+
+Deliverables:
+
+- SQLAlchemy metadata contract generator compiled for PostgreSQL
+- Checked schema contract under `contracts/database`
+- CI gate for schema contract freshness
+- Production-readiness gate for required tables, metadata depth, and indexed foreign keys
+- Central metadata registration fix for the administration audit log table
+- Alembic migration adding indexes for foreign-key lookup columns surfaced by the schema gate
+- Unit tests for checked metadata extraction, stale contracts, missing required tables, keyless tables, naming policy, unindexed foreign keys, deterministic serialization, and production-readiness wiring
+- README, database contract docs, runbook, schema strategy, testing strategy, CI strategy, ADR, and sprint documentation updates
+
+Acceptance criteria:
+
+- The checked contract records tables, columns, primary keys, foreign keys, indexes, and unique constraints from `Base.metadata`.
+- The application metadata registry includes all core platform tables, including audit logs.
+- Foreign-key columns are indexed unless they are already primary keys.
+- ORM schema changes fail CI unless the checked contract is regenerated.
+- Schema metadata governance and Alembic topology governance both run in production-readiness.
+
+Implemented scope:
+
+- `scripts/ci/check_sqlalchemy_schema_contract.py` imports the central model registry, validates `Base.metadata`, writes deterministic contracts, and checks contract freshness.
+- `contracts/database/sqlalchemy-schema.v1.json` captures the current 38-table PostgreSQL schema metadata surface.
+- `forgeml.platform.database.models` now registers `AuditLogModel`.
+- Migration `202607190013_schema_contract_indexes.py` adds indexes for refresh-session replacement lineage and feature-pipeline source dataset lookups.
+- GitHub Actions and production-readiness run the SQLAlchemy schema contract gate.
+- Tests cover valid metadata, contract drift, required-table coverage, naming policy, foreign-key index coverage, readiness wiring, and deterministic serialization.

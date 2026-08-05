@@ -7,7 +7,7 @@
     "backend/alembic/versions"
   ],
   "heads": [
-    "202607190012"
+    "202607190013"
   ],
   "linearized_revision_order": [
     "202607180001",
@@ -21,7 +21,8 @@
     "202607190009",
     "202607190010",
     "202607190011",
-    "202607190012"
+    "202607190012",
+    "202607190013"
   ],
   "merge_revisions": [],
   "migrations": [
@@ -130,6 +131,15 @@
       "has_upgrade": true,
       "path": "backend/alembic/versions/202607190012_training_run_logs.py",
       "revision": "202607190012"
+    },
+    {
+      "down_revisions": [
+        "202607190012"
+      ],
+      "has_downgrade": true,
+      "has_upgrade": true,
+      "path": "backend/alembic/versions/202607190013_schema_contract_indexes.py",
+      "revision": "202607190013"
     }
   ],
   "schema_version": "forgeml.alembic_migrations.v1",
@@ -138,8 +148,8 @@
     "base_revision": "202607180001",
     "branch_point_count": 0,
     "head_count": 1,
-    "head_revision": "202607190012",
+    "head_revision": "202607190013",
     "merge_revision_count": 0,
-    "migration_count": 12
+    "migration_count": 13
   }
 }

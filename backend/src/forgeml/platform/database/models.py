@@ -1,3 +1,4 @@
+from forgeml.modules.administration.infrastructure.sqlalchemy_models import AuditLogModel
 from forgeml.modules.alerting.infrastructure.sqlalchemy_models import (
     AlertEventModel,
     AlertRuleModel,
@@ -58,6 +59,7 @@ from forgeml.modules.training.infrastructure.sqlalchemy_models import (
 )
 
 __all__ = [
+    "AuditLogModel",
     "DatasetModel",
     "DatasetSchemaModel",
     "DatasetValidationRunModel",
