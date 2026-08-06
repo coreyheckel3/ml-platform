@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass, replace
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from forgeml.modules.administration.application.audit import record_user_audit_event
@@ -29,7 +30,32 @@ from forgeml.platform.domain.errors import (
     PermissionDeniedError,
     ResourceNotFoundError,
 )
+from forgeml.platform.observability.metrics import (
+    training_worker_claims_total,
+    training_worker_expired_leases_total,
+    training_worker_heartbeats_total,
+    training_worker_retries_total,
+)
 from forgeml.platform.security.rbac import Principal
+
+
+@dataclass(frozen=True)
+class TrainingRetryPolicy:
+    max_attempts: int = 3
+    base_backoff_seconds: int = 60
+    max_backoff_seconds: int = 1_800
+    lease_seconds: int = 900
+
+    def lease_expires_at(self, now: datetime) -> datetime:
+        return now + timedelta(seconds=self.lease_seconds)
+
+    def next_retry_at(self, now: datetime, attempt_count: int) -> datetime:
+        exponent = max(attempt_count - 1, 0)
+        delay_seconds = min(
+            self.max_backoff_seconds,
+            self.base_backoff_seconds * (2**exponent),
+        )
+        return now + timedelta(seconds=delay_seconds)
 
 
 @dataclass(frozen=True)
@@ -62,11 +88,18 @@ class ExecuteTrainingRunCommand:
 
 
 @dataclass(frozen=True)
+class RecordTrainingHeartbeatCommand:
+    training_run_id: UUID
+    worker_id: str
+
+
+@dataclass(frozen=True)
 class ExecuteNextTrainingRunsCommand:
     organization_id: UUID
     project_id: UUID | None = None
     max_runs: int = 1
     worker_id: str = "local-training-worker"
+    recover_expired_leases: bool = True
 
 
 @dataclass(frozen=True)
@@ -78,6 +111,11 @@ class TrainingWorkerRunSummary:
     failed: int
     skipped: int
     training_run_ids: list[UUID]
+    retried: int = 0
+    dead_lettered: int = 0
+    expired_leases_requeued: int = 0
+    expired_leases_dead_lettered: int = 0
+    heartbeats: int = 0
 
 
 class TrainingRunService:
@@ -90,6 +128,7 @@ class TrainingRunService:
         artifact_bucket: str,
         runner: TrainingJobRunner | None = None,
         audit_log: AuditEventRecorder | None = None,
+        retry_policy: TrainingRetryPolicy | None = None,
     ) -> None:
         self._training_runs = training_runs
         self._experiment_runs = experiment_runs
@@ -97,6 +136,8 @@ class TrainingRunService:
         self._artifact_bucket = artifact_bucket
         self._runner = runner
         self._audit_log = audit_log
+        self._retry_policy = retry_policy or TrainingRetryPolicy()
+        _validate_retry_policy(self._retry_policy)
 
     def start_training_run(
         self,
@@ -129,6 +170,7 @@ class TrainingRunService:
         ):
             raise ResourceNotFoundError("Feature set was not found.")
 
+        now = _utcnow()
         training_run_id = uuid4()
         experiment_run_id = uuid4()
         artifact_uri = f"s3://{self._artifact_bucket}/training-runs/{training_run_id}"
@@ -172,6 +214,9 @@ class TrainingRunService:
             orchestrator_run_id="",
             metrics={},
             error_message=None,
+            attempt_count=0,
+            max_attempts=self._retry_policy.max_attempts,
+            queued_at=now,
         )
         orchestrator_run_id = self._orchestrator.trigger_training(planned)
         queued = replace(
@@ -279,10 +324,18 @@ class TrainingRunService:
         if self._runner is None:
             raise DomainValidationError("No training runner is configured for this worker.")
 
+        now = _utcnow()
+        expired_leases_requeued = 0
+        expired_leases_dead_lettered = 0
+        if command.recover_expired_leases:
+            expired_leases_requeued, expired_leases_dead_lettered = (
+                self._recover_expired_training_run_leases(command, now=now)
+            )
         candidates = self._training_runs.list_runnable_training_runs(
             command.organization_id,
             command.project_id,
             limit=command.max_runs * 10,
+            now=now,
         )
         executed_runs: list[TrainingRun] = []
         skipped = 0
@@ -311,7 +364,34 @@ class TrainingRunService:
             failed=sum(run.status == TrainingRunStatus.FAILED for run in executed_runs),
             skipped=skipped,
             training_run_ids=[run.id for run in executed_runs],
+            retried=sum(
+                run.status == TrainingRunStatus.QUEUED and run.next_retry_at is not None
+                for run in executed_runs
+            ),
+            dead_lettered=sum(
+                run.status == TrainingRunStatus.DEAD_LETTERED for run in executed_runs
+            ),
+            expired_leases_requeued=expired_leases_requeued,
+            expired_leases_dead_lettered=expired_leases_dead_lettered,
+            heartbeats=len(executed_runs),
         )
+
+    def record_worker_heartbeat(
+        self,
+        command: RecordTrainingHeartbeatCommand,
+        principal: Principal,
+    ) -> TrainingRun:
+        self._require(principal, "training_runs:write")
+        training_run = self._get_scoped_training_run(command.training_run_id, principal)
+        if training_run.status != TrainingRunStatus.RUNNING:
+            raise DomainValidationError("Only running training runs can accept worker heartbeats.")
+        heartbeat = self._heartbeat_claimed_training_run(
+            training_run,
+            worker_id=command.worker_id,
+        )
+        if heartbeat is None:
+            raise DomainValidationError("Training run heartbeat was rejected.")
+        return heartbeat
 
     def _execute_claimed_training_run(
         self,
@@ -321,9 +401,17 @@ class TrainingRunService:
     ) -> TrainingRun:
         if self._runner is None or not self._runner.can_run(training_run):
             raise DomainValidationError("No training runner is configured for this run.")
-        claimed = self._training_runs.claim_training_run(training_run.id)
+        now = _utcnow()
+        claimed = self._training_runs.claim_training_run(
+            training_run.id,
+            worker_id=worker_id,
+            lease_expires_at=self._retry_policy.lease_expires_at(now),
+            heartbeat_at=now,
+        )
         if claimed is None:
+            training_worker_claims_total.labels(outcome="rejected").inc()
             raise DomainValidationError("Training run is no longer executable.")
+        training_worker_claims_total.labels(outcome="claimed").inc()
         self._training_runs.add_event(
             TrainingRunEvent(
                 id=uuid4(),
@@ -344,8 +432,14 @@ class TrainingRunService:
             metadata={
                 "worker_id": worker_id,
                 "orchestrator_run_id": claimed.orchestrator_run_id,
+                "attempt_count": claimed.attempt_count,
+                "max_attempts": claimed.max_attempts,
+                "lease_expires_at": _datetime_isoformat(claimed.lease_expires_at),
             },
         )
+        heartbeat = self._heartbeat_claimed_training_run(claimed, worker_id=worker_id)
+        if heartbeat is not None:
+            claimed = heartbeat
         self._record_log(
             training_run_id=claimed.id,
             level="info",
@@ -399,6 +493,14 @@ class TrainingRunService:
                 external_run_id=claimed.orchestrator_run_id,
                 error_message=str(exc),
             )
+        if execution_result.status == TrainingRunStatus.FAILED:
+            return self._schedule_retry_or_dead_letter(
+                claimed,
+                metrics=execution_result.metrics,
+                evaluation_report=_with_execution_metadata(execution_result),
+                error_message=execution_result.error_message or "Training runner failed.",
+                worker_id=worker_id,
+            )
         return self._record_terminal_result(
             claimed,
             status=execution_result.status,
@@ -407,11 +509,230 @@ class TrainingRunService:
             error_message=execution_result.error_message,
         )
 
+    def _heartbeat_claimed_training_run(
+        self,
+        training_run: TrainingRun,
+        *,
+        worker_id: str,
+    ) -> TrainingRun | None:
+        now = _utcnow()
+        heartbeat = self._training_runs.heartbeat_training_run(
+            training_run.id,
+            worker_id=worker_id,
+            lease_expires_at=self._retry_policy.lease_expires_at(now),
+            heartbeat_at=now,
+        )
+        if heartbeat is None:
+            training_worker_heartbeats_total.labels(outcome="rejected").inc()
+            return None
+        training_worker_heartbeats_total.labels(outcome="recorded").inc()
+        self._training_runs.add_event(
+            TrainingRunEvent(
+                id=uuid4(),
+                training_run_id=heartbeat.id,
+                event_type="heartbeat",
+                message="Training worker heartbeat was recorded.",
+                metadata={
+                    "worker_id": worker_id,
+                    "last_heartbeat_at": _datetime_isoformat(heartbeat.last_heartbeat_at),
+                    "lease_expires_at": _datetime_isoformat(heartbeat.lease_expires_at),
+                },
+            )
+        )
+        self._record_log(
+            training_run_id=heartbeat.id,
+            level="debug",
+            logger="training.worker",
+            message="Training worker heartbeat was recorded.",
+            metadata={
+                "worker_id": worker_id,
+                "lease_expires_at": _datetime_isoformat(heartbeat.lease_expires_at),
+            },
+        )
+        return heartbeat
+
+    def _schedule_retry_or_dead_letter(
+        self,
+        training_run: TrainingRun,
+        *,
+        metrics: dict[str, float],
+        evaluation_report: dict[str, object],
+        error_message: str,
+        worker_id: str,
+    ) -> TrainingRun:
+        validate_metrics(metrics)
+        if training_run.attempt_count < training_run.max_attempts:
+            now = _utcnow()
+            next_retry_at = self._retry_policy.next_retry_at(now, training_run.attempt_count)
+            retry = replace(
+                training_run,
+                status=TrainingRunStatus.QUEUED,
+                metrics={**training_run.metrics, **metrics},
+                error_message=error_message,
+                worker_id=None,
+                lease_expires_at=None,
+                queued_at=now,
+                completed_at=None,
+                next_retry_at=next_retry_at,
+            )
+            saved = self._training_runs.update_training_run(retry)
+            training_worker_retries_total.labels(outcome="scheduled").inc()
+            self._training_runs.add_event(
+                TrainingRunEvent(
+                    id=uuid4(),
+                    training_run_id=saved.id,
+                    event_type="retry_scheduled",
+                    message="Training run attempt failed and was scheduled for retry.",
+                    metadata={
+                        "worker_id": worker_id,
+                        "attempt_count": saved.attempt_count,
+                        "max_attempts": saved.max_attempts,
+                        "next_retry_at": _datetime_isoformat(saved.next_retry_at),
+                        "error_message": error_message,
+                    },
+                )
+            )
+            self._record_log(
+                training_run_id=saved.id,
+                level="warning",
+                logger="training.retry",
+                message="Training run attempt failed and was scheduled for retry.",
+                metadata={
+                    "worker_id": worker_id,
+                    "attempt_count": saved.attempt_count,
+                    "max_attempts": saved.max_attempts,
+                    "next_retry_at": _datetime_isoformat(saved.next_retry_at),
+                    "error_message": error_message,
+                },
+            )
+            return saved
+
+        training_worker_retries_total.labels(outcome="dead_lettered").inc()
+        self._training_runs.add_event(
+            TrainingRunEvent(
+                id=uuid4(),
+                training_run_id=training_run.id,
+                event_type="retry_exhausted",
+                message="Training run exhausted all retry attempts.",
+                metadata={
+                    "worker_id": worker_id,
+                    "attempt_count": training_run.attempt_count,
+                    "max_attempts": training_run.max_attempts,
+                    "error_message": error_message,
+                },
+            )
+        )
+        return self._record_terminal_result(
+            training_run,
+            status=TrainingRunStatus.DEAD_LETTERED,
+            metrics=metrics,
+            evaluation_report=evaluation_report,
+            error_message=error_message,
+        )
+
+    def _recover_expired_training_run_leases(
+        self,
+        command: ExecuteNextTrainingRunsCommand,
+        *,
+        now: datetime,
+    ) -> tuple[int, int]:
+        expired_runs = self._training_runs.list_expired_running_training_runs(
+            command.organization_id,
+            command.project_id,
+            limit=command.max_runs * 10,
+            now=now,
+        )
+        requeued = 0
+        dead_lettered = 0
+        for expired in expired_runs:
+            if expired.attempt_count >= expired.max_attempts:
+                training_worker_expired_leases_total.labels(outcome="dead_lettered").inc()
+                self._training_runs.add_event(
+                    TrainingRunEvent(
+                        id=uuid4(),
+                        training_run_id=expired.id,
+                        event_type="lease_expired",
+                        message="Training run lease expired after all attempts.",
+                        metadata={
+                            "worker_id": expired.worker_id,
+                            "attempt_count": expired.attempt_count,
+                            "max_attempts": expired.max_attempts,
+                            "lease_expires_at": _datetime_isoformat(expired.lease_expires_at),
+                        },
+                    )
+                )
+                self._record_terminal_result(
+                    expired,
+                    status=TrainingRunStatus.DEAD_LETTERED,
+                    metrics={},
+                    evaluation_report={
+                        "training_execution": {
+                            "schema_version": "forgeml.training_execution_result.v1",
+                            "runner_name": "expired-worker-lease",
+                            "external_run_id": expired.orchestrator_run_id,
+                            "artifacts": [],
+                        }
+                    },
+                    error_message="Training run lease expired after all attempts.",
+                )
+                dead_lettered += 1
+                continue
+
+            next_retry_at = self._retry_policy.next_retry_at(now, expired.attempt_count)
+            retry = replace(
+                expired,
+                status=TrainingRunStatus.QUEUED,
+                error_message="Training run lease expired before completion.",
+                worker_id=None,
+                lease_expires_at=None,
+                queued_at=now,
+                completed_at=None,
+                next_retry_at=next_retry_at,
+            )
+            saved = self._training_runs.update_training_run(retry)
+            training_worker_expired_leases_total.labels(outcome="requeued").inc()
+            self._training_runs.add_event(
+                TrainingRunEvent(
+                    id=uuid4(),
+                    training_run_id=saved.id,
+                    event_type="lease_expired",
+                    message="Training run lease expired and was returned to the queue.",
+                    metadata={
+                        "previous_worker_id": expired.worker_id,
+                        "attempt_count": saved.attempt_count,
+                        "max_attempts": saved.max_attempts,
+                        "lease_expires_at": _datetime_isoformat(expired.lease_expires_at),
+                        "next_retry_at": _datetime_isoformat(saved.next_retry_at),
+                    },
+                )
+            )
+            self._record_log(
+                training_run_id=saved.id,
+                level="warning",
+                logger="training.lease",
+                message="Training run lease expired and was returned to the queue.",
+                metadata={
+                    "previous_worker_id": expired.worker_id,
+                    "attempt_count": saved.attempt_count,
+                    "max_attempts": saved.max_attempts,
+                    "next_retry_at": _datetime_isoformat(saved.next_retry_at),
+                },
+            )
+            requeued += 1
+        return requeued, dead_lettered
+
     def cancel_training_run(self, training_run_id: UUID, principal: Principal) -> TrainingRun:
         self._require(principal, "training_runs:cancel")
         training_run = self._get_scoped_training_run(training_run_id, principal)
         self._orchestrator.cancel_training(training_run)
-        canceled = replace(training_run, status=TrainingRunStatus.CANCELED)
+        canceled = replace(
+            training_run,
+            status=TrainingRunStatus.CANCELED,
+            worker_id=None,
+            lease_expires_at=None,
+            completed_at=_utcnow(),
+            next_retry_at=None,
+        )
         saved = self._training_runs.update_training_run(canceled)
         self._experiment_runs.update_experiment_run(
             saved.experiment_run_id,
@@ -504,11 +825,16 @@ class TrainingRunService:
     ) -> TrainingRun:
         validate_terminal_status(status)
         validate_metrics(metrics)
+        now = _utcnow()
         updated = replace(
             training_run,
             status=status,
             metrics={**training_run.metrics, **metrics},
             error_message=error_message,
+            worker_id=None,
+            lease_expires_at=None,
+            completed_at=now,
+            next_retry_at=None,
         )
         saved = self._training_runs.update_training_run(updated)
         self._experiment_runs.update_experiment_run(
@@ -573,13 +899,13 @@ class TrainingRunService:
 def _to_experiment_status(status: TrainingRunStatus) -> ExperimentRunStatus:
     if status == TrainingRunStatus.SUCCEEDED:
         return ExperimentRunStatus.SUCCEEDED
-    if status == TrainingRunStatus.FAILED:
+    if status in {TrainingRunStatus.FAILED, TrainingRunStatus.DEAD_LETTERED}:
         return ExperimentRunStatus.FAILED
     return ExperimentRunStatus.CANCELED
 
 
 def _terminal_log_level(status: TrainingRunStatus) -> str:
-    if status == TrainingRunStatus.FAILED:
+    if status in {TrainingRunStatus.FAILED, TrainingRunStatus.DEAD_LETTERED}:
         return "error"
     if status == TrainingRunStatus.CANCELED:
         return "warning"
@@ -608,3 +934,24 @@ def _with_execution_metadata(result: TrainingExecutionResult) -> dict[str, objec
             "artifacts": [asdict(artifact) for artifact in result.artifacts],
         },
     }
+
+
+def _validate_retry_policy(policy: TrainingRetryPolicy) -> None:
+    if policy.max_attempts < 1 or policy.max_attempts > 100:
+        raise ValueError("Training retry max_attempts must be between 1 and 100.")
+    if policy.base_backoff_seconds < 0:
+        raise ValueError("Training retry base_backoff_seconds cannot be negative.")
+    if policy.max_backoff_seconds < policy.base_backoff_seconds:
+        raise ValueError(
+            "Training retry max_backoff_seconds must be greater than base_backoff_seconds."
+        )
+    if policy.lease_seconds < 1:
+        raise ValueError("Training worker lease_seconds must be positive.")
+
+
+def _utcnow() -> datetime:
+    return datetime.now(tz=UTC)
+
+
+def _datetime_isoformat(value: datetime | None) -> str | None:
+    return value.isoformat() if value is not None else None

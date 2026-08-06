@@ -520,6 +520,15 @@ async function startTrainingRun(
     orchestrator_run_id: `airflow-${runId}`,
     metrics: {},
     error_message: null,
+    attempt_count: 0,
+    max_attempts: 3,
+    worker_id: null,
+    lease_expires_at: null,
+    last_heartbeat_at: null,
+    queued_at: "2026-08-05T20:00:00Z",
+    started_at: null,
+    completed_at: null,
+    next_retry_at: null,
   };
   state.trainingRunsByProject.set(projectId, [
     run,
@@ -564,6 +573,11 @@ async function handleTrainingRunAction(
       status: stringValue(body.status, "succeeded"),
       metrics: numericRecordValue(body.metrics, { auc: 0.94 }),
       error_message: nullableString(body.error_message),
+      attempt_count: Number(run.attempt_count ?? 1) || 1,
+      worker_id: null,
+      lease_expires_at: null,
+      completed_at: "2026-08-05T20:10:00Z",
+      next_retry_at: null,
     };
     replaceTrainingRun(state, succeeded);
     state.trainingEventsByRun.set(runId, [

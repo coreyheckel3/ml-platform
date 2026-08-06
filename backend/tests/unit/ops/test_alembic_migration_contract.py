@@ -18,7 +18,7 @@ def test_migration_contract_extracts_checked_in_topology() -> None:
 
     assert len(migrations) >= 13
     assert contract["summary"]["base_revision"] == "202607180001"
-    assert contract["summary"]["head_revision"] == "202607190013"
+    assert contract["summary"]["head_revision"] == "202607190014"
     assert contract["summary"]["head_count"] == 1
     assert contract["summary"]["base_count"] == 1
     assert validate_migration_graph(migrations) == ()

@@ -1603,6 +1603,42 @@ Implemented scope:
 - `.github/workflows/ci.yml` now verifies the release manifest before upload from the `release-evidence` job.
 - The release manifest contract now includes release evidence workflow and verifier contracts as required operations artifacts.
 
+## Sprint 51: Background Worker / Job Queue Hardening
+
+Goal: Turn the local training worker into a production-shaped queue consumer
+with durable lifecycle state, bounded retries, stale lease recovery, heartbeat
+visibility, and worker metrics.
+
+Scope:
+
+- Training run retry policy with max attempts and exponential backoff
+- Worker claim metadata, attempt counters, lease expiry, heartbeat timestamps, and retry scheduling fields
+- Dead-letter terminal state for exhausted training work
+- Expired running-run lease recovery before worker polling
+- Worker CLI flags for max attempts, lease seconds, retry backoff, and expired lease recovery
+- Prometheus counters for claims, heartbeats, retry decisions, and expired lease recovery
+- Training Runs page worker lifecycle detail for attempts, active worker, lease, heartbeat, retry, and completion timing
+- Retraining status sync for dead-lettered linked training runs
+
+Acceptance criteria:
+
+- Workers atomically claim requested or queued training runs and stamp worker id, attempt count, heartbeat, and lease expiry.
+- Failed attempts are requeued while attempts remain and are dead-lettered when the retry budget is exhausted.
+- Expired running leases are requeued or dead-lettered before normal worker polling.
+- Training run responses expose worker lifecycle metadata for UI and SDK clients.
+- Retraining runs no longer remain queued when their linked training run reaches a dead-lettered terminal state.
+- Unit, integration, frontend, E2E, OpenAPI, Alembic, SQLAlchemy, permission catalog, and production-readiness checks cover the new behavior.
+
+Implemented scope:
+
+- `TrainingRun` now includes durable attempt, worker, lease, heartbeat, queued, started, completed, and retry timestamps.
+- `SqlAlchemyTrainingRunRepository` implements runnable polling, expired lease discovery, worker claim, heartbeat, and lifecycle persistence.
+- `TrainingRunService` applies retry policy, schedules retries, dead-letters exhausted work, recovers expired leases, records heartbeat events/logs, and emits worker metrics.
+- `scripts/workers/run_training_worker.py` reports retry, dead-letter, lease recovery, and heartbeat counters in the worker summary payload.
+- `backend/alembic/versions/202607190014_training_worker_queue_hardening.py` adds queue lifecycle columns and polling/lease indexes.
+- `TrainingRunsPage` displays worker lifecycle metadata and treats dead-lettered runs as terminal failures.
+- Generated Alembic, SQLAlchemy, OpenAPI, and permission catalog contracts were refreshed for release gates.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1617,8 +1653,8 @@ sequence.
 | 48 | Release Manifest Provenance | Completed | Release manifest builder, required contract hashes, image target provenance, quality gates, smoke evidence ingestion, and manifest contract. |
 | 49 | CI Release Evidence Publication | Completed | Main-branch release-evidence job, manifest artifact upload, workflow contract, CI gate, and production-readiness validation. |
 | 50 | Release Manifest Verification | Completed | Manifest verifier CLI, verification contract, CI verification before upload, artifact and Dockerfile hash checks, quality gate coverage, and CI evidence linkage. |
-| 51 | Background Worker / Job Queue Hardening | Next | Real queued job lifecycle, retry policy, dead-letter handling, worker heartbeat, job lease timeout, and worker observability. |
-| 52 | Artifact Storage Abstraction | Planned | MinIO/S3-backed artifacts, model artifact manifests, dataset artifact manifests, checksum validation, artifact lineage, and storage contract tests. |
+| 51 | Background Worker / Job Queue Hardening | Completed | Real queued job lifecycle, retry policy, dead-letter handling, worker heartbeat, job lease timeout, and worker observability. |
+| 52 | Artifact Storage Abstraction | Next | MinIO/S3-backed artifacts, model artifact manifests, dataset artifact manifests, checksum validation, artifact lineage, and storage contract tests. |
 | 53 | MLflow Integration Layer | Planned | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, and adapter contract tests. |
 | 54 | Airflow Orchestration Adapter | Planned | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, retry mapping, and orchestration contract tests. |
 | 55 | Deployment Runtime Hardening | Planned | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |

@@ -1,7 +1,17 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstraint, Uuid, func
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    Uuid,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from forgeml.platform.database.base import Base
@@ -9,6 +19,15 @@ from forgeml.platform.database.base import Base
 
 class TrainingRunModel(Base):
     __tablename__ = "training_runs"
+    __table_args__ = (
+        Index("ix_training_runs_queue_polling", "organization_id", "status", "next_retry_at"),
+        Index(
+            "ix_training_runs_running_leases",
+            "organization_id",
+            "status",
+            "lease_expires_at",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     organization_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, index=True)
@@ -50,12 +69,41 @@ class TrainingRunModel(Base):
         nullable=False,
         default=dict,
     )
-    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     requested_by: Mapped[UUID] = mapped_column(Uuid, nullable=False)
     artifact_uri: Mapped[str] = mapped_column(String(2048), nullable=False)
     orchestrator_run_id: Mapped[str] = mapped_column(String(512), nullable=False)
     metrics_json: Mapped[dict[str, float]] = mapped_column(JSON, nullable=False, default=dict)
     error_message: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    worker_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
+    last_heartbeat_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    queued_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    next_retry_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

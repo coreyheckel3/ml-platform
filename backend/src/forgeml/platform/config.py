@@ -29,6 +29,27 @@ class Settings(BaseSettings):
         default=Path("artifacts/training-runs"),
         alias="FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT",
     )
+    training_worker_max_attempts: int = Field(
+        default=3,
+        ge=1,
+        le=100,
+        alias="FORGEML_TRAINING_WORKER_MAX_ATTEMPTS",
+    )
+    training_worker_lease_seconds: int = Field(
+        default=900,
+        ge=1,
+        alias="FORGEML_TRAINING_WORKER_LEASE_SECONDS",
+    )
+    training_worker_retry_backoff_seconds: int = Field(
+        default=60,
+        ge=0,
+        alias="FORGEML_TRAINING_WORKER_RETRY_BACKOFF_SECONDS",
+    )
+    training_worker_max_retry_backoff_seconds: int = Field(
+        default=1_800,
+        ge=0,
+        alias="FORGEML_TRAINING_WORKER_MAX_RETRY_BACKOFF_SECONDS",
+    )
     airflow_base_url: str = Field(
         default="http://localhost:8080",
         alias="FORGEML_AIRFLOW_BASE_URL",

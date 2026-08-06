@@ -663,6 +663,7 @@ def _retraining_status_from_training_status(value: str) -> RetrainingRunStatus |
         "running": RetrainingRunStatus.RUNNING,
         "succeeded": RetrainingRunStatus.SUCCEEDED,
         "failed": RetrainingRunStatus.FAILED,
+        "dead_lettered": RetrainingRunStatus.FAILED,
         "canceled": RetrainingRunStatus.CANCELED,
     }
     return status_map.get(value)

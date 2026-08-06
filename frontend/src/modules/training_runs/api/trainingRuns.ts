@@ -18,6 +18,15 @@ export type TrainingRun = {
   orchestrator_run_id: string;
   metrics: Record<string, number>;
   error_message: string | null;
+  attempt_count: number;
+  max_attempts: number;
+  worker_id: string | null;
+  lease_expires_at: string | null;
+  last_heartbeat_at: string | null;
+  queued_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  next_retry_at: string | null;
 };
 
 export type TrainingRunEvent = {

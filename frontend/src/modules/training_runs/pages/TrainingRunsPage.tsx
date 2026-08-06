@@ -160,8 +160,9 @@ export function TrainingRunsPage() {
     [logsQuery.data?.items],
   );
   const counts = countByStatus(trainingRuns.map((run) => run.status));
+  const failedCount = (counts.failed ?? 0) + (counts.dead_lettered ?? 0);
   const terminalCount =
-    (counts.succeeded ?? 0) + (counts.failed ?? 0) + (counts.canceled ?? 0);
+    (counts.succeeded ?? 0) + failedCount + (counts.canceled ?? 0);
   const startRunMutation = useMutation({
     mutationFn: () => {
       if (!projectId || !token) {
@@ -417,9 +418,9 @@ export function TrainingRunsPage() {
         />
         <MetricCard
           label="Failed"
-          value={String(counts.failed ?? 0)}
+          value={String(failedCount)}
           detail={`${counts.canceled ?? 0} canceled`}
-          tone={(counts.failed ?? 0) > 0 ? "danger" : "neutral"}
+          tone={failedCount > 0 ? "danger" : "neutral"}
         />
       </div>
       {operationMessage ? (
@@ -1035,6 +1036,26 @@ function RunDetail({ run }: { run: TrainingRun }) {
           <div>requested by: {run.requested_by.slice(0, 8)}</div>
         </div>
       </div>
+      <div className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-3">
+        <SignalTile
+          icon={<Play className="h-4 w-4" />}
+          label="Attempts"
+          value={`${run.attempt_count}/${run.max_attempts}`}
+          detail={run.worker_id ?? "no active worker"}
+        />
+        <SignalTile
+          icon={<Activity className="h-4 w-4" />}
+          label="Lease"
+          value={formatTimestamp(run.lease_expires_at)}
+          detail={`heartbeat ${formatTimestamp(run.last_heartbeat_at)}`}
+        />
+        <SignalTile
+          icon={<ClipboardCheck className="h-4 w-4" />}
+          label="Retry"
+          value={formatTimestamp(run.next_retry_at)}
+          detail={lifecycleDetail(run)}
+        />
+      </div>
       {run.error_message ? (
         <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-risk">
           {run.error_message}
@@ -1131,7 +1152,12 @@ function firstMetric(metrics: Record<string, number>): string {
 }
 
 function isTerminalStatus(status: string): boolean {
-  return status === "succeeded" || status === "failed" || status === "canceled";
+  return (
+    status === "succeeded" ||
+    status === "failed" ||
+    status === "canceled" ||
+    status === "dead_lettered"
+  );
 }
 
 function canCancelStatus(status: string): boolean {
@@ -1145,10 +1171,32 @@ function statusClassName(status: string): string {
   if (status === "queued" || status === "running" || status === "requested") {
     return "rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700";
   }
-  if (status === "failed" || status === "canceled") {
+  if (status === "failed" || status === "canceled" || status === "dead_lettered") {
     return "rounded bg-rose-50 px-2 py-1 text-xs font-medium text-risk";
   }
   return "rounded bg-field px-2 py-1 text-xs font-medium";
+}
+
+function lifecycleDetail(run: TrainingRun): string {
+  if (run.completed_at) {
+    return `completed ${formatTimestamp(run.completed_at)}`;
+  }
+  if (run.started_at) {
+    return `started ${formatTimestamp(run.started_at)}`;
+  }
+  return `queued ${formatTimestamp(run.queued_at)}`;
+}
+
+function formatTimestamp(value: string | null): string {
+  if (!value) {
+    return "none";
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function logLevelClassName(level: string): string {

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -25,10 +26,37 @@ class TrainingRunRepository(Protocol):
         organization_id: UUID,
         project_id: UUID | None,
         limit: int,
+        now: datetime,
     ) -> list[TrainingRun]:
         raise NotImplementedError
 
-    def claim_training_run(self, training_run_id: UUID) -> TrainingRun | None:
+    def list_expired_running_training_runs(
+        self,
+        organization_id: UUID,
+        project_id: UUID | None,
+        limit: int,
+        now: datetime,
+    ) -> list[TrainingRun]:
+        raise NotImplementedError
+
+    def claim_training_run(
+        self,
+        training_run_id: UUID,
+        *,
+        worker_id: str,
+        lease_expires_at: datetime,
+        heartbeat_at: datetime,
+    ) -> TrainingRun | None:
+        raise NotImplementedError
+
+    def heartbeat_training_run(
+        self,
+        training_run_id: UUID,
+        *,
+        worker_id: str,
+        lease_expires_at: datetime,
+        heartbeat_at: datetime,
+    ) -> TrainingRun | None:
         raise NotImplementedError
 
     def update_training_run(self, training_run: TrainingRun) -> TrainingRun:

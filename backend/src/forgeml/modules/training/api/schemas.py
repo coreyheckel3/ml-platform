@@ -30,6 +30,15 @@ class TrainingRunResponse(BaseModel):
     orchestrator_run_id: str
     metrics: dict[str, float]
     error_message: str | None
+    attempt_count: int
+    max_attempts: int
+    worker_id: str | None
+    lease_expires_at: str | None
+    last_heartbeat_at: str | None
+    queued_at: str | None
+    started_at: str | None
+    completed_at: str | None
+    next_retry_at: str | None
 
 
 class TrainingRunListResponse(BaseModel):

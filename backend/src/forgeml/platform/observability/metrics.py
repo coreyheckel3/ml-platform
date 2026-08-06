@@ -24,6 +24,26 @@ model_promotions_total = Counter(
     "Total model version promotions from training runs.",
     ["status"],
 )
+training_worker_claims_total = Counter(
+    "forgeml_training_worker_claims_total",
+    "Total training run claim attempts by outcome.",
+    ["outcome"],
+)
+training_worker_heartbeats_total = Counter(
+    "forgeml_training_worker_heartbeats_total",
+    "Total training worker heartbeat attempts by outcome.",
+    ["outcome"],
+)
+training_worker_retries_total = Counter(
+    "forgeml_training_worker_retries_total",
+    "Total training worker retry decisions by outcome.",
+    ["outcome"],
+)
+training_worker_expired_leases_total = Counter(
+    "forgeml_training_worker_expired_leases_total",
+    "Total expired training run leases recovered by outcome.",
+    ["outcome"],
+)
 readiness_probe_status = Gauge(
     "forgeml_readiness_probe_status",
     "Readiness probe status, where 1 is pass and 0 is fail.",

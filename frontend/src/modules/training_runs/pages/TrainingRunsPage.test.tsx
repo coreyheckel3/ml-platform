@@ -381,6 +381,18 @@ function trainingRun({
     orchestrator_run_id,
     metrics,
     error_message,
+    attempt_count: status === "queued" ? 0 : 1,
+    max_attempts: 3,
+    worker_id: status === "running" ? "worker-a" : null,
+    lease_expires_at: status === "running" ? "2026-08-05T20:00:00Z" : null,
+    last_heartbeat_at: status === "running" ? "2026-08-05T19:45:00Z" : null,
+    queued_at: "2026-08-05T19:30:00Z",
+    started_at: status === "queued" ? null : "2026-08-05T19:40:00Z",
+    completed_at:
+      status === "succeeded" || status === "failed" || status === "canceled"
+        ? "2026-08-05T19:50:00Z"
+        : null,
+    next_retry_at: null,
   };
 }
 

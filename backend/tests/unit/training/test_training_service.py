@@ -1,5 +1,5 @@
-from dataclasses import replace
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
@@ -9,8 +9,10 @@ from forgeml.modules.experiments.domain.entities import ExperimentRun, Experimen
 from forgeml.modules.training.application.services import (
     ExecuteNextTrainingRunsCommand,
     ExecuteTrainingRunCommand,
+    RecordTrainingHeartbeatCommand,
     RecordTrainingResultCommand,
     StartTrainingRunCommand,
+    TrainingRetryPolicy,
     TrainingRunService,
 )
 from forgeml.modules.training.domain.entities import (
@@ -57,26 +59,88 @@ class FakeTrainingRunRepository:
         organization_id: UUID,
         project_id: UUID | None,
         limit: int,
+        now: datetime,
     ) -> list[TrainingRun]:
         runs = [
             run
             for run in self.training_runs.values()
             if run.organization_id == organization_id
             and run.status in {TrainingRunStatus.REQUESTED, TrainingRunStatus.QUEUED}
+            and (run.next_retry_at is None or run.next_retry_at <= now)
             and (project_id is None or run.project_id == project_id)
         ]
         return runs[:limit]
 
-    def claim_training_run(self, training_run_id: UUID) -> TrainingRun | None:
+    def list_expired_running_training_runs(
+        self,
+        organization_id: UUID,
+        project_id: UUID | None,
+        limit: int,
+        now: datetime,
+    ) -> list[TrainingRun]:
+        runs = [
+            run
+            for run in self.training_runs.values()
+            if run.organization_id == organization_id
+            and run.status == TrainingRunStatus.RUNNING
+            and run.lease_expires_at is not None
+            and run.lease_expires_at <= now
+            and (project_id is None or run.project_id == project_id)
+        ]
+        return runs[:limit]
+
+    def claim_training_run(
+        self,
+        training_run_id: UUID,
+        *,
+        worker_id: str,
+        lease_expires_at: datetime,
+        heartbeat_at: datetime,
+    ) -> TrainingRun | None:
         training_run = self.training_runs.get(training_run_id)
         if training_run is None or training_run.status not in {
             TrainingRunStatus.REQUESTED,
             TrainingRunStatus.QUEUED,
         }:
             return None
-        claimed = replace(training_run, status=TrainingRunStatus.RUNNING)
+        if training_run.next_retry_at is not None and training_run.next_retry_at > heartbeat_at:
+            return None
+        claimed = replace(
+            training_run,
+            status=TrainingRunStatus.RUNNING,
+            attempt_count=training_run.attempt_count + 1,
+            worker_id=worker_id,
+            lease_expires_at=lease_expires_at,
+            last_heartbeat_at=heartbeat_at,
+            started_at=heartbeat_at,
+            completed_at=None,
+            next_retry_at=None,
+        )
         self.training_runs[training_run_id] = claimed
         return claimed
+
+    def heartbeat_training_run(
+        self,
+        training_run_id: UUID,
+        *,
+        worker_id: str,
+        lease_expires_at: datetime,
+        heartbeat_at: datetime,
+    ) -> TrainingRun | None:
+        training_run = self.training_runs.get(training_run_id)
+        if (
+            training_run is None
+            or training_run.status != TrainingRunStatus.RUNNING
+            or training_run.worker_id != worker_id
+        ):
+            return None
+        heartbeat = replace(
+            training_run,
+            lease_expires_at=lease_expires_at,
+            last_heartbeat_at=heartbeat_at,
+        )
+        self.training_runs[training_run_id] = heartbeat
+        return heartbeat
 
     def update_training_run(self, training_run: TrainingRun) -> TrainingRun:
         self.training_runs[training_run.id] = training_run
@@ -216,6 +280,71 @@ def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Pr
         email="owner@example.com",
         organization_id=str(organization_id),
         permissions=frozenset(permissions),
+    )
+
+
+@dataclass(frozen=True)
+class StartedTrainingRunContext:
+    repository: FakeTrainingRunRepository
+    recorder: FakeExperimentRunRecorder
+    service: TrainingRunService
+    actor: Principal
+    organization_id: UUID
+    project_id: UUID
+    training_run: TrainingRun
+
+
+def started_training_run_context(
+    *,
+    runner: FakeRunner | None,
+    retry_policy: TrainingRetryPolicy | None = None,
+) -> StartedTrainingRunContext:
+    repository = FakeTrainingRunRepository()
+    recorder = FakeExperimentRunRecorder()
+    service = TrainingRunService(
+        training_runs=repository,
+        experiment_runs=recorder,
+        orchestrator=FakeOrchestrator(),
+        artifact_bucket="forgeml-artifacts",
+        runner=runner,
+        retry_policy=retry_policy,
+    )
+    organization_id = uuid4()
+    project_id = uuid4()
+    experiment_id = uuid4()
+    dataset_version_id = uuid4()
+    user_id = uuid4()
+    repository.experiments.add((organization_id, project_id, experiment_id))
+    repository.dataset_versions.add((project_id, dataset_version_id))
+    actor = principal(
+        organization_id,
+        user_id,
+        {"training_runs:create", "training_runs:read", "training_runs:write"},
+    )
+    training_run = service.start_training_run(
+        StartTrainingRunCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            experiment_id=experiment_id,
+            run_name="fraud-xgb-depth-6",
+            dataset_version_id=dataset_version_id,
+            feature_set_id=None,
+            algorithm="xgboost",
+            model_type="xgboost",
+            objective_metric_name="auc",
+            hyperparameters={"max_depth": 6},
+            requested_by=user_id,
+        ),
+        actor,
+    )
+    return StartedTrainingRunContext(
+        repository=repository,
+        recorder=recorder,
+        service=service,
+        actor=actor,
+        organization_id=organization_id,
+        project_id=project_id,
+        training_run=training_run,
     )
 
 
@@ -384,15 +513,27 @@ def test_training_service_executes_queued_run_with_runner() -> None:
         "forgeml.training_execution_result.v1"
     )
     assert evaluation_report["training_execution"]["artifacts"][0]["name"] == "model"
+    assert completed.attempt_count == 1
+    assert completed.worker_id is None
+    assert completed.completed_at is not None
     assert [event.event_type for event in repository.events] == [
         "queued",
         "running",
+        "heartbeat",
         "succeeded",
     ]
-    assert [log.sequence for log in service.list_logs(training_run.id, actor)] == [1, 2, 3, 4, 5]
+    assert [log.sequence for log in service.list_logs(training_run.id, actor)] == [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+    ]
     assert [log.message for log in repository.logs] == [
         "Training run was queued for execution.",
         "Worker claimed training run.",
+        "Training worker heartbeat was recorded.",
         "Training runner execution started.",
         "Training runner produced artifacts.",
         "Training run finished with status succeeded.",
@@ -518,11 +659,188 @@ def test_training_service_worker_executes_next_supported_queued_run() -> None:
     assert summary.succeeded == 1
     assert summary.failed == 0
     assert summary.skipped == 1
+    assert summary.heartbeats == 1
+    assert summary.retried == 0
+    assert summary.dead_lettered == 0
     assert summary.training_run_ids == [supported_run.id]
     assert repository.training_runs[unsupported_run.id].status == TrainingRunStatus.QUEUED
     assert repository.training_runs[supported_run.id].status == TrainingRunStatus.SUCCEEDED
     running_events = [event for event in repository.events if event.event_type == "running"]
     assert running_events[0].metadata["worker_id"] == "worker-a"
+
+
+def test_training_service_worker_schedules_retry_for_failed_attempt() -> None:
+    context = started_training_run_context(
+        runner=FakeRunner(should_fail=True),
+        retry_policy=TrainingRetryPolicy(
+            max_attempts=3,
+            base_backoff_seconds=60,
+            max_backoff_seconds=60,
+            lease_seconds=30,
+        ),
+    )
+
+    summary = context.service.execute_next_training_runs(
+        ExecuteNextTrainingRunsCommand(
+            organization_id=context.organization_id,
+            project_id=context.project_id,
+            max_runs=1,
+            worker_id="worker-a",
+        ),
+        context.actor,
+    )
+
+    retry = context.repository.training_runs[context.training_run.id]
+    assert summary.executed == 1
+    assert summary.retried == 1
+    assert summary.dead_lettered == 0
+    assert retry.status == TrainingRunStatus.QUEUED
+    assert retry.attempt_count == 1
+    assert retry.worker_id is None
+    assert retry.lease_expires_at is None
+    assert retry.next_retry_at is not None
+    assert context.recorder.runs[retry.experiment_run_id].status == ExperimentRunStatus.RUNNING
+    assert "retry_scheduled" in [event.event_type for event in context.repository.events]
+    assert context.repository.logs[-1].message == (
+        "Training run attempt failed and was scheduled for retry."
+    )
+
+
+def test_training_service_worker_dead_letters_after_retry_budget() -> None:
+    context = started_training_run_context(
+        runner=FakeRunner(should_fail=True),
+        retry_policy=TrainingRetryPolicy(
+            max_attempts=1,
+            base_backoff_seconds=0,
+            max_backoff_seconds=0,
+            lease_seconds=30,
+        ),
+    )
+
+    summary = context.service.execute_next_training_runs(
+        ExecuteNextTrainingRunsCommand(
+            organization_id=context.organization_id,
+            project_id=context.project_id,
+            max_runs=1,
+            worker_id="worker-a",
+        ),
+        context.actor,
+    )
+
+    dead_lettered = context.repository.training_runs[context.training_run.id]
+    assert summary.executed == 1
+    assert summary.retried == 0
+    assert summary.dead_lettered == 1
+    assert dead_lettered.status == TrainingRunStatus.DEAD_LETTERED
+    assert dead_lettered.attempt_count == 1
+    assert dead_lettered.completed_at is not None
+    assert dead_lettered.worker_id is None
+    assert context.recorder.runs[dead_lettered.experiment_run_id].status == (
+        ExperimentRunStatus.FAILED
+    )
+    assert [event.event_type for event in context.repository.events][-2:] == [
+        "retry_exhausted",
+        "dead_lettered",
+    ]
+
+
+def test_training_service_records_worker_heartbeat() -> None:
+    context = started_training_run_context(runner=FakeRunner())
+    heartbeat_at = datetime.now(tz=UTC)
+    running = replace(
+        context.training_run,
+        status=TrainingRunStatus.RUNNING,
+        attempt_count=1,
+        worker_id="worker-a",
+        lease_expires_at=heartbeat_at + timedelta(seconds=30),
+        last_heartbeat_at=heartbeat_at,
+    )
+    context.repository.training_runs[running.id] = running
+
+    heartbeat = context.service.record_worker_heartbeat(
+        RecordTrainingHeartbeatCommand(
+            training_run_id=running.id,
+            worker_id="worker-a",
+        ),
+        context.actor,
+    )
+
+    assert heartbeat.status == TrainingRunStatus.RUNNING
+    assert heartbeat.worker_id == "worker-a"
+    assert heartbeat.last_heartbeat_at is not None
+    assert heartbeat.lease_expires_at is not None
+    assert context.repository.events[-1].event_type == "heartbeat"
+
+
+def test_training_service_recovers_expired_running_lease() -> None:
+    context = started_training_run_context(runner=FakeRunner(can_run=False))
+    expired_at = datetime.now(tz=UTC) - timedelta(seconds=5)
+    running = replace(
+        context.training_run,
+        status=TrainingRunStatus.RUNNING,
+        attempt_count=1,
+        worker_id="worker-a",
+        lease_expires_at=expired_at,
+        last_heartbeat_at=expired_at - timedelta(seconds=30),
+    )
+    context.repository.training_runs[running.id] = running
+
+    summary = context.service.execute_next_training_runs(
+        ExecuteNextTrainingRunsCommand(
+            organization_id=context.organization_id,
+            project_id=context.project_id,
+            max_runs=1,
+            worker_id="worker-b",
+        ),
+        context.actor,
+    )
+
+    recovered = context.repository.training_runs[running.id]
+    assert summary.expired_leases_requeued == 1
+    assert summary.expired_leases_dead_lettered == 0
+    assert summary.executed == 0
+    assert recovered.status == TrainingRunStatus.QUEUED
+    assert recovered.worker_id is None
+    assert recovered.lease_expires_at is None
+    assert recovered.next_retry_at is not None
+    assert context.repository.events[-1].event_type == "lease_expired"
+
+
+def test_training_service_dead_letters_expired_lease_after_retry_budget() -> None:
+    context = started_training_run_context(
+        runner=FakeRunner(can_run=False),
+        retry_policy=TrainingRetryPolicy(max_attempts=1, lease_seconds=30),
+    )
+    expired_at = datetime.now(tz=UTC) - timedelta(seconds=5)
+    running = replace(
+        context.training_run,
+        status=TrainingRunStatus.RUNNING,
+        attempt_count=1,
+        max_attempts=1,
+        worker_id="worker-a",
+        lease_expires_at=expired_at,
+        last_heartbeat_at=expired_at - timedelta(seconds=30),
+    )
+    context.repository.training_runs[running.id] = running
+
+    summary = context.service.execute_next_training_runs(
+        ExecuteNextTrainingRunsCommand(
+            organization_id=context.organization_id,
+            project_id=context.project_id,
+            max_runs=1,
+            worker_id="worker-b",
+        ),
+        context.actor,
+    )
+
+    recovered = context.repository.training_runs[running.id]
+    assert summary.expired_leases_requeued == 0
+    assert summary.expired_leases_dead_lettered == 1
+    assert recovered.status == TrainingRunStatus.DEAD_LETTERED
+    assert recovered.completed_at is not None
+    assert context.recorder.runs[recovered.experiment_run_id].status == (
+        ExperimentRunStatus.FAILED
+    )
 
 
 def test_training_service_worker_validates_batch_size() -> None:

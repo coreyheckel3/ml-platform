@@ -82,7 +82,7 @@ def test_alembic_migration_contract_gate_is_enforced() -> None:
     assert "python scripts/ci/check_alembic_migration_contract.py" in workflow
     assert contract["schema_version"] == "forgeml.alembic_migrations.v1"
     assert contract["summary"]["base_revision"] == "202607180001"
-    assert contract["summary"]["head_revision"] == "202607190013"
+    assert contract["summary"]["head_revision"] == "202607190014"
     assert contract["summary"]["head_count"] == 1
     assert len(migrations) >= 13
     assert all(migration["has_upgrade"] and migration["has_downgrade"] for migration in migrations)

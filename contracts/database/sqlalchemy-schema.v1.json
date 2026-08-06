@@ -6,9 +6,9 @@
   ],
   "schema_version": "forgeml.sqlalchemy_schema.v1",
   "summary": {
-    "column_count": 394,
+    "column_count": 403,
     "foreign_key_count": 65,
-    "index_count": 105,
+    "index_count": 111,
     "table_count": 38,
     "unique_constraint_count": 15
   },
@@ -5616,7 +5616,7 @@
           "foreign_keys": [],
           "has_python_default": false,
           "has_server_default": false,
-          "index": false,
+          "index": true,
           "name": "status",
           "nullable": false,
           "primary_key": false,
@@ -5680,6 +5680,105 @@
         },
         {
           "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "attempt_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "max_attempts",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "worker_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(120)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "lease_expires_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "last_heartbeat_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "queued_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "started_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "completed_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "next_retry_at",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
           "has_python_default": false,
           "has_server_default": true,
           "index": false,
@@ -5739,6 +5838,20 @@
         },
         {
           "columns": [
+            "lease_expires_at"
+          ],
+          "name": "ix_training_runs_lease_expires_at",
+          "unique": false
+        },
+        {
+          "columns": [
+            "next_retry_at"
+          ],
+          "name": "ix_training_runs_next_retry_at",
+          "unique": false
+        },
+        {
+          "columns": [
             "organization_id"
           ],
           "name": "ix_training_runs_organization_id",
@@ -5749,6 +5862,38 @@
             "project_id"
           ],
           "name": "ix_training_runs_project_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id",
+            "status",
+            "next_retry_at"
+          ],
+          "name": "ix_training_runs_queue_polling",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id",
+            "status",
+            "lease_expires_at"
+          ],
+          "name": "ix_training_runs_running_leases",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_training_runs_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "worker_id"
+          ],
+          "name": "ix_training_runs_worker_id",
           "unique": false
         }
       ],

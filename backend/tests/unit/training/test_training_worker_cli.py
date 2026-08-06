@@ -16,6 +16,11 @@ def test_training_worker_summary_payload_serializes_run_ids() -> None:
         failed=0,
         skipped=2,
         training_run_ids=[training_run_id],
+        retried=1,
+        dead_lettered=0,
+        expired_leases_requeued=1,
+        expired_leases_dead_lettered=0,
+        heartbeats=1,
     )
 
     payload = summary_payload(summary)
@@ -27,6 +32,11 @@ def test_training_worker_summary_payload_serializes_run_ids() -> None:
         "succeeded": 1,
         "failed": 0,
         "skipped": 2,
+        "retried": 1,
+        "dead_lettered": 0,
+        "expired_leases_requeued": 1,
+        "expired_leases_dead_lettered": 0,
+        "heartbeats": 1,
         "training_run_ids": [str(training_run_id)],
     }
 

@@ -1671,7 +1671,7 @@ function runVerb(status: string): string {
   if (status === "succeeded") {
     return "succeeded";
   }
-  if (status === "failed") {
+  if (status === "failed" || status === "dead_lettered") {
     return "failed";
   }
   if (status === "canceled") {
@@ -1707,7 +1707,12 @@ function runStatusClassName(status: string): string {
   ) {
     return "rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700";
   }
-  if (status === "failed" || status === "canceled" || status === "rejected") {
+  if (
+    status === "failed" ||
+    status === "dead_lettered" ||
+    status === "canceled" ||
+    status === "rejected"
+  ) {
     return "rounded bg-rose-50 px-2 py-1 text-xs font-medium text-risk";
   }
   return "rounded bg-field px-2 py-1 text-xs font-medium";

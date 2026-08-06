@@ -1,3 +1,5 @@
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from sqlalchemy import create_engine
@@ -236,9 +238,37 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
             organization_id,
             project_id,
             limit=10,
+            now=datetime.now(tz=UTC),
         )
-        claimed_run = repository.claim_training_run(queued_training_run_id)
-        second_claim = repository.claim_training_run(queued_training_run_id)
+        heartbeat_at = datetime.now(tz=UTC)
+        claimed_run = repository.claim_training_run(
+            queued_training_run_id,
+            worker_id="worker-a",
+            lease_expires_at=heartbeat_at + timedelta(seconds=60),
+            heartbeat_at=heartbeat_at,
+        )
+        heartbeat = repository.heartbeat_training_run(
+            queued_training_run_id,
+            worker_id="worker-a",
+            lease_expires_at=heartbeat_at + timedelta(seconds=120),
+            heartbeat_at=heartbeat_at + timedelta(seconds=30),
+        )
+        assert heartbeat is not None
+        repository.update_training_run(
+            replace(heartbeat, lease_expires_at=heartbeat_at - timedelta(seconds=1))
+        )
+        expired_runs = repository.list_expired_running_training_runs(
+            organization_id,
+            project_id,
+            limit=10,
+            now=heartbeat_at,
+        )
+        second_claim = repository.claim_training_run(
+            queued_training_run_id,
+            worker_id="worker-b",
+            lease_expires_at=heartbeat_at + timedelta(seconds=60),
+            heartbeat_at=heartbeat_at,
+        )
         events = repository.list_events(training_run_id)
         logs = repository.list_logs(training_run_id)
         next_log_sequence = repository.next_log_sequence(training_run_id)
@@ -256,6 +286,10 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
     assert {run.id for run in runnable_runs} == {queued_training_run.id}
     assert claimed_run is not None
     assert claimed_run.status == TrainingRunStatus.RUNNING
+    assert claimed_run.worker_id == "worker-a"
+    assert claimed_run.attempt_count == 1
+    assert heartbeat.lease_expires_at is not None
+    assert {run.id for run in expired_runs} == {queued_training_run.id}
     assert second_claim is None
     assert any(run.metrics.get("auc") == 0.94 for run in training_runs)
     assert events[0].event_type == "queued"

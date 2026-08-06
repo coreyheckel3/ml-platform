@@ -11,6 +11,7 @@ _ALLOWED_TERMINAL_STATUSES = {
     TrainingRunStatus.SUCCEEDED,
     TrainingRunStatus.FAILED,
     TrainingRunStatus.CANCELED,
+    TrainingRunStatus.DEAD_LETTERED,
 }
 
 

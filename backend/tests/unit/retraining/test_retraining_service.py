@@ -274,6 +274,13 @@ def test_retraining_service_queues_drift_triggered_training_run() -> None:
     assert synced_run.decision_metadata["training_status"] == "succeeded"
     assert synced_run.decision_metadata["previous_retraining_status"] == "queued"
 
+    repository.training_statuses[evaluation.run.training_run_id] = "dead_lettered"
+    failed_runs = service.list_runs(project_id, actor)
+    failed_run = next(run for run in failed_runs if run.id == evaluation.run.id)
+
+    assert failed_run.status == RetrainingRunStatus.FAILED
+    assert failed_run.decision_metadata["training_status"] == "dead_lettered"
+
 
 def test_retraining_service_holds_run_for_approval_then_launches() -> None:
     repository = FakeRetrainingRepository()

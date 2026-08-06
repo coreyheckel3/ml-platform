@@ -4603,6 +4603,21 @@
             "title": "Artifact Uri",
             "type": "string"
           },
+          "attempt_count": {
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
           "dataset_version_id": {
             "anyOf": [
               {
@@ -4653,6 +4668,32 @@
             "title": "Id",
             "type": "string"
           },
+          "last_heartbeat_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Heartbeat At"
+          },
+          "lease_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Expires At"
+          },
+          "max_attempts": {
+            "title": "Max Attempts",
+            "type": "integer"
+          },
           "metrics": {
             "additionalProperties": {
               "type": "number"
@@ -4663,6 +4704,17 @@
           "model_type": {
             "title": "Model Type",
             "type": "string"
+          },
+          "next_retry_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Retry At"
           },
           "objective_metric_name": {
             "title": "Objective Metric Name",
@@ -4680,13 +4732,46 @@
             "title": "Project Id",
             "type": "string"
           },
+          "queued_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queued At"
+          },
           "requested_by": {
             "title": "Requested By",
             "type": "string"
           },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "worker_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Id"
           }
         },
         "required": [
@@ -4706,7 +4791,16 @@
           "artifact_uri",
           "orchestrator_run_id",
           "metrics",
-          "error_message"
+          "error_message",
+          "attempt_count",
+          "max_attempts",
+          "worker_id",
+          "lease_expires_at",
+          "last_heartbeat_at",
+          "queued_at",
+          "started_at",
+          "completed_at",
+          "next_retry_at"
         ],
         "title": "TrainingRunResponse",
         "type": "object"

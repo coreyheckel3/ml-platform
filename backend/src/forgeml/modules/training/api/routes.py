@@ -19,6 +19,7 @@ from forgeml.modules.training.api.schemas import (
 from forgeml.modules.training.application.services import (
     RecordTrainingResultCommand,
     StartTrainingRunCommand,
+    TrainingRetryPolicy,
     TrainingRunService,
 )
 from forgeml.modules.training.domain.entities import (
@@ -51,6 +52,12 @@ def get_training_run_service(
         artifact_bucket=settings.object_storage_bucket,
         runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
         audit_log=SqlAlchemyAuditLogRepository(session),
+        retry_policy=TrainingRetryPolicy(
+            max_attempts=settings.training_worker_max_attempts,
+            base_backoff_seconds=settings.training_worker_retry_backoff_seconds,
+            max_backoff_seconds=settings.training_worker_max_retry_backoff_seconds,
+            lease_seconds=settings.training_worker_lease_seconds,
+        ),
     )
 
 
@@ -191,6 +198,15 @@ def _training_run_response(training_run: TrainingRun) -> TrainingRunResponse:
         orchestrator_run_id=training_run.orchestrator_run_id,
         metrics=training_run.metrics,
         error_message=training_run.error_message,
+        attempt_count=training_run.attempt_count,
+        max_attempts=training_run.max_attempts,
+        worker_id=training_run.worker_id,
+        lease_expires_at=_datetime_response(training_run.lease_expires_at),
+        last_heartbeat_at=_datetime_response(training_run.last_heartbeat_at),
+        queued_at=_datetime_response(training_run.queued_at),
+        started_at=_datetime_response(training_run.started_at),
+        completed_at=_datetime_response(training_run.completed_at),
+        next_retry_at=_datetime_response(training_run.next_retry_at),
     )
 
 
@@ -215,3 +231,7 @@ def _log_response(log: TrainingRunLog) -> TrainingRunLogResponse:
         metadata=log.metadata,
         created_at=log.created_at.isoformat() if log.created_at else None,
     )
+
+
+def _datetime_response(value: object | None) -> str | None:
+    return value.isoformat() if hasattr(value, "isoformat") else None

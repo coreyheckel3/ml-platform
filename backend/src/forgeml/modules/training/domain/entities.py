@@ -11,6 +11,7 @@ class TrainingRunStatus(StrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     CANCELED = "canceled"
+    DEAD_LETTERED = "dead_lettered"
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,15 @@ class TrainingRun:
     orchestrator_run_id: str
     metrics: dict[str, float]
     error_message: str | None
+    attempt_count: int = 0
+    max_attempts: int = 3
+    worker_id: str | None = None
+    lease_expires_at: datetime | None = None
+    last_heartbeat_at: datetime | None = None
+    queued_at: datetime | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    next_retry_at: datetime | None = None
 
 
 @dataclass(frozen=True)

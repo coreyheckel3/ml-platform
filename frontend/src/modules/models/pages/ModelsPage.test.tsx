@@ -110,7 +110,16 @@ function mockRegistryWorkflow() {
             artifact_uri: "s3://forgeml/training-runs/run-1",
             orchestrator_run_id: "workflow-1",
             metrics: { auc: 0.94 },
-            error_message: null
+            error_message: null,
+            attempt_count: 1,
+            max_attempts: 3,
+            worker_id: null,
+            lease_expires_at: null,
+            last_heartbeat_at: "2026-08-05T20:00:00Z",
+            queued_at: "2026-08-05T19:55:00Z",
+            started_at: "2026-08-05T19:56:00Z",
+            completed_at: "2026-08-05T20:05:00Z",
+            next_retry_at: null
           }
         ],
         next_cursor: null
