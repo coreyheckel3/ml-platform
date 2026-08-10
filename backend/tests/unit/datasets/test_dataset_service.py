@@ -18,6 +18,12 @@ from forgeml.modules.datasets.domain.entities import (
     DatasetVersion,
     DatasetVersionStatus,
 )
+from forgeml.platform.artifacts import (
+    ArtifactManifest,
+    StoredArtifact,
+    serialize_artifact_manifest,
+    sha256_uri,
+)
 from forgeml.platform.domain.errors import ConflictError, PermissionDeniedError
 from forgeml.platform.security.rbac import Principal
 
@@ -46,6 +52,22 @@ class FakeObjectStorage:
             object_uri=f"s3://forgeml/{dataset_id}/{version_id}/{filename}",
             expires_at="2026-07-18T00:15:00+00:00",
             required_headers={"content-type": content_type},
+        )
+
+
+class FakeArtifactManifestStore:
+    def __init__(self) -> None:
+        self.records: list[tuple[str, ArtifactManifest]] = []
+
+    def put_manifest(self, *, key: str, manifest: ArtifactManifest) -> StoredArtifact:
+        self.records.append((key, manifest))
+        payload = serialize_artifact_manifest(manifest)
+        return StoredArtifact(
+            key=key,
+            uri=f"s3://forgeml-artifacts/{key}",
+            content_type="application/vnd.forgeml.artifact-manifest+json",
+            size_bytes=len(payload),
+            checksum_sha256=sha256_uri(payload),
         )
 
 
@@ -168,7 +190,12 @@ def test_dataset_service_creates_dataset_and_upload_version() -> None:
 
 def test_dataset_service_finalizes_version_with_inferred_schema() -> None:
     repository = FakeDatasetRepository()
-    service = DatasetService(datasets=repository, object_storage=FakeObjectStorage())
+    artifact_store = FakeArtifactManifestStore()
+    service = DatasetService(
+        datasets=repository,
+        object_storage=FakeObjectStorage(),
+        artifact_manifest_store=artifact_store,
+    )
     organization_id = uuid4()
     project_id = uuid4()
     user_id = uuid4()
@@ -218,8 +245,12 @@ def test_dataset_service_finalizes_version_with_inferred_schema() -> None:
 
     assert finalized.status == DatasetVersionStatus.VALIDATED
     assert finalized.row_count == 2
+    assert finalized.artifact_manifest_uri.startswith("s3://forgeml-artifacts/")
+    assert finalized.artifact_manifest_hash.startswith("sha256:")
     assert repository.schemas[version.id].fields[1].dtype == "float"
     assert repository.validation_runs[-1].report["field_count"] == 2
+    assert artifact_store.records[0][1].artifact_set_type == "dataset_version"
+    assert artifact_store.records[0][1].artifacts[0].checksum_sha256 == "sha256:abc123"
 
 
 def test_dataset_service_rejects_duplicate_dataset_slug() -> None:
@@ -259,4 +290,3 @@ def test_dataset_service_rejects_missing_permission() -> None:
             ),
             principal(organization_id, user_id, {"datasets:read"}),
         )
-

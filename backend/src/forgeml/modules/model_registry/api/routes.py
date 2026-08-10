@@ -40,6 +40,8 @@ from forgeml.modules.model_registry.infrastructure.sqlalchemy_repositories impor
     SqlAlchemyModelRegistryRepository,
 )
 from forgeml.platform.api.dependencies import get_current_principal, get_db_session
+from forgeml.platform.artifacts import ArtifactManifestStore, LocalArtifactStorageGateway
+from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.security.rbac import Principal
 
 router = APIRouter(tags=["model-registry"])
@@ -47,10 +49,17 @@ router = APIRouter(tags=["model-registry"])
 
 def get_model_registry_service(
     session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ) -> ModelRegistryService:
     return ModelRegistryService(
         repository=SqlAlchemyModelRegistryRepository(session),
         audit_log=SqlAlchemyAuditLogRepository(session),
+        artifact_manifest_store=ArtifactManifestStore(
+            LocalArtifactStorageGateway(
+                root=settings.artifact_manifest_local_root,
+                bucket=settings.object_storage_bucket,
+            )
+        ),
     )
 
 
@@ -265,6 +274,8 @@ def _model_version_response(version: ModelVersion) -> ModelVersionResponse:
         training_run_id=str(version.training_run_id),
         experiment_run_id=str(version.experiment_run_id),
         artifact_uri=version.artifact_uri,
+        artifact_manifest_uri=version.artifact_manifest_uri,
+        artifact_manifest_hash=version.artifact_manifest_hash,
         model_format=version.model_format,
         signature=version.signature,
         metrics=version.metrics,

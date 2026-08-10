@@ -22,6 +22,12 @@ from forgeml.modules.model_registry.domain.entities import (
     TrainingRunPromotionCandidate,
     TrainingRunReference,
 )
+from forgeml.platform.artifacts import (
+    ArtifactManifest,
+    StoredArtifact,
+    serialize_artifact_manifest,
+    sha256_uri,
+)
 from forgeml.platform.domain.errors import ConflictError, DomainValidationError
 from forgeml.platform.security.rbac import Principal
 
@@ -144,6 +150,22 @@ class FakeModelRegistryRepository:
 
     def list_lineage(self, model_version_id: UUID) -> list[ModelLineage]:
         return [lineage for lineage in self.lineage if lineage.model_version_id == model_version_id]
+
+
+class FakeArtifactManifestStore:
+    def __init__(self) -> None:
+        self.records: list[tuple[str, ArtifactManifest]] = []
+
+    def put_manifest(self, *, key: str, manifest: ArtifactManifest) -> StoredArtifact:
+        self.records.append((key, manifest))
+        payload = serialize_artifact_manifest(manifest)
+        return StoredArtifact(
+            key=key,
+            uri=f"s3://forgeml-artifacts/{key}",
+            content_type="application/vnd.forgeml.artifact-manifest+json",
+            size_bytes=len(payload),
+            checksum_sha256=sha256_uri(payload),
+        )
 
 
 class FakeAuditLogRepository:
@@ -337,7 +359,11 @@ def test_model_registry_service_rejects_failed_training_run_registration() -> No
 
 def test_model_registry_service_promotes_training_run_from_execution_manifest() -> None:
     repository = FakeModelRegistryRepository()
-    service = ModelRegistryService(repository=repository)
+    artifact_store = FakeArtifactManifestStore()
+    service = ModelRegistryService(
+        repository=repository,
+        artifact_manifest_store=artifact_store,
+    )
     organization_id = uuid4()
     project_id = uuid4()
     user_id = uuid4()
@@ -377,6 +403,8 @@ def test_model_registry_service_promotes_training_run_from_execution_manifest() 
 
     assert version.status == ModelVersionStatus.CANDIDATE
     assert version.artifact_uri == "s3://forgeml/training-runs/run-1/model.json"
+    assert version.artifact_manifest_uri.startswith("s3://forgeml-artifacts/")
+    assert version.artifact_manifest_hash.startswith("sha256:")
     assert version.metrics["auc"] == 0.94
     assert {lineage.source_type for lineage in repository.lineage} == {
         "dataset_version",
@@ -384,6 +412,8 @@ def test_model_registry_service_promotes_training_run_from_execution_manifest() 
         "feature_set",
         "training_run",
     }
+    assert artifact_store.records[0][1].artifact_set_type == "model_version"
+    assert artifact_store.records[0][1].artifacts[0].checksum_sha256 == "sha256:model"
 
 
 def test_model_registry_service_promotes_training_run_idempotently() -> None:
@@ -527,7 +557,9 @@ def promotion_candidate(
                         "artifact_type": "model",
                         "uri": "file:///tmp/model.json",
                         "metadata": {
-                            "control_plane_uri": "s3://forgeml/training-runs/run-1/model.json"
+                            "control_plane_uri": "s3://forgeml/training-runs/run-1/model.json",
+                            "size_bytes": 128,
+                            "sha256": "sha256:model",
                         },
                     },
                     {

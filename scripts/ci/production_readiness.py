@@ -16,6 +16,9 @@ try:
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
     )
+    from scripts.ci.check_artifact_manifest_contract import (
+        check_artifact_manifest_contract as verify_artifact_manifest_contract,
+    )
     from scripts.ci.check_release_evidence_workflow import (
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
     )
@@ -34,6 +37,9 @@ try:
 except ModuleNotFoundError:
     from check_alembic_migration_contract import (  # type: ignore[no-redef]
         check_migration_contract as verify_alembic_migration_contract,
+    )
+    from check_artifact_manifest_contract import (  # type: ignore[no-redef]
+        check_artifact_manifest_contract as verify_artifact_manifest_contract,
     )
     from check_release_evidence_workflow import (  # type: ignore[no-redef]
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
@@ -102,6 +108,13 @@ REQUIRED_FILES = (
     "scripts/ci/check_sqlalchemy_schema_contract.py",
     "contracts/database/sqlalchemy-schema.v1.json",
     "backend/tests/unit/ops/test_sqlalchemy_schema_contract.py",
+    "backend/src/forgeml/platform/artifacts/manifest.py",
+    "backend/src/forgeml/platform/artifacts/storage.py",
+    "scripts/ci/check_artifact_manifest_contract.py",
+    "contracts/artifacts/README.md",
+    "contracts/artifacts/artifact-manifest.v1.json",
+    "backend/tests/unit/platform/test_artifact_manifest.py",
+    "backend/tests/unit/ops/test_artifact_manifest_contract.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -167,6 +180,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_training_execution_contract(repo_root),
         check_alembic_migration_contract(repo_root),
         check_sqlalchemy_schema_contract(repo_root),
+        check_artifact_manifest_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -515,6 +529,56 @@ def check_sqlalchemy_schema_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_foreign_key_depth={has_foreign_key_depth}, "
                 f"missing_tables={missing_tables}, "
                 f"has_indexed_foreign_keys={has_indexed_foreign_keys}"
+            )
+        ),
+    )
+
+
+def check_artifact_manifest_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/artifacts/artifact-manifest.v1.json"
+    has_ci_gate = "python scripts/ci/check_artifact_manifest_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="artifact manifest contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    producer_types = {
+        producer.get("artifact_set_type")
+        for producer in contract.get("producers", [])
+    }
+    contract_current, contract_detail = verify_artifact_manifest_contract(contract_path)
+    has_checksum_policy = (
+        contract.get("checksum_policy", {}).get("algorithm") == "sha256"
+        and "checksum_sha256" in contract.get("required_artifact_fields", [])
+    )
+    has_storage_boundary = (
+        contract.get("storage_contract", {}).get("gateway_protocol")
+        == "ArtifactStorageGateway"
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and {"dataset_version", "model_version"}.issubset(producer_types)
+        and has_checksum_policy
+        and has_storage_boundary
+    )
+    return ReadinessCheck(
+        name="artifact manifest contract",
+        passed=passed,
+        detail=(
+            "artifact manifest storage contract, checksums, and producers are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"producer_types={sorted(producer_types)}, "
+                f"has_checksum_policy={has_checksum_policy}, "
+                f"has_storage_boundary={has_storage_boundary}"
             )
         ),
     )

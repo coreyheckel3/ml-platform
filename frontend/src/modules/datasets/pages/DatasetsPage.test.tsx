@@ -268,6 +268,9 @@ function datasetVersion(
     version,
     object_uri: `s3://forgeml/datasets/${datasetId}/v${version}.csv`,
     content_hash: status === "validated" ? "sha256:abc123" : "",
+    artifact_manifest_uri:
+      status === "validated" ? `s3://forgeml-artifacts/datasets/${id}/manifest.json` : "",
+    artifact_manifest_hash: status === "validated" ? "sha256:manifest" : "",
     row_count: status === "validated" ? 12000 : 0,
     size_bytes: status === "validated" ? 8192 : 0,
     status,

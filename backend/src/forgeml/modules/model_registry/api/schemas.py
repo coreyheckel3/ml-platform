@@ -43,6 +43,8 @@ class ModelVersionResponse(BaseModel):
     training_run_id: str
     experiment_run_id: str
     artifact_uri: str
+    artifact_manifest_uri: str
+    artifact_manifest_hash: str
     model_format: str
     signature: dict[str, object]
     metrics: dict[str, float]

@@ -21,6 +21,10 @@ class Settings(BaseSettings):
         default="forgeml-artifacts",
         alias="FORGEML_OBJECT_STORAGE_BUCKET",
     )
+    artifact_manifest_local_root: Path = Field(
+        default=Path("artifacts/manifests"),
+        alias="FORGEML_ARTIFACT_MANIFEST_LOCAL_ROOT",
+    )
     mlflow_tracking_uri: str = Field(
         default="http://localhost:5000",
         alias="FORGEML_MLFLOW_TRACKING_URI",

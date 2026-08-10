@@ -89,6 +89,8 @@ def test_dataset_repository_round_trips_dataset_version_schema_and_validation() 
                 version=1,
                 object_uri=version.object_uri,
                 content_hash="sha256:abc123",
+                artifact_manifest_uri="s3://forgeml-artifacts/datasets/manifest.json",
+                artifact_manifest_hash="sha256:manifest",
                 row_count=2,
                 size_bytes=128,
                 status=DatasetVersionStatus.VALIDATED,
@@ -124,6 +126,7 @@ def test_dataset_repository_round_trips_dataset_version_schema_and_validation() 
 
     assert datasets[0].slug == "transactions"
     assert versions[0].status == DatasetVersionStatus.VALIDATED
+    assert versions[0].artifact_manifest_hash == "sha256:manifest"
     assert schema is not None
     assert schema.fields[0].dtype == "float"
     assert runs[0].status == DatasetValidationStatus.COMPLETED

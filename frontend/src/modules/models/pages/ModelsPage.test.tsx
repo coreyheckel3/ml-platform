@@ -172,6 +172,8 @@ function modelVersion(status: string): Record<string, unknown> {
     training_run_id: trainingRunId,
     experiment_run_id: "experiment-run-1",
     artifact_uri: "s3://forgeml/training-runs/run-1/model.json",
+    artifact_manifest_uri: "s3://forgeml-artifacts/models/model-version-1/manifest.json",
+    artifact_manifest_hash: "sha256:manifest",
     model_format: "xgboost-booster",
     signature: { inputs: [], outputs: [] },
     metrics: { auc: 0.94 },

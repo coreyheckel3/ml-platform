@@ -72,7 +72,7 @@
       "code": "dataset_versions:create",
       "description": "Create immutable dataset version upload records.",
       "enforced_at": [
-        "backend/src/forgeml/modules/datasets/application/services.py:120"
+        "backend/src/forgeml/modules/datasets/application/services.py:131"
       ],
       "module": "datasets"
     },
@@ -81,7 +81,7 @@
       "code": "dataset_versions:finalize",
       "description": "Finalize dataset versions after object upload.",
       "enforced_at": [
-        "backend/src/forgeml/modules/datasets/application/services.py:169"
+        "backend/src/forgeml/modules/datasets/application/services.py:180"
       ],
       "module": "datasets"
     },
@@ -90,7 +90,7 @@
       "code": "dataset_versions:validate",
       "description": "Run schema validation for dataset versions.",
       "enforced_at": [
-        "backend/src/forgeml/modules/datasets/application/services.py:237"
+        "backend/src/forgeml/modules/datasets/application/services.py:280"
       ],
       "module": "datasets"
     },
@@ -99,7 +99,7 @@
       "code": "datasets:create",
       "description": "Create datasets.",
       "enforced_at": [
-        "backend/src/forgeml/modules/datasets/application/services.py:88"
+        "backend/src/forgeml/modules/datasets/application/services.py:99"
       ],
       "module": "datasets"
     },
@@ -108,12 +108,12 @@
       "code": "datasets:read",
       "description": "Read datasets and versions.",
       "enforced_at": [
-        "backend/src/forgeml/modules/datasets/application/services.py:108",
-        "backend/src/forgeml/modules/datasets/application/services.py:112",
-        "backend/src/forgeml/modules/datasets/application/services.py:155",
-        "backend/src/forgeml/modules/datasets/application/services.py:160",
-        "backend/src/forgeml/modules/datasets/application/services.py:220",
-        "backend/src/forgeml/modules/datasets/application/services.py:232"
+        "backend/src/forgeml/modules/datasets/application/services.py:119",
+        "backend/src/forgeml/modules/datasets/application/services.py:123",
+        "backend/src/forgeml/modules/datasets/application/services.py:166",
+        "backend/src/forgeml/modules/datasets/application/services.py:171",
+        "backend/src/forgeml/modules/datasets/application/services.py:263",
+        "backend/src/forgeml/modules/datasets/application/services.py:275"
       ],
       "module": "datasets"
     },
@@ -365,8 +365,8 @@
       "code": "model_versions:create",
       "description": "Register model versions and promote training artifacts.",
       "enforced_at": [
-        "backend/src/forgeml/modules/model_registry/application/services.py:140",
-        "backend/src/forgeml/modules/model_registry/application/services.py:167"
+        "backend/src/forgeml/modules/model_registry/application/services.py:151",
+        "backend/src/forgeml/modules/model_registry/application/services.py:178"
       ],
       "module": "model_registry"
     },
@@ -375,7 +375,7 @@
       "code": "model_versions:request_approval",
       "description": "Request model-version approval.",
       "enforced_at": [
-        "backend/src/forgeml/modules/model_registry/application/services.py:240"
+        "backend/src/forgeml/modules/model_registry/application/services.py:278"
       ],
       "module": "model_registry"
     },
@@ -384,7 +384,7 @@
       "code": "model_versions:review",
       "description": "Approve or reject model versions.",
       "enforced_at": [
-        "backend/src/forgeml/modules/model_registry/application/services.py:282"
+        "backend/src/forgeml/modules/model_registry/application/services.py:320"
       ],
       "module": "model_registry"
     },
@@ -393,7 +393,7 @@
       "code": "models:create",
       "description": "Create registered models.",
       "enforced_at": [
-        "backend/src/forgeml/modules/model_registry/application/services.py:98"
+        "backend/src/forgeml/modules/model_registry/application/services.py:109"
       ],
       "module": "model_registry"
     },
@@ -402,12 +402,12 @@
       "code": "models:read",
       "description": "Read model registry records.",
       "enforced_at": [
-        "backend/src/forgeml/modules/model_registry/application/services.py:128",
-        "backend/src/forgeml/modules/model_registry/application/services.py:132",
-        "backend/src/forgeml/modules/model_registry/application/services.py:227",
-        "backend/src/forgeml/modules/model_registry/application/services.py:232",
-        "backend/src/forgeml/modules/model_registry/application/services.py:331",
-        "backend/src/forgeml/modules/model_registry/application/services.py:340"
+        "backend/src/forgeml/modules/model_registry/application/services.py:139",
+        "backend/src/forgeml/modules/model_registry/application/services.py:143",
+        "backend/src/forgeml/modules/model_registry/application/services.py:265",
+        "backend/src/forgeml/modules/model_registry/application/services.py:270",
+        "backend/src/forgeml/modules/model_registry/application/services.py:369",
+        "backend/src/forgeml/modules/model_registry/application/services.py:378"
       ],
       "module": "model_registry"
     },

@@ -49,6 +49,12 @@
       "required": true
     },
     {
+      "kind": "artifact_contract",
+      "name": "artifact_manifest_contract",
+      "path": "contracts/artifacts/artifact-manifest.v1.json",
+      "required": true
+    },
+    {
       "kind": "operations_contract",
       "name": "release_smoke_contract",
       "path": "contracts/ops/release-smoke.v1.json",
@@ -151,6 +157,7 @@
     "backend_lint",
     "backend_tests",
     "example_training_smoke",
+    "artifact_manifest_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",
@@ -185,7 +192,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 13,
-    "required_artifact_count": 17
+    "quality_gate_count": 14,
+    "required_artifact_count": 18
   }
 }

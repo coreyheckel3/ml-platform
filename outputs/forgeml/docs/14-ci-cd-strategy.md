@@ -34,6 +34,7 @@ Required checks:
 | Request logging contract | Structured HTTP log event fields and redaction policy |
 | Release smoke contract | Required live API smoke stages, read-only posture, and operator command |
 | Release manifest contract | Required artifact hashes, image targets, evidence types, and quality gates |
+| Artifact manifest contract | Dataset/model artifact manifest shape, storage boundary, checksums, and lineage producers |
 | Release evidence workflow | Manifest generation and artifact upload after required release gates |
 | Release manifest verifier | Artifact integrity, Dockerfile integrity, quality gates, and CI evidence linkage |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
@@ -45,10 +46,11 @@ After merge:
 1. Build versioned Docker images.
 2. Push images to ECR.
 3. Generate OpenAPI contract artifact.
-4. Run database migration dry-run against staging clone where available.
-5. Deploy to staging.
-6. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
-7. Build, verify, and publish the release manifest artifact with contract hashes, image targets, CI evidence, and smoke evidence.
+4. Validate artifact manifest storage contract.
+5. Run database migration dry-run against staging clone where available.
+6. Deploy to staging.
+7. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
+8. Build, verify, and publish the release manifest artifact with contract hashes, image targets, CI evidence, and smoke evidence.
 
 ## Production Deployment Workflow
 

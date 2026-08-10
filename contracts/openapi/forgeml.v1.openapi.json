@@ -1070,6 +1070,14 @@
       },
       "DatasetVersionResponse": {
         "properties": {
+          "artifact_manifest_hash": {
+            "title": "Artifact Manifest Hash",
+            "type": "string"
+          },
+          "artifact_manifest_uri": {
+            "title": "Artifact Manifest Uri",
+            "type": "string"
+          },
           "content_hash": {
             "title": "Content Hash",
             "type": "string"
@@ -1113,6 +1121,8 @@
           "version",
           "object_uri",
           "content_hash",
+          "artifact_manifest_uri",
+          "artifact_manifest_hash",
           "row_count",
           "size_bytes",
           "status",
@@ -3161,6 +3171,14 @@
       },
       "ModelVersionResponse": {
         "properties": {
+          "artifact_manifest_hash": {
+            "title": "Artifact Manifest Hash",
+            "type": "string"
+          },
+          "artifact_manifest_uri": {
+            "title": "Artifact Manifest Uri",
+            "type": "string"
+          },
           "artifact_uri": {
             "title": "Artifact Uri",
             "type": "string"
@@ -3217,6 +3235,8 @@
           "training_run_id",
           "experiment_run_id",
           "artifact_uri",
+          "artifact_manifest_uri",
+          "artifact_manifest_hash",
           "model_format",
           "signature",
           "metrics",

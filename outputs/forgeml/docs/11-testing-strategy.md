@@ -179,6 +179,16 @@ after it is created:
 - Verify schema version, release metadata, source revision metadata, artifact hashes, Dockerfile hashes, quality gates, and CI evidence linkage.
 - Fail when an artifact hash is tampered with.
 - Fail when required quality gates are missing from the manifest.
+
+## Artifact Manifest Tests
+
+Artifact manifest tests protect object-store metadata and lineage:
+
+- Validate deterministic dataset and model artifact manifest serialization.
+- Verify manifest payload SHA-256 checksums after storage writes.
+- Reject tampered payloads through checksum validation.
+- Round-trip `artifact_manifest_uri` and `artifact_manifest_hash` through dataset and model repositories.
+- Keep the artifact manifest contract checked in backend CI, release provenance, and production-readiness.
 - Optionally require Docker image digests for promotion workflows that publish immutable images.
 - Keep verifier behavior captured in a checked operations contract.
 

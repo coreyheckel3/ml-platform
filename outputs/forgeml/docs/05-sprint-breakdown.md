@@ -1654,7 +1654,7 @@ sequence.
 | 49 | CI Release Evidence Publication | Completed | Main-branch release-evidence job, manifest artifact upload, workflow contract, CI gate, and production-readiness validation. |
 | 50 | Release Manifest Verification | Completed | Manifest verifier CLI, verification contract, CI verification before upload, artifact and Dockerfile hash checks, quality gate coverage, and CI evidence linkage. |
 | 51 | Background Worker / Job Queue Hardening | Completed | Real queued job lifecycle, retry policy, dead-letter handling, worker heartbeat, job lease timeout, and worker observability. |
-| 52 | Artifact Storage Abstraction | Next | MinIO/S3-backed artifacts, model artifact manifests, dataset artifact manifests, checksum validation, artifact lineage, and storage contract tests. |
+| 52 | Artifact Storage Abstraction | Completed | S3-compatible manifest storage boundary, dataset and model artifact manifests, checksum validation, lineage, contracts, and CI wiring. |
 | 53 | MLflow Integration Layer | Planned | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, and adapter contract tests. |
 | 54 | Airflow Orchestration Adapter | Planned | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, retry mapping, and orchestration contract tests. |
 | 55 | Deployment Runtime Hardening | Planned | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |

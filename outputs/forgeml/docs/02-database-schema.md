@@ -43,7 +43,7 @@ PostgreSQL is the system of record for ForgeML metadata, workflow state, authori
 | Table | Purpose | Key Columns |
 | --- | --- | --- |
 | `datasets` | Logical dataset | `id`, `organization_id`, `project_id`, `name`, `description`, `source_type`, `status` |
-| `dataset_versions` | Immutable dataset version | `id`, `dataset_id`, `version`, `object_uri`, `content_hash`, `row_count`, `size_bytes`, `created_by` |
+| `dataset_versions` | Immutable dataset version | `id`, `dataset_id`, `version`, `object_uri`, `content_hash`, `artifact_manifest_uri`, `artifact_manifest_hash`, `row_count`, `size_bytes`, `created_by` |
 | `dataset_schemas` | Versioned schema | `id`, `dataset_version_id`, `schema_json`, `inferred`, `schema_hash` |
 | `dataset_validation_runs` | Validation execution | `id`, `dataset_version_id`, `status`, `started_at`, `finished_at`, `report_uri`, `error_message` |
 | `dataset_profiles` | Profile summaries | `id`, `dataset_version_id`, `profile_uri`, `summary_json` |
@@ -77,7 +77,7 @@ PostgreSQL is the system of record for ForgeML metadata, workflow state, authori
 | Table | Purpose | Key Columns |
 | --- | --- | --- |
 | `registered_models` | Logical model package | `id`, `organization_id`, `project_id`, `name`, `description`, `model_type`, `status` |
-| `model_versions` | Immutable model version | `id`, `registered_model_id`, `version`, `run_id`, `artifact_uri`, `signature_json`, `metrics_json`, `status` |
+| `model_versions` | Immutable model version | `id`, `registered_model_id`, `version`, `run_id`, `artifact_uri`, `artifact_manifest_uri`, `artifact_manifest_hash`, `signature_json`, `metrics_json`, `status` |
 | `model_approvals` | Approval workflow | `id`, `model_version_id`, `requested_by`, `reviewed_by`, `status`, `reason`, `reviewed_at` |
 | `model_lineage` | Model dependency graph | `id`, `model_version_id`, `upstream_type`, `upstream_id`, `created_at` |
 

@@ -65,6 +65,8 @@ class DatasetVersion:
     size_bytes: int
     status: DatasetVersionStatus
     created_by: UUID
+    artifact_manifest_uri: str = ""
+    artifact_manifest_hash: str = ""
 
 
 @dataclass(frozen=True)
@@ -74,4 +76,3 @@ class DatasetValidationRun:
     status: DatasetValidationStatus
     report: dict[str, object]
     error_message: str | None
-

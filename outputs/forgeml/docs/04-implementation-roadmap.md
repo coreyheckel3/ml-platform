@@ -203,8 +203,8 @@ the remaining product/runtime platform roadmap.
 | 49 | CI Release Evidence Publication | Publish release manifests from successful main-branch CI runs. |
 | 50 | Release Manifest Verification | Verify release manifests before artifact publication and promotion. |
 | 51 | Background Worker / Job Queue Hardening | Completed: hardened queued jobs with retries, leases, dead-letter handling, heartbeats, and metrics. |
-| 52 | Artifact Storage Abstraction | Next: move datasets and models behind S3-compatible artifact storage contracts and checksum validation. |
-| 53 | MLflow Integration Layer | Sync ForgeML experiments, runs, metrics, parameters, and artifacts to MLflow through adapters. |
+| 52 | Artifact Storage Abstraction | Completed: dataset and model versions now persist S3-compatible artifact manifest URIs, manifest hashes, checksum metadata, lineage, storage contracts, and CI gates. |
+| 53 | MLflow Integration Layer | Next: sync ForgeML experiments, runs, metrics, parameters, and artifacts to MLflow through adapters. |
 | 54 | Airflow Orchestration Adapter | Trigger and poll training pipeline DAGs while preserving a local fallback path. |
 | 55 | Deployment Runtime Hardening | Strengthen serving adapters, revision resolution, canary simulation, rollback, and health probes. |
 | 56 | Monitoring Dashboards v2 | Expand dashboards across inference errors, latency, drift, training failures, and retraining activity. |

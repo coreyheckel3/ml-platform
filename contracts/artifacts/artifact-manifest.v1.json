@@ -1,0 +1,75 @@
+{
+  "checksum_policy": {
+    "algorithm": "sha256",
+    "serialized_format": "sha256:<hex-digest>",
+    "validation_functions": [
+      "validate_artifact_manifest",
+      "validate_payload_checksum"
+    ]
+  },
+  "generated_from": [
+    "forgeml.platform.artifacts.manifest",
+    "forgeml.platform.artifacts.storage",
+    "forgeml.modules.datasets.application.services",
+    "forgeml.modules.model_registry.application.services"
+  ],
+  "manifest_schema_version": "forgeml.artifact_manifest.v1",
+  "producers": [
+    {
+      "artifact_set_type": "dataset_version",
+      "manifest_hash_column": "dataset_versions.artifact_manifest_hash",
+      "manifest_uri_column": "dataset_versions.artifact_manifest_uri",
+      "module": "datasets"
+    },
+    {
+      "artifact_set_type": "model_version",
+      "manifest_hash_column": "model_versions.artifact_manifest_hash",
+      "manifest_uri_column": "model_versions.artifact_manifest_uri",
+      "module": "model_registry"
+    }
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_artifact_manifest_contract.py",
+    "backend/tests/unit/platform/test_artifact_manifest.py",
+    "backend/tests/unit/ops/test_artifact_manifest_contract.py"
+  ],
+  "required_artifact_fields": [
+    "name",
+    "artifact_type",
+    "uri",
+    "media_type",
+    "size_bytes",
+    "checksum_sha256",
+    "metadata"
+  ],
+  "required_lineage_fields": [
+    "source_type",
+    "source_id",
+    "relation"
+  ],
+  "required_manifest_fields": [
+    "schema_version",
+    "artifact_set_type",
+    "artifact_set_id",
+    "artifact_root_uri",
+    "producer",
+    "created_at",
+    "artifacts",
+    "lineage",
+    "metadata"
+  ],
+  "schema_version": "forgeml.artifact_manifest_contract.v1",
+  "storage_contract": {
+    "gateway_protocol": "ArtifactStorageGateway",
+    "local_backend": "LocalArtifactStorageGateway",
+    "manifest_writer": "ArtifactManifestStore.put_manifest",
+    "required_methods": [
+      "put_bytes",
+      "get_bytes",
+      "exists"
+    ],
+    "test_backend": "InMemoryArtifactStorageGateway",
+    "uri_scheme": "s3",
+    "writer_protocol": "ArtifactManifestWriter"
+  }
+}

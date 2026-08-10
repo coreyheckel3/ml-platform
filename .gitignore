@@ -23,7 +23,7 @@ frontend/playwright.config.d.ts
 frontend/*.tsbuildinfo
 .playwright/
 coverage/
-artifacts/
+/artifacts/
 backups/
 *.pyc
 *.pyo

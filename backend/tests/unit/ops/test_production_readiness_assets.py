@@ -82,9 +82,9 @@ def test_alembic_migration_contract_gate_is_enforced() -> None:
     assert "python scripts/ci/check_alembic_migration_contract.py" in workflow
     assert contract["schema_version"] == "forgeml.alembic_migrations.v1"
     assert contract["summary"]["base_revision"] == "202607180001"
-    assert contract["summary"]["head_revision"] == "202607190014"
+    assert contract["summary"]["head_revision"] == "202607190015"
     assert contract["summary"]["head_count"] == 1
-    assert len(migrations) >= 13
+    assert len(migrations) >= 14
     assert all(migration["has_upgrade"] and migration["has_downgrade"] for migration in migrations)
 
 
@@ -106,6 +106,22 @@ def test_sqlalchemy_schema_contract_gate_is_enforced() -> None:
         "model_versions",
         "retraining_runs",
     }.issubset(table_names)
+
+
+def test_artifact_manifest_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/artifacts/artifact-manifest.v1.json").read_text(encoding="utf-8")
+    )
+    producer_types = {producer["artifact_set_type"] for producer in contract["producers"]}
+
+    assert "python scripts/ci/check_artifact_manifest_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.artifact_manifest_contract.v1"
+    assert contract["manifest_schema_version"] == "forgeml.artifact_manifest.v1"
+    assert contract["checksum_policy"]["algorithm"] == "sha256"
+    assert contract["storage_contract"]["writer_protocol"] == "ArtifactManifestWriter"
+    assert "checksum_sha256" in contract["required_artifact_fields"]
+    assert {"dataset_version", "model_version"}.issubset(producer_types)
 
 
 def test_problem_details_contract_gate_is_enforced() -> None:
@@ -249,6 +265,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert contract["manifest_schema_version"] == "forgeml.release_manifest.v1"
     assert contract["summary"]["required_artifact_count"] >= 14
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
+    assert "contracts/artifacts/artifact-manifest.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths

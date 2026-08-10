@@ -17,6 +17,8 @@ export type DatasetVersion = {
   version: number;
   object_uri: string;
   content_hash: string;
+  artifact_manifest_uri: string;
+  artifact_manifest_hash: string;
   row_count: number;
   size_bytes: number;
   status: string;

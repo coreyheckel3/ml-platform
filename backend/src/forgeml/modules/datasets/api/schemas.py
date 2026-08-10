@@ -49,6 +49,8 @@ class DatasetVersionResponse(BaseModel):
     version: int
     object_uri: str
     content_hash: str
+    artifact_manifest_uri: str
+    artifact_manifest_hash: str
     row_count: int
     size_bytes: int
     status: str

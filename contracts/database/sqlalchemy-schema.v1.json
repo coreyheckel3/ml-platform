@@ -6,9 +6,9 @@
   ],
   "schema_version": "forgeml.sqlalchemy_schema.v1",
   "summary": {
-    "column_count": 403,
+    "column_count": 407,
     "foreign_key_count": 65,
-    "index_count": 111,
+    "index_count": 113,
     "table_count": 38,
     "unique_constraint_count": 15
   },
@@ -970,6 +970,28 @@
           "has_python_default": true,
           "has_server_default": false,
           "index": false,
+          "name": "artifact_manifest_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": true,
+          "name": "artifact_manifest_hash",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
           "name": "row_count",
           "nullable": false,
           "primary_key": false,
@@ -1036,6 +1058,13 @@
         "dataset_id->datasets.id"
       ],
       "indexes": [
+        {
+          "columns": [
+            "artifact_manifest_hash"
+          ],
+          "name": "ix_dataset_versions_artifact_manifest_hash",
+          "unique": false
+        },
         {
           "columns": [
             "dataset_id"
@@ -4213,6 +4242,28 @@
         },
         {
           "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_manifest_uri",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(2048)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": true,
+          "name": "artifact_manifest_hash",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
           "has_python_default": false,
           "has_server_default": false,
           "index": false,
@@ -4295,6 +4346,13 @@
         "training_run_id->training_runs.id"
       ],
       "indexes": [
+        {
+          "columns": [
+            "artifact_manifest_hash"
+          ],
+          "name": "ix_model_versions_artifact_manifest_hash",
+          "unique": false
+        },
         {
           "columns": [
             "experiment_run_id"

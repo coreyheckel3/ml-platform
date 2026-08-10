@@ -173,6 +173,8 @@ class SqlAlchemyModelRegistryRepository:
             training_run_id=version.training_run_id,
             experiment_run_id=version.experiment_run_id,
             artifact_uri=version.artifact_uri,
+            artifact_manifest_uri=version.artifact_manifest_uri,
+            artifact_manifest_hash=version.artifact_manifest_hash,
             model_format=version.model_format,
             signature_json=version.signature,
             metrics_json=version.metrics,
@@ -202,6 +204,8 @@ class SqlAlchemyModelRegistryRepository:
         record.status = version.status.value
         record.metrics_json = version.metrics
         record.signature_json = version.signature
+        record.artifact_manifest_uri = version.artifact_manifest_uri
+        record.artifact_manifest_hash = version.artifact_manifest_hash
         self._session.flush()
         return _model_version_to_domain(record)
 
@@ -269,6 +273,8 @@ def _model_version_to_domain(record: ModelVersionModel) -> ModelVersion:
         training_run_id=record.training_run_id,
         experiment_run_id=record.experiment_run_id,
         artifact_uri=record.artifact_uri,
+        artifact_manifest_uri=record.artifact_manifest_uri,
+        artifact_manifest_hash=record.artifact_manifest_hash,
         model_format=record.model_format,
         signature=record.signature_json,
         metrics={key: float(value) for key, value in record.metrics_json.items()},

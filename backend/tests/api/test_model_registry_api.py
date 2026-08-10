@@ -105,6 +105,8 @@ class FakeModelRegistryService:
             metrics={"auc": 0.94},
             status=status,
             created_by=self.user_id,
+            artifact_manifest_uri="s3://forgeml-artifacts/models/manifest.json",
+            artifact_manifest_hash="sha256:manifest",
         )
 
     def _approval(
@@ -195,6 +197,7 @@ def test_model_registry_routes_expose_versioning_approval_and_lineage() -> None:
     assert version.json()["metrics"]["auc"] == 0.94
     assert promoted.status_code == 201
     assert promoted.json()["training_run_id"] == str(service.training_run_id)
+    assert promoted.json()["artifact_manifest_hash"] == "sha256:manifest"
     assert approval.status_code == 202
     assert approval.json()["status"] == "requested"
     assert review.status_code == 200

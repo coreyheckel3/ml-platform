@@ -96,7 +96,7 @@ Idempotency-Key: <client-generated-key>
 | `POST` | `/datasets/{dataset_id}/versions` | Create dataset version upload record |
 | `GET` | `/datasets/{dataset_id}/versions` | List dataset versions |
 | `GET` | `/dataset-versions/{version_id}` | Get dataset version |
-| `POST` | `/dataset-versions/{version_id}/finalize` | Finalize object upload and lock the immutable version |
+| `POST` | `/dataset-versions/{version_id}/finalize` | Finalize object upload, write the artifact manifest, and lock the immutable version |
 | `POST` | `/dataset-versions/{version_id}/validate` | Trigger schema validation workflow |
 | `GET` | `/dataset-versions/{version_id}/validation-runs` | List validation runs |
 | `GET` | `/dataset-validation-runs/{run_id}` | Get validation status and report URI |
@@ -174,7 +174,7 @@ Training job request:
 | `GET` | `/projects/{project_id}/models` | List registered models |
 | `GET` | `/models/{model_id}` | Get registered model |
 | `POST` | `/models/{model_id}/versions` | Register model version from a succeeded training run reference |
-| `POST` | `/models/{model_id}/versions/promote-training-run` | Promote a succeeded training run after validating its execution manifest |
+| `POST` | `/models/{model_id}/versions/promote-training-run` | Promote a succeeded training run after validating its execution manifest and writing model artifact metadata |
 | `GET` | `/models/{model_id}/versions` | List model versions |
 | `GET` | `/model-versions/{version_id}` | Get model version |
 | `POST` | `/model-versions/{version_id}/approval-request` | Request approval |

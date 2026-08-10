@@ -23,6 +23,13 @@ from forgeml.modules.datasets.repositories.interfaces import (
     DatasetRepository,
     ObjectStorageGateway,
 )
+from forgeml.platform.artifacts import (
+    ArtifactManifestStore,
+    ArtifactManifestWriter,
+    InMemoryArtifactStorageGateway,
+    build_dataset_artifact_manifest,
+    dataset_artifact_manifest_key,
+)
 from forgeml.platform.domain.errors import (
     ConflictError,
     DomainValidationError,
@@ -80,9 +87,13 @@ class DatasetService:
         *,
         datasets: DatasetRepository,
         object_storage: ObjectStorageGateway,
+        artifact_manifest_store: ArtifactManifestWriter | None = None,
     ) -> None:
         self._datasets = datasets
         self._object_storage = object_storage
+        self._artifact_manifest_store = artifact_manifest_store or ArtifactManifestStore(
+            InMemoryArtifactStorageGateway()
+        )
 
     def create_dataset(self, command: CreateDatasetCommand, principal: Principal) -> Dataset:
         self._require(principal, "datasets:create")
@@ -192,15 +203,47 @@ class DatasetService:
             status=DatasetVersionStatus.VALIDATED,
             created_by=version.created_by,
         )
-        self._datasets.update_version(finalized)
-        self._datasets.save_schema(
-            DatasetSchema(
-                dataset_version_id=version.id,
-                fields=fields,
-                inferred=command.schema_fields is None,
-                schema_hash=schema_hash(fields),
-            )
+        schema = DatasetSchema(
+            dataset_version_id=version.id,
+            fields=fields,
+            inferred=command.schema_fields is None,
+            schema_hash=schema_hash(fields),
         )
+        stored_manifest = self._artifact_manifest_store.put_manifest(
+            key=dataset_artifact_manifest_key(
+                organization_id=_dataset.organization_id,
+                project_id=_dataset.project_id,
+                dataset_id=_dataset.id,
+                dataset_version_id=version.id,
+            ),
+            manifest=build_dataset_artifact_manifest(
+                organization_id=_dataset.organization_id,
+                project_id=_dataset.project_id,
+                dataset_id=_dataset.id,
+                dataset_version_id=version.id,
+                object_uri=finalized.object_uri,
+                content_hash=finalized.content_hash,
+                size_bytes=finalized.size_bytes,
+                row_count=finalized.row_count,
+                schema_hash=schema.schema_hash,
+                created_by=finalized.created_by,
+            ),
+        )
+        finalized_with_manifest = DatasetVersion(
+            id=finalized.id,
+            dataset_id=finalized.dataset_id,
+            version=finalized.version,
+            object_uri=finalized.object_uri,
+            content_hash=finalized.content_hash,
+            row_count=finalized.row_count,
+            size_bytes=finalized.size_bytes,
+            status=finalized.status,
+            created_by=finalized.created_by,
+            artifact_manifest_uri=stored_manifest.uri,
+            artifact_manifest_hash=stored_manifest.checksum_sha256,
+        )
+        self._datasets.update_version(finalized_with_manifest)
+        self._datasets.save_schema(schema)
         self._datasets.add_validation_run(
             DatasetValidationRun(
                 id=uuid4(),
@@ -214,7 +257,7 @@ class DatasetService:
                 error_message=None,
             )
         )
-        return finalized
+        return finalized_with_manifest
 
     def get_schema(self, version_id: UUID, principal: Principal) -> DatasetSchema:
         self._require(principal, "datasets:read")
@@ -299,4 +342,3 @@ class DatasetService:
     def _require_same_organization(self, organization_id: UUID, principal: Principal) -> None:
         if str(organization_id) != principal.organization_id:
             raise PermissionDeniedError("You cannot manage datasets in another organization.")
-

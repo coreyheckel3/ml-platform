@@ -66,6 +66,13 @@ class ModelVersionModel(Base):
         index=True,
     )
     artifact_uri: Mapped[str] = mapped_column(String(2048), nullable=False)
+    artifact_manifest_uri: Mapped[str] = mapped_column(String(2048), nullable=False, default="")
+    artifact_manifest_hash: Mapped[str] = mapped_column(
+        String(128),
+        nullable=False,
+        default="",
+        index=True,
+    )
     model_format: Mapped[str] = mapped_column(String(64), nullable=False)
     signature_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
     metrics_json: Mapped[dict[str, float]] = mapped_column(JSON, nullable=False, default=dict)

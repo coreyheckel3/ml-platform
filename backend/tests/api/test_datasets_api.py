@@ -108,6 +108,14 @@ class FakeDatasetService:
             size_bytes=128 if status == DatasetVersionStatus.VALIDATED else 0,
             status=status,
             created_by=self.user_id,
+            artifact_manifest_uri=(
+                "s3://forgeml-artifacts/datasets/manifest.json"
+                if status == DatasetVersionStatus.VALIDATED
+                else ""
+            ),
+            artifact_manifest_hash=(
+                "sha256:manifest" if status == DatasetVersionStatus.VALIDATED else ""
+            ),
         )
 
     def _validation_run(self) -> DatasetValidationRun:
@@ -171,8 +179,8 @@ def test_dataset_routes_expose_registry_lifecycle() -> None:
     assert upload.json()["upload"]["object_uri"] == "s3://forgeml/transactions.csv"
     assert finalized.status_code == 200
     assert finalized.json()["status"] == "validated"
+    assert finalized.json()["artifact_manifest_uri"].startswith("s3://forgeml-artifacts/")
     assert schema.status_code == 200
     assert schema.json()["fields"][0]["name"] == "amount"
     assert validation.status_code == 202
     assert validation.json()["status"] == "completed"
-

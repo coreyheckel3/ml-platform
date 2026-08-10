@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, GitBranchPlus, Send, X } from "lucide-react";
+import { Check, GitBranchPlus, Hash, Send, X } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { listTrainingRuns, type TrainingRun } from "../../training_runs/api/trainingRuns";
@@ -357,7 +357,7 @@ export function ModelsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[780px] text-left text-sm">
+              <table className="w-full min-w-[920px] text-left text-sm">
                 <thead className="text-xs uppercase text-steel">
                   <tr>
                     <th className="py-2">Version</th>
@@ -365,6 +365,7 @@ export function ModelsPage() {
                     <th>Status</th>
                     <th>Metric</th>
                     <th>Artifact</th>
+                    <th>Manifest</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -385,6 +386,12 @@ export function ModelsPage() {
                       </td>
                       <td>{firstMetric(version.metrics)}</td>
                       <td className="max-w-[240px] truncate">{version.artifact_uri}</td>
+                      <td className="max-w-[180px] truncate">
+                        <span className="inline-flex items-center gap-1 text-xs text-steel">
+                          <Hash className="h-3.5 w-3.5" />
+                          {version.artifact_manifest_hash || "pending"}
+                        </span>
+                      </td>
                       <td>{versionAction(version)}</td>
                     </tr>
                   ))}

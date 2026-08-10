@@ -48,6 +48,8 @@ class ModelVersion:
     metrics: dict[str, float]
     status: ModelVersionStatus
     created_by: UUID
+    artifact_manifest_uri: str = ""
+    artifact_manifest_hash: str = ""
 
 
 @dataclass(frozen=True)

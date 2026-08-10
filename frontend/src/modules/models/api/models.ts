@@ -19,6 +19,8 @@ export type ModelVersion = {
   training_run_id: string;
   experiment_run_id: string;
   artifact_uri: string;
+  artifact_manifest_uri: string;
+  artifact_manifest_hash: string;
   model_format: string;
   signature: Record<string, unknown>;
   metrics: Record<string, number>;

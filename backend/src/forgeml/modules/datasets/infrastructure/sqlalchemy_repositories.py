@@ -81,6 +81,8 @@ class SqlAlchemyDatasetRepository:
             version=version.version,
             object_uri=version.object_uri,
             content_hash=version.content_hash,
+            artifact_manifest_uri=version.artifact_manifest_uri,
+            artifact_manifest_hash=version.artifact_manifest_hash,
             row_count=version.row_count,
             size_bytes=version.size_bytes,
             status=version.status.value,
@@ -108,6 +110,8 @@ class SqlAlchemyDatasetRepository:
             raise ValueError("Dataset version does not exist.")
         model.object_uri = version.object_uri
         model.content_hash = version.content_hash
+        model.artifact_manifest_uri = version.artifact_manifest_uri
+        model.artifact_manifest_hash = version.artifact_manifest_hash
         model.row_count = version.row_count
         model.size_bytes = version.size_bytes
         model.status = version.status.value
@@ -173,6 +177,8 @@ def _version_to_domain(model: DatasetVersionModel) -> DatasetVersion:
         version=model.version,
         object_uri=model.object_uri,
         content_hash=model.content_hash,
+        artifact_manifest_uri=model.artifact_manifest_uri,
+        artifact_manifest_hash=model.artifact_manifest_hash,
         row_count=model.row_count,
         size_bytes=model.size_bytes,
         status=DatasetVersionStatus(model.status),
@@ -204,4 +210,3 @@ def _validation_run_to_domain(model: DatasetValidationRunModel) -> DatasetValida
         report=model.report_json,
         error_message=model.error_message,
     )
-

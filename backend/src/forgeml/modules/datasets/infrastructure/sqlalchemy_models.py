@@ -49,6 +49,13 @@ class DatasetVersionModel(Base):
     version: Mapped[int] = mapped_column(Integer, nullable=False)
     object_uri: Mapped[str] = mapped_column(String(2048), nullable=False)
     content_hash: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    artifact_manifest_uri: Mapped[str] = mapped_column(String(2048), nullable=False, default="")
+    artifact_manifest_hash: Mapped[str] = mapped_column(
+        String(128),
+        nullable=False,
+        default="",
+        index=True,
+    )
     row_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -102,4 +109,3 @@ class DatasetValidationRunModel(Base):
         server_default=func.now(),
         nullable=False,
     )
-

@@ -37,6 +37,7 @@ from forgeml.modules.datasets.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyDatasetRepository,
 )
 from forgeml.platform.api.dependencies import get_current_principal, get_db_session
+from forgeml.platform.artifacts import ArtifactManifestStore, LocalArtifactStorageGateway
 from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.security.rbac import Principal
 
@@ -53,6 +54,12 @@ def get_dataset_service(
             endpoint=settings.object_storage_endpoint,
             bucket=settings.object_storage_bucket,
             signing_secret=settings.jwt_secret,
+        ),
+        artifact_manifest_store=ArtifactManifestStore(
+            LocalArtifactStorageGateway(
+                root=settings.artifact_manifest_local_root,
+                bucket=settings.object_storage_bucket,
+            )
         ),
     )
 
@@ -248,6 +255,8 @@ def _version_response(version: DatasetVersion) -> DatasetVersionResponse:
         version=version.version,
         object_uri=version.object_uri,
         content_hash=version.content_hash,
+        artifact_manifest_uri=version.artifact_manifest_uri,
+        artifact_manifest_hash=version.artifact_manifest_hash,
         row_count=version.row_count,
         size_bytes=version.size_bytes,
         status=version.status.value,

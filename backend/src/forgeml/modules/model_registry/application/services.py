@@ -28,6 +28,13 @@ from forgeml.modules.model_registry.domain.policies import (
     validate_training_run_reference,
 )
 from forgeml.modules.model_registry.repositories.interfaces import ModelRegistryRepository
+from forgeml.platform.artifacts import (
+    ArtifactManifestStore,
+    ArtifactManifestWriter,
+    InMemoryArtifactStorageGateway,
+    build_model_artifact_manifest,
+    model_artifact_manifest_key,
+)
 from forgeml.platform.domain.errors import (
     ConflictError,
     PermissionDeniedError,
@@ -86,9 +93,13 @@ class ModelRegistryService:
         *,
         repository: ModelRegistryRepository,
         audit_log: AuditEventRecorder | None = None,
+        artifact_manifest_store: ArtifactManifestWriter | None = None,
     ) -> None:
         self._repository = repository
         self._audit_log = audit_log
+        self._artifact_manifest_store = artifact_manifest_store or ArtifactManifestStore(
+            InMemoryArtifactStorageGateway()
+        )
 
     def create_registered_model(
         self,
@@ -202,8 +213,33 @@ class ModelRegistryService:
         created_by: UUID,
     ) -> ModelVersion:
         version_number = self._repository.latest_model_version_number(model.id) + 1
+        version_id = uuid4()
+        stored_manifest = self._artifact_manifest_store.put_manifest(
+            key=model_artifact_manifest_key(
+                organization_id=model.organization_id,
+                project_id=model.project_id,
+                registered_model_id=model.id,
+                model_version_id=version_id,
+            ),
+            manifest=build_model_artifact_manifest(
+                organization_id=model.organization_id,
+                project_id=model.project_id,
+                registered_model_id=model.id,
+                model_version_id=version_id,
+                training_run_id=training_run.id,
+                experiment_run_id=training_run.experiment_run_id,
+                dataset_version_id=training_run.dataset_version_id,
+                feature_set_id=training_run.feature_set_id,
+                artifact_uri=artifact_uri,
+                model_format=model_format,
+                signature=signature,
+                metrics=training_run.metrics,
+                created_by=created_by,
+                training_execution=_training_execution_metadata(training_run),
+            ),
+        )
         version = ModelVersion(
-            id=uuid4(),
+            id=version_id,
             registered_model_id=model.id,
             version=version_number,
             training_run_id=training_run.id,
@@ -214,6 +250,8 @@ class ModelRegistryService:
             metrics=training_run.metrics,
             status=ModelVersionStatus.CANDIDATE,
             created_by=created_by,
+            artifact_manifest_uri=stored_manifest.uri,
+            artifact_manifest_hash=stored_manifest.checksum_sha256,
         )
         saved = self._repository.add_model_version(version)
         self._record_training_lineage(saved, training_run)
@@ -384,3 +422,12 @@ class ModelRegistryService:
     def _require_same_organization(self, organization_id: UUID, principal: Principal) -> None:
         if str(organization_id) != principal.organization_id:
             raise PermissionDeniedError("You cannot manage models in another organization.")
+
+
+def _training_execution_metadata(
+    training_run: TrainingRunReference | TrainingRunPromotionCandidate,
+) -> dict[str, object] | None:
+    if not isinstance(training_run, TrainingRunPromotionCandidate):
+        return None
+    manifest = training_run.evaluation_report.get("training_execution")
+    return manifest if isinstance(manifest, dict) else None

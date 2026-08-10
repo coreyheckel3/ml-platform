@@ -12,6 +12,7 @@ from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunStatus,
 )
+from forgeml.platform.artifacts import sha256_uri
 
 EXAMPLE_PROJECT_SLUG_PARAMETER = "forgeml.example_project_slug"
 
@@ -107,6 +108,8 @@ def _artifacts_from_summary(
             metadata={
                 "local_path": str(Path(path).resolve()),
                 "control_plane_uri": f"{control_plane_artifact_uri}/{name}.json",
+                "size_bytes": Path(path).resolve().stat().st_size,
+                "sha256": sha256_uri(Path(path).resolve().read_bytes()),
             },
         )
         for name, path in summary["artifact_paths"].items()

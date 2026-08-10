@@ -207,6 +207,8 @@ def test_model_registry_repository_round_trips_versions_approvals_and_lineage() 
                 training_run_id=training_run_id,
                 experiment_run_id=experiment_run_id,
                 artifact_uri="s3://forgeml/training-runs/run-1",
+                artifact_manifest_uri="s3://forgeml-artifacts/models/manifest.json",
+                artifact_manifest_hash="sha256:manifest",
                 model_format="xgboost-booster",
                 signature={"inputs": [{"name": "amount"}], "outputs": [{"name": "risk_score"}]},
                 metrics={"auc": 0.94},
@@ -222,6 +224,8 @@ def test_model_registry_repository_round_trips_versions_approvals_and_lineage() 
                 training_run_id=training_run_id,
                 experiment_run_id=experiment_run_id,
                 artifact_uri=version.artifact_uri,
+                artifact_manifest_uri=version.artifact_manifest_uri,
+                artifact_manifest_hash=version.artifact_manifest_hash,
                 model_format=version.model_format,
                 signature=version.signature,
                 metrics=version.metrics,
@@ -264,6 +268,7 @@ def test_model_registry_repository_round_trips_versions_approvals_and_lineage() 
     assert models[0].slug == "fraud-risk-xgb"
     assert versions[0].status == ModelVersionStatus.APPROVED
     assert versions[0].metrics["auc"] == 0.94
+    assert versions[0].artifact_manifest_hash == "sha256:manifest"
     assert reference is not None
     assert reference.status == "succeeded"
     assert candidate is not None

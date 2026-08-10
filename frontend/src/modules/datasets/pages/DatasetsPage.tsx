@@ -479,7 +479,7 @@ export function DatasetsPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[920px] text-left text-sm">
+              <table className="w-full min-w-[1040px] text-left text-sm">
                 <thead className="text-xs uppercase text-steel">
                   <tr>
                     <th className="py-2">Version</th>
@@ -487,6 +487,7 @@ export function DatasetsPage() {
                     <th>Rows</th>
                     <th>Size</th>
                     <th>Hash</th>
+                    <th>Manifest</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -951,6 +952,7 @@ function VersionRow({
       <td>{formatInteger(version.row_count)}</td>
       <td>{formatBytes(version.size_bytes)}</td>
       <td className="max-w-[160px] truncate">{version.content_hash || "pending"}</td>
+      <td className="max-w-[180px] truncate">{version.artifact_manifest_hash || "pending"}</td>
       <td>
         <button
           type="button"
@@ -1016,7 +1018,7 @@ function VersionDetail({ version }: { version: DatasetVersion }) {
         </div>
         <span className={statusClassName(version.status)}>{version.status}</span>
       </div>
-      <div className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-3">
+      <div className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-4">
         <SignalTile
           icon={<Database className="h-4 w-4" />}
           label="Rows"
@@ -1034,6 +1036,12 @@ function VersionDetail({ version }: { version: DatasetVersion }) {
           label="Hash"
           value={version.content_hash || "pending"}
           detail={version.id.slice(0, 8)}
+        />
+        <SignalTile
+          icon={<FileCheck className="h-4 w-4" />}
+          label="Manifest"
+          value={version.artifact_manifest_hash || "pending"}
+          detail={version.artifact_manifest_uri || "not written"}
         />
       </div>
     </div>
