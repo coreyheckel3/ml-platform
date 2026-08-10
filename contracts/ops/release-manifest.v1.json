@@ -55,6 +55,12 @@
       "required": true
     },
     {
+      "kind": "integration_contract",
+      "name": "mlflow_tracking_contract",
+      "path": "contracts/mlflow/mlflow-tracking.v1.json",
+      "required": true
+    },
+    {
       "kind": "operations_contract",
       "name": "release_smoke_contract",
       "path": "contracts/ops/release-smoke.v1.json",
@@ -158,6 +164,7 @@
     "backend_tests",
     "example_training_smoke",
     "artifact_manifest_contract",
+    "mlflow_tracking_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",
@@ -192,7 +199,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 14,
-    "required_artifact_count": 18
+    "quality_gate_count": 15,
+    "required_artifact_count": 19
   }
 }

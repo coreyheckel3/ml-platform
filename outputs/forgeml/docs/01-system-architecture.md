@@ -134,8 +134,13 @@ MLflow should be integrated behind ForgeML-owned ports:
 - `ExperimentTracker`
 - `RunArtifactStore`
 - `ModelRegistryGateway`
+- `MLflowTrackingGateway`
 
-This allows ForgeML to use MLflow's maturity while preserving the option to replace or augment it later.
+The current modular-monolith implementation uses `MLflowTrackingGateway` for
+terminal training-run sync. ForgeML records remain the system of record; MLflow
+receives run parameters, metrics, lineage tags, and artifact references through
+a best-effort adapter. This allows ForgeML to use MLflow's maturity while
+preserving the option to replace or augment it later.
 
 ## Data and Artifact Storage
 

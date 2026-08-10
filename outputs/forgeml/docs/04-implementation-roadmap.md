@@ -204,8 +204,8 @@ the remaining product/runtime platform roadmap.
 | 50 | Release Manifest Verification | Verify release manifests before artifact publication and promotion. |
 | 51 | Background Worker / Job Queue Hardening | Completed: hardened queued jobs with retries, leases, dead-letter handling, heartbeats, and metrics. |
 | 52 | Artifact Storage Abstraction | Completed: dataset and model versions now persist S3-compatible artifact manifest URIs, manifest hashes, checksum metadata, lineage, storage contracts, and CI gates. |
-| 53 | MLflow Integration Layer | Next: sync ForgeML experiments, runs, metrics, parameters, and artifacts to MLflow through adapters. |
-| 54 | Airflow Orchestration Adapter | Trigger and poll training pipeline DAGs while preserving a local fallback path. |
+| 53 | MLflow Integration Layer | Completed: training runs now sync metrics, parameters, lineage tags, artifact references, and sync status reports through a configurable MLflow adapter boundary. |
+| 54 | Airflow Orchestration Adapter | Next: trigger and poll training pipeline DAGs while preserving a local fallback path. |
 | 55 | Deployment Runtime Hardening | Strengthen serving adapters, revision resolution, canary simulation, rollback, and health probes. |
 | 56 | Monitoring Dashboards v2 | Expand dashboards across inference errors, latency, drift, training failures, and retraining activity. |
 | 57 | Security and Multi-Tenant Hardening | Deepen organization isolation, RBAC, rate limiting, audit coverage, and secrets/config guidance. |

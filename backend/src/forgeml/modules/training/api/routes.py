@@ -36,6 +36,7 @@ from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
 )
 from forgeml.platform.api.dependencies import get_current_principal, get_db_session
 from forgeml.platform.config import Settings, get_settings
+from forgeml.platform.mlflow import build_mlflow_tracking_gateway
 from forgeml.platform.security.rbac import Principal
 
 router = APIRouter(tags=["training-runs"])
@@ -58,6 +59,12 @@ def get_training_run_service(
             max_backoff_seconds=settings.training_worker_max_retry_backoff_seconds,
             lease_seconds=settings.training_worker_lease_seconds,
         ),
+        mlflow_tracking=build_mlflow_tracking_gateway(
+            enabled=settings.mlflow_sync_enabled,
+            tracking_uri=settings.mlflow_tracking_uri,
+            timeout_seconds=settings.mlflow_http_timeout_seconds,
+        ),
+        mlflow_experiment_prefix=settings.mlflow_experiment_prefix,
     )
 
 

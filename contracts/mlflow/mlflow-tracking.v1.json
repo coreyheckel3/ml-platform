@@ -1,0 +1,92 @@
+{
+  "artifact_logging_policy": {
+    "mode": "artifact_reference_tags",
+    "required_tag_patterns": [
+      "forgeml.artifact.count",
+      "forgeml.artifact.<name>.uri",
+      "forgeml.artifact.<name>.type",
+      "forgeml.artifact.<name>.media_type"
+    ]
+  },
+  "configuration": [
+    "FORGEML_MLFLOW_TRACKING_URI",
+    "FORGEML_MLFLOW_SYNC_ENABLED",
+    "FORGEML_MLFLOW_EXPERIMENT_PREFIX",
+    "FORGEML_MLFLOW_HTTP_TIMEOUT_SECONDS"
+  ],
+  "failure_semantics": {
+    "failed_sync_effect": "training_terminal_status_is_preserved",
+    "observability": [
+      "forgeml_mlflow_tracking_sync_total",
+      "training.mlflow logs",
+      "mlflow_sync events",
+      "evaluation_report.mlflow_sync"
+    ],
+    "training_lifecycle": "best_effort_tracking_sync"
+  },
+  "generated_from": [
+    "forgeml.platform.mlflow.tracking",
+    "forgeml.modules.training.application.services",
+    "forgeml.modules.training.api.routes",
+    "scripts.workers.run_training_worker"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_mlflow_tracking_contract.py",
+    "backend/tests/unit/platform/test_mlflow_tracking.py",
+    "backend/tests/unit/training/test_training_service.py",
+    "backend/tests/unit/ops/test_mlflow_tracking_contract.py"
+  ],
+  "required_record_fields": [
+    "experiment_name",
+    "run_name",
+    "organization_id",
+    "project_id",
+    "experiment_id",
+    "experiment_run_id",
+    "training_run_id",
+    "status",
+    "artifact_uri",
+    "parameters",
+    "metrics",
+    "tags",
+    "artifacts"
+  ],
+  "required_sync_result_fields": [
+    "schema_version",
+    "tracking_uri",
+    "experiment_name",
+    "run_id",
+    "status",
+    "logged_param_count",
+    "logged_metric_count",
+    "logged_artifact_count",
+    "error_message",
+    "created_at"
+  ],
+  "required_tags": [
+    "forgeml.organization_id",
+    "forgeml.project_id",
+    "forgeml.experiment_id",
+    "forgeml.experiment_run_id",
+    "forgeml.training_run_id",
+    "forgeml.status",
+    "forgeml.artifact_uri"
+  ],
+  "rest_endpoints": [
+    "/api/2.0/mlflow/experiments/get-by-name",
+    "/api/2.0/mlflow/experiments/create",
+    "/api/2.0/mlflow/runs/create",
+    "/api/2.0/mlflow/runs/log-batch",
+    "/api/2.0/mlflow/runs/update"
+  ],
+  "schema_version": "forgeml.mlflow_tracking_contract.v1",
+  "sync_schema_version": "forgeml.mlflow_tracking_sync.v1",
+  "tracking_boundary": {
+    "disabled_adapter": "DisabledMLflowTrackingGateway",
+    "factory": "build_mlflow_tracking_gateway",
+    "gateway_protocol": "MLflowTrackingGateway",
+    "http_adapter": "MLflowHttpTrackingGateway",
+    "local_test_adapter": "InMemoryMLflowTrackingGateway",
+    "runtime_dependency_policy": "stdlib-http-adapter"
+  }
+}

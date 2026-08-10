@@ -30,7 +30,15 @@ from forgeml.platform.domain.errors import (
     PermissionDeniedError,
     ResourceNotFoundError,
 )
+from forgeml.platform.mlflow import (
+    MLflowSyncResult,
+    MLflowTrackingGateway,
+    build_training_run_mlflow_record,
+    failed_mlflow_sync_result,
+    mlflow_sync_result_payload,
+)
 from forgeml.platform.observability.metrics import (
+    mlflow_tracking_sync_total,
     training_worker_claims_total,
     training_worker_expired_leases_total,
     training_worker_heartbeats_total,
@@ -129,6 +137,8 @@ class TrainingRunService:
         runner: TrainingJobRunner | None = None,
         audit_log: AuditEventRecorder | None = None,
         retry_policy: TrainingRetryPolicy | None = None,
+        mlflow_tracking: MLflowTrackingGateway | None = None,
+        mlflow_experiment_prefix: str = "forgeml",
     ) -> None:
         self._training_runs = training_runs
         self._experiment_runs = experiment_runs
@@ -137,6 +147,8 @@ class TrainingRunService:
         self._runner = runner
         self._audit_log = audit_log
         self._retry_policy = retry_policy or TrainingRetryPolicy()
+        self._mlflow_tracking = mlflow_tracking
+        self._mlflow_experiment_prefix = mlflow_experiment_prefix
         _validate_retry_policy(self._retry_policy)
 
     def start_training_run(
@@ -837,13 +849,27 @@ class TrainingRunService:
             next_retry_at=None,
         )
         saved = self._training_runs.update_training_run(updated)
-        self._experiment_runs.update_experiment_run(
+        experiment_run = self._experiment_runs.update_experiment_run(
             saved.experiment_run_id,
             _to_experiment_status(status),
             saved.metrics,
             evaluation_report,
             error_message,
         )
+        synced_evaluation_report = self._sync_mlflow_tracking(
+            training_run=saved,
+            experiment_run=experiment_run,
+            status=status,
+            evaluation_report=evaluation_report,
+        )
+        if synced_evaluation_report != evaluation_report:
+            self._experiment_runs.update_experiment_run(
+                saved.experiment_run_id,
+                _to_experiment_status(status),
+                saved.metrics,
+                synced_evaluation_report,
+                error_message,
+            )
         self._training_runs.add_event(
             TrainingRunEvent(
                 id=uuid4(),
@@ -865,6 +891,87 @@ class TrainingRunService:
             },
         )
         return saved
+
+    def _sync_mlflow_tracking(
+        self,
+        *,
+        training_run: TrainingRun,
+        experiment_run: ExperimentRun,
+        status: TrainingRunStatus,
+        evaluation_report: dict[str, object],
+    ) -> dict[str, object]:
+        if self._mlflow_tracking is None:
+            return evaluation_report
+
+        record = build_training_run_mlflow_record(
+            experiment_prefix=self._mlflow_experiment_prefix,
+            organization_id=training_run.organization_id,
+            project_id=training_run.project_id,
+            experiment_id=training_run.experiment_id,
+            experiment_run_id=training_run.experiment_run_id,
+            training_run_id=training_run.id,
+            run_name=experiment_run.run_name,
+            status=status.value,
+            started_at=training_run.started_at,
+            completed_at=training_run.completed_at,
+            artifact_uri=training_run.artifact_uri,
+            algorithm=training_run.algorithm,
+            model_type=training_run.model_type,
+            objective_metric_name=training_run.objective_metric_name,
+            parameters=experiment_run.parameters,
+            metrics=training_run.metrics,
+            evaluation_report=evaluation_report,
+        )
+        try:
+            result = self._mlflow_tracking.sync_training_run(record)
+            mlflow_tracking_sync_total.labels(outcome=result.status).inc()
+            self._record_mlflow_sync_observability(training_run, result, level="info")
+        except Exception as exc:  # noqa: BLE001
+            result = failed_mlflow_sync_result(
+                tracking_uri=getattr(self._mlflow_tracking, "_tracking_uri", ""),
+                experiment_name=record.experiment_name,
+                error_message=str(exc),
+            )
+            mlflow_tracking_sync_total.labels(outcome="failed").inc()
+            self._record_mlflow_sync_observability(training_run, result, level="error")
+
+        return {
+            **evaluation_report,
+            "mlflow_sync": mlflow_sync_result_payload(result),
+        }
+
+    def _record_mlflow_sync_observability(
+        self,
+        training_run: TrainingRun,
+        result: MLflowSyncResult,
+        *,
+        level: str,
+    ) -> None:
+        payload = mlflow_sync_result_payload(result)
+        event_type = (
+            "mlflow_synced" if result.status == "synced" else f"mlflow_sync_{result.status}"
+        )
+        message = (
+            "Training run was synced to MLflow."
+            if result.status == "synced"
+            else f"Training run MLflow sync finished with status {result.status}."
+        )
+        self._training_runs.add_event(
+            TrainingRunEvent(
+                id=uuid4(),
+                training_run_id=training_run.id,
+                event_type=event_type,
+                message=message,
+                metadata=payload,
+            )
+        )
+        self._record_log(
+            training_run_id=training_run.id,
+            level=level,
+            logger="training.mlflow",
+            message=message,
+            metadata=payload,
+        )
 
     def _record_log(
         self,

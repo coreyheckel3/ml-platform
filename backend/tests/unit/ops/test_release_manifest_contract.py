@@ -68,6 +68,7 @@ def test_release_manifest_contract_shape() -> None:
     assert "sha256" in parsed["operator_command"]
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
     assert "contracts/artifacts/artifact-manifest.v1.json" in artifact_paths
+    assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
@@ -75,3 +76,4 @@ def test_release_manifest_contract_shape() -> None:
     assert "release_evidence_workflow_contract" in parsed["quality_gates"]
     assert "release_manifest_verifier_contract" in parsed["quality_gates"]
     assert "artifact_manifest_contract" in parsed["quality_gates"]
+    assert "mlflow_tracking_contract" in parsed["quality_gates"]

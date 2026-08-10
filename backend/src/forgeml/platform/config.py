@@ -29,6 +29,19 @@ class Settings(BaseSettings):
         default="http://localhost:5000",
         alias="FORGEML_MLFLOW_TRACKING_URI",
     )
+    mlflow_sync_enabled: bool = Field(
+        default=False,
+        alias="FORGEML_MLFLOW_SYNC_ENABLED",
+    )
+    mlflow_experiment_prefix: str = Field(
+        default="forgeml",
+        alias="FORGEML_MLFLOW_EXPERIMENT_PREFIX",
+    )
+    mlflow_http_timeout_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        alias="FORGEML_MLFLOW_HTTP_TIMEOUT_SECONDS",
+    )
     local_training_artifact_root: Path = Field(
         default=Path("artifacts/training-runs"),
         alias="FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT",

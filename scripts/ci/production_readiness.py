@@ -19,6 +19,9 @@ try:
     from scripts.ci.check_artifact_manifest_contract import (
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
     )
+    from scripts.ci.check_mlflow_tracking_contract import (
+        check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
+    )
     from scripts.ci.check_release_evidence_workflow import (
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
     )
@@ -40,6 +43,9 @@ except ModuleNotFoundError:
     )
     from check_artifact_manifest_contract import (  # type: ignore[no-redef]
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
+    )
+    from check_mlflow_tracking_contract import (  # type: ignore[no-redef]
+        check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
     )
     from check_release_evidence_workflow import (  # type: ignore[no-redef]
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
@@ -115,6 +121,13 @@ REQUIRED_FILES = (
     "contracts/artifacts/artifact-manifest.v1.json",
     "backend/tests/unit/platform/test_artifact_manifest.py",
     "backend/tests/unit/ops/test_artifact_manifest_contract.py",
+    "backend/src/forgeml/platform/mlflow/tracking.py",
+    "backend/src/forgeml/platform/mlflow/__init__.py",
+    "scripts/ci/check_mlflow_tracking_contract.py",
+    "contracts/mlflow/README.md",
+    "contracts/mlflow/mlflow-tracking.v1.json",
+    "backend/tests/unit/platform/test_mlflow_tracking.py",
+    "backend/tests/unit/ops/test_mlflow_tracking_contract.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -181,6 +194,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_alembic_migration_contract(repo_root),
         check_sqlalchemy_schema_contract(repo_root),
         check_artifact_manifest_contract(repo_root),
+        check_mlflow_tracking_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -579,6 +593,64 @@ def check_artifact_manifest_contract(repo_root: Path) -> ReadinessCheck:
                 f"producer_types={sorted(producer_types)}, "
                 f"has_checksum_policy={has_checksum_policy}, "
                 f"has_storage_boundary={has_storage_boundary}"
+            )
+        ),
+    )
+
+
+def check_mlflow_tracking_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/mlflow/mlflow-tracking.v1.json"
+    has_ci_gate = "python scripts/ci/check_mlflow_tracking_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="mlflow tracking contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    required_tags = set(contract.get("required_tags", []))
+    rest_endpoints = set(contract.get("rest_endpoints", []))
+    failure_semantics = contract.get("failure_semantics", {})
+    contract_current, contract_detail = verify_mlflow_tracking_contract(contract_path)
+    has_gateway_boundary = (
+        contract.get("tracking_boundary", {}).get("gateway_protocol")
+        == "MLflowTrackingGateway"
+    )
+    has_rest_depth = len(rest_endpoints) >= 5 and "/api/2.0/mlflow/runs/log-batch" in rest_endpoints
+    has_lineage_tags = {
+        "forgeml.organization_id",
+        "forgeml.project_id",
+        "forgeml.experiment_run_id",
+        "forgeml.training_run_id",
+    }.issubset(required_tags)
+    preserves_training_status = (
+        failure_semantics.get("failed_sync_effect")
+        == "training_terminal_status_is_preserved"
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_gateway_boundary
+        and has_rest_depth
+        and has_lineage_tags
+        and preserves_training_status
+    )
+    return ReadinessCheck(
+        name="mlflow tracking contract",
+        passed=passed,
+        detail=(
+            "MLflow tracking gateway, lineage tags, REST sync, and failure semantics are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_gateway_boundary={has_gateway_boundary}, "
+                f"has_rest_depth={has_rest_depth}, "
+                f"has_lineage_tags={has_lineage_tags}, "
+                f"preserves_training_status={preserves_training_status}"
             )
         ),
     )
@@ -1163,6 +1235,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/database/sqlalchemy-schema.v1.json",
         "contracts/security/api-authorization.v1.json",
         "contracts/observability/request-log-event.v1.json",
+        "contracts/mlflow/mlflow-tracking.v1.json",
         "contracts/ops/release-smoke.v1.json",
         "contracts/ops/release-manifest.v1.json",
         "contracts/ops/release-evidence-workflow.v1.json",
@@ -1178,6 +1251,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_manifest_contract",
         "release_evidence_workflow_contract",
         "release_manifest_verifier_contract",
+        "mlflow_tracking_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)

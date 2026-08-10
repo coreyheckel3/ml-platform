@@ -44,6 +44,11 @@ training_worker_expired_leases_total = Counter(
     "Total expired training run leases recovered by outcome.",
     ["outcome"],
 )
+mlflow_tracking_sync_total = Counter(
+    "forgeml_mlflow_tracking_sync_total",
+    "Total MLflow tracking sync attempts by outcome.",
+    ["outcome"],
+)
 readiness_probe_status = Gauge(
     "forgeml_readiness_probe_status",
     "Readiness probe status, where 1 is pass and 0 is fail.",

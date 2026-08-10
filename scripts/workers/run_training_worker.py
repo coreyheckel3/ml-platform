@@ -20,6 +20,7 @@ from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyTrainingRunRepository,
 )
 from forgeml.platform.config import get_settings
+from forgeml.platform.mlflow import build_mlflow_tracking_gateway
 from forgeml.platform.security.rbac import Principal
 
 
@@ -48,6 +49,12 @@ def run_once(
             artifact_bucket=settings.object_storage_bucket,
             runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
             retry_policy=resolved_retry_policy,
+            mlflow_tracking=build_mlflow_tracking_gateway(
+                enabled=settings.mlflow_sync_enabled,
+                tracking_uri=settings.mlflow_tracking_uri,
+                timeout_seconds=settings.mlflow_http_timeout_seconds,
+            ),
+            mlflow_experiment_prefix=settings.mlflow_experiment_prefix,
         )
         summary = service.execute_next_training_runs(
             ExecuteNextTrainingRunsCommand(

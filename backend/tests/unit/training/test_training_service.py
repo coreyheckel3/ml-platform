@@ -28,6 +28,7 @@ from forgeml.platform.domain.errors import (
     PermissionDeniedError,
     ResourceNotFoundError,
 )
+from forgeml.platform.mlflow import MLflowRunRecord, MLflowSyncResult
 from forgeml.platform.security.rbac import Principal
 
 
@@ -255,6 +256,26 @@ class FakeRunner:
         )
 
 
+class FakeMLflowTrackingGateway:
+    def __init__(self, *, should_fail: bool = False) -> None:
+        self.should_fail = should_fail
+        self.records: list[MLflowRunRecord] = []
+
+    def sync_training_run(self, record: MLflowRunRecord) -> MLflowSyncResult:
+        self.records.append(record)
+        if self.should_fail:
+            raise RuntimeError("mlflow unavailable")
+        return MLflowSyncResult(
+            tracking_uri="memory://forgeml",
+            experiment_name=record.experiment_name,
+            run_id=f"mlflow:{record.training_run_id}",
+            status="synced",
+            logged_param_count=len(record.parameters),
+            logged_metric_count=len(record.metrics),
+            logged_artifact_count=len(record.artifacts),
+        )
+
+
 class FakeAuditLogRepository:
     def __init__(self) -> None:
         self.events: list[AuditLogEvent] = []
@@ -298,6 +319,7 @@ def started_training_run_context(
     *,
     runner: FakeRunner | None,
     retry_policy: TrainingRetryPolicy | None = None,
+    mlflow_tracking: FakeMLflowTrackingGateway | None = None,
 ) -> StartedTrainingRunContext:
     repository = FakeTrainingRunRepository()
     recorder = FakeExperimentRunRecorder()
@@ -308,6 +330,8 @@ def started_training_run_context(
         artifact_bucket="forgeml-artifacts",
         runner=runner,
         retry_policy=retry_policy,
+        mlflow_tracking=mlflow_tracking,
+        mlflow_experiment_prefix="forgeml-test",
     )
     organization_id = uuid4()
     project_id = uuid4()
@@ -539,6 +563,60 @@ def test_training_service_executes_queued_run_with_runner() -> None:
         "Training run finished with status succeeded.",
     ]
     assert repository.logs[-1].metadata["metrics"] == {"auc": 0.95}
+
+
+def test_training_service_syncs_terminal_run_to_mlflow() -> None:
+    mlflow_tracking = FakeMLflowTrackingGateway()
+    context = started_training_run_context(
+        runner=FakeRunner(),
+        mlflow_tracking=mlflow_tracking,
+    )
+
+    completed = context.service.execute_training_run(
+        ExecuteTrainingRunCommand(training_run_id=context.training_run.id),
+        context.actor,
+    )
+
+    evaluation_report = context.recorder.runs[
+        context.training_run.experiment_run_id
+    ].evaluation_report
+    assert completed.status == TrainingRunStatus.SUCCEEDED
+    assert len(mlflow_tracking.records) == 1
+    record = mlflow_tracking.records[0]
+    assert record.experiment_name.startswith("forgeml-test/organizations/")
+    assert record.metrics == {"auc": 0.95}
+    assert record.parameters["max_depth"] == "6"
+    assert record.artifacts[0].name == "model"
+    assert evaluation_report["mlflow_sync"]["status"] == "synced"
+    assert evaluation_report["mlflow_sync"]["logged_artifact_count"] == 1
+    assert "mlflow_synced" in [event.event_type for event in context.repository.events]
+    assert "Training run was synced to MLflow." in [
+        log.message for log in context.repository.logs
+    ]
+
+
+def test_training_service_records_mlflow_failure_without_failing_training_run() -> None:
+    mlflow_tracking = FakeMLflowTrackingGateway(should_fail=True)
+    context = started_training_run_context(
+        runner=FakeRunner(),
+        mlflow_tracking=mlflow_tracking,
+    )
+
+    completed = context.service.execute_training_run(
+        ExecuteTrainingRunCommand(training_run_id=context.training_run.id),
+        context.actor,
+    )
+
+    evaluation_report = context.recorder.runs[
+        context.training_run.experiment_run_id
+    ].evaluation_report
+    assert completed.status == TrainingRunStatus.SUCCEEDED
+    assert len(mlflow_tracking.records) == 1
+    assert evaluation_report["mlflow_sync"]["status"] == "failed"
+    assert evaluation_report["mlflow_sync"]["error_message"] == "mlflow unavailable"
+    assert "mlflow_sync_failed" in [event.event_type for event in context.repository.events]
+    assert context.repository.logs[-2].logger == "training.mlflow"
+    assert context.repository.logs[-2].level == "error"
 
 
 def test_training_service_rejects_execution_without_matching_runner() -> None:

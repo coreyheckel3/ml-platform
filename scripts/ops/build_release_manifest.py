@@ -101,6 +101,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="mlflow_tracking_contract",
+        kind="integration_contract",
+        path="contracts/mlflow/mlflow-tracking.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="release_smoke_contract",
         kind="operations_contract",
         path="contracts/ops/release-smoke.v1.json",
@@ -194,6 +200,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "backend_tests",
     "example_training_smoke",
     "artifact_manifest_contract",
+    "mlflow_tracking_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",

@@ -124,6 +124,24 @@ def test_artifact_manifest_contract_gate_is_enforced() -> None:
     assert {"dataset_version", "model_version"}.issubset(producer_types)
 
 
+def test_mlflow_tracking_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/mlflow/mlflow-tracking.v1.json").read_text(encoding="utf-8")
+    )
+    tracking_source = Path("backend/src/forgeml/platform/mlflow/tracking.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_mlflow_tracking_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.mlflow_tracking_contract.v1"
+    assert contract["sync_schema_version"] == "forgeml.mlflow_tracking_sync.v1"
+    assert contract["tracking_boundary"]["gateway_protocol"] == "MLflowTrackingGateway"
+    assert "/api/2.0/mlflow/runs/log-batch" in contract["rest_endpoints"]
+    assert "forgeml.training_run_id" in contract["required_tags"]
+    assert "MLflowHttpTrackingGateway" in tracking_source
+
+
 def test_problem_details_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(Path("contracts/api/problem-details.v1.json").read_text(encoding="utf-8"))
@@ -266,6 +284,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert contract["summary"]["required_artifact_count"] >= 14
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
     assert "contracts/artifacts/artifact-manifest.v1.json" in artifact_paths
+    assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths

@@ -35,6 +35,7 @@ Required checks:
 | Release smoke contract | Required live API smoke stages, read-only posture, and operator command |
 | Release manifest contract | Required artifact hashes, image targets, evidence types, and quality gates |
 | Artifact manifest contract | Dataset/model artifact manifest shape, storage boundary, checksums, and lineage producers |
+| MLflow tracking contract | Tracking adapter boundary, REST sync endpoints, lineage tags, and sync failure semantics |
 | Release evidence workflow | Manifest generation and artifact upload after required release gates |
 | Release manifest verifier | Artifact integrity, Dockerfile integrity, quality gates, and CI evidence linkage |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
@@ -46,7 +47,7 @@ After merge:
 1. Build versioned Docker images.
 2. Push images to ECR.
 3. Generate OpenAPI contract artifact.
-4. Validate artifact manifest storage contract.
+4. Validate artifact manifest storage and MLflow tracking contracts.
 5. Run database migration dry-run against staging clone where available.
 6. Deploy to staging.
 7. Run release smoke, API smoke tests, and k6 smoke load tests against staging.

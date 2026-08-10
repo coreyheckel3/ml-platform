@@ -1639,6 +1639,67 @@ Implemented scope:
 - `TrainingRunsPage` displays worker lifecycle metadata and treats dead-lettered runs as terminal failures.
 - Generated Alembic, SQLAlchemy, OpenAPI, and permission catalog contracts were refreshed for release gates.
 
+## Sprint 52: Artifact Storage Abstraction
+
+Goal: Promote dataset and model artifact handling from raw URI references to a
+versioned storage manifest contract with checksums, lineage, and release gates.
+
+Scope:
+
+- S3-compatible artifact storage gateway protocol
+- Local and in-memory artifact storage adapters
+- Dataset artifact manifests
+- Model artifact manifests from training execution artifacts
+- Checksum validation for manifest payloads and referenced artifact content
+- Release and production-readiness contract wiring
+
+Acceptance criteria:
+
+- Dataset version finalization writes a manifest URI and manifest checksum.
+- Model version promotion writes a model artifact manifest linked to the training run and experiment run.
+- Training execution artifacts include size and checksum metadata.
+- CI fails when the artifact manifest contract or release provenance becomes stale.
+
+Implemented scope:
+
+- `forgeml.platform.artifacts` defines manifest, descriptor, lineage, checksum, storage gateway, and manifest writer abstractions.
+- Dataset and model version repositories persist `artifact_manifest_uri` and `artifact_manifest_hash`.
+- Dataset finalization and model promotion write deterministic manifests through `ArtifactManifestStore`.
+- Local example training artifacts include `size_bytes` and `sha256` metadata.
+- Artifact manifest contracts, release manifest contracts, production readiness, and tests were updated.
+
+## Sprint 53: MLflow Integration Layer
+
+Goal: Mirror ForgeML training run outcomes into MLflow through a configurable
+adapter boundary while preserving ForgeML as the system of record.
+
+Scope:
+
+- MLflow tracking gateway protocol
+- Stdlib HTTP adapter for MLflow REST APIs
+- In-memory adapter for unit and contract tests
+- Config switch for enabling MLflow sync
+- Training-run terminal sync for parameters, metrics, lineage tags, and artifact references
+- Best-effort failure semantics that preserve training terminal status
+- Sync observability through metrics, training events, training logs, and evaluation reports
+- CI contract for adapter shape and release evidence coverage
+
+Acceptance criteria:
+
+- Training terminal states can produce a versioned `evaluation_report.mlflow_sync` payload.
+- MLflow records include ForgeML organization, project, experiment, experiment run, and training run lineage tags.
+- Artifact references from the training execution manifest are logged as MLflow tags.
+- MLflow sync failures are visible but do not convert a successful training run into a failure.
+- CI and production-readiness gates validate the MLflow tracking contract.
+
+Implemented scope:
+
+- `forgeml.platform.mlflow` now provides `MLflowTrackingGateway`, `MLflowHttpTrackingGateway`, `InMemoryMLflowTrackingGateway`, and `build_training_run_mlflow_record`.
+- `TrainingRunService` syncs terminal results when an adapter is configured and records sync metadata in experiment evaluation reports.
+- FastAPI training routes and the local training worker construct the adapter from `FORGEML_MLFLOW_SYNC_ENABLED`, `FORGEML_MLFLOW_TRACKING_URI`, `FORGEML_MLFLOW_EXPERIMENT_PREFIX`, and `FORGEML_MLFLOW_HTTP_TIMEOUT_SECONDS`.
+- `forgeml_mlflow_tracking_sync_total` exposes sync outcomes to Prometheus.
+- `contracts/mlflow/mlflow-tracking.v1.json` and `scripts/ci/check_mlflow_tracking_contract.py` lock the adapter boundary and CI wiring.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1655,7 +1716,7 @@ sequence.
 | 50 | Release Manifest Verification | Completed | Manifest verifier CLI, verification contract, CI verification before upload, artifact and Dockerfile hash checks, quality gate coverage, and CI evidence linkage. |
 | 51 | Background Worker / Job Queue Hardening | Completed | Real queued job lifecycle, retry policy, dead-letter handling, worker heartbeat, job lease timeout, and worker observability. |
 | 52 | Artifact Storage Abstraction | Completed | S3-compatible manifest storage boundary, dataset and model artifact manifests, checksum validation, lineage, contracts, and CI wiring. |
-| 53 | MLflow Integration Layer | Planned | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, and adapter contract tests. |
+| 53 | MLflow Integration Layer | Completed | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, failure-safe sync reports, and adapter contract tests. |
 | 54 | Airflow Orchestration Adapter | Planned | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, retry mapping, and orchestration contract tests. |
 | 55 | Deployment Runtime Hardening | Planned | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
 | 56 | Monitoring Dashboards v2 | Planned | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
