@@ -207,6 +207,6 @@ the remaining product/runtime platform roadmap.
 | 53 | MLflow Integration Layer | Completed: training runs now sync metrics, parameters, lineage tags, artifact references, and sync status reports through a configurable MLflow adapter boundary. |
 | 54 | Airflow Orchestration Adapter | Completed: training launches can route through a configurable Airflow REST adapter with DAG run contracts, cancellation, status polling, local fallback, and CI gates. |
 | 55 | Deployment Runtime Hardening | Completed: serving adapter boundary, revision resolution, canary simulation, rollback draining, runtime health probes, and CI contract gates. |
-| 56 | Monitoring Dashboards v2 | Next: expand dashboards across inference errors, latency, drift, training failures, and retraining activity. |
-| 57 | Security and Multi-Tenant Hardening | Deepen organization isolation, RBAC, rate limiting, audit coverage, and secrets/config guidance. |
+| 56 | Monitoring Dashboards v2 | Completed: operations overview API, latency percentiles, inference errors, drift trends, training failures, retraining activity, and dashboard contract gates. |
+| 57 | Security and Multi-Tenant Hardening | Next: deepen organization isolation, RBAC, rate limiting, audit coverage, and secrets/config guidance. |
 | 58 | Developer Experience / Demo Readiness | Package a one-command demo path with seeded data, walkthrough docs, and reviewer-ready assets. |

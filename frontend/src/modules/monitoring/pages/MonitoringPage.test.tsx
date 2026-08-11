@@ -34,6 +34,13 @@ describe("MonitoringPage", () => {
     );
     expect(screen.getAllByText("critical").length).toBeGreaterThan(0);
     expect(screen.getByText("Fraud p95 latency breach")).toBeInTheDocument();
+    expect(screen.getByText("Latency Percentiles")).toBeInTheDocument();
+    expect(screen.getByText("Inference Errors")).toBeInTheDocument();
+    expect(screen.getByText("Drift Trends")).toBeInTheDocument();
+    expect(screen.getByText("Training Failures")).toBeInTheDocument();
+    expect(screen.getByText("Retraining Activity")).toBeInTheDocument();
+    expect(screen.getByText("validation split missing target")).toBeInTheDocument();
+    expect(screen.getByText("enabled policies")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Evaluate rule" }));
 
@@ -72,6 +79,126 @@ function mockMonitoringWorkflow() {
             .length,
           error_rate: 0.056,
           max_p95_latency_ms: 720,
+        });
+      }
+
+      if (
+        method === "GET" &&
+        path === "/api/v1/projects/project-1/monitoring/operations"
+      ) {
+        return jsonResponse({
+          project_id: "project-1",
+          active_alert_count: events.filter((event) => event.status === "open")
+            .length,
+          inference: {
+            endpoint_count: 2,
+            prediction_count: 2500,
+            error_count: 140,
+            request_count: 2500,
+            error_rate: 0.056,
+            weighted_p50_latency_ms: 69.4,
+            weighted_p95_latency_ms: 549.2,
+            latency_percentiles: [
+              {
+                endpoint_id: endpointId,
+                endpoint_name: "Fraud Online",
+                p50_latency_ms: 84,
+                p95_latency_ms: 720,
+                prediction_count: 1800,
+                latest_window_seconds: 300,
+              },
+              {
+                endpoint_id: "endpoint-2",
+                endpoint_name: "Search Online",
+                p50_latency_ms: 32,
+                p95_latency_ms: 110,
+                prediction_count: 700,
+                latest_window_seconds: 300,
+              },
+            ],
+            error_breakdown: [
+              {
+                endpoint_id: endpointId,
+                endpoint_name: "Fraud Online",
+                error_count: 126,
+                request_count: 1800,
+                error_rate: 0.07,
+                status: "active",
+              },
+              {
+                endpoint_id: "endpoint-2",
+                endpoint_name: "Search Online",
+                error_count: 2,
+                request_count: 700,
+                error_rate: 0.0028,
+                status: "active",
+              },
+            ],
+          },
+          drift: {
+            report_count: 3,
+            failed_report_count: 1,
+            breached_report_count: 1,
+            latest_drift_score: 0.42,
+            drifted_feature_count: 4,
+            signals: [
+              {
+                drift_report_id: "drift-report-1",
+                endpoint_id: endpointId,
+                deployment_id: "deployment-1",
+                status: "completed",
+                drift_score: 0.42,
+                drift_threshold: 0.2,
+                drifted_feature_count: 4,
+                evaluated_feature_count: 18,
+                created_at: "2026-08-11T18:00:00Z",
+              },
+            ],
+          },
+          training: {
+            total_run_count: 12,
+            running_count: 1,
+            failed_count: 1,
+            dead_lettered_count: 1,
+            failure_rate: 0.1667,
+            average_training_time_seconds: 420,
+            latest_failures: [
+              {
+                training_run_id: "training-run-1",
+                algorithm: "xgboost",
+                model_type: "classification",
+                status: "failed",
+                objective_metric_name: "auc",
+                error_message: "validation split missing target",
+                attempt_count: 2,
+                completed_at: "2026-08-11T17:30:00Z",
+              },
+            ],
+          },
+          retraining: {
+            policy_count: 2,
+            enabled_policy_count: 1,
+            run_count: 5,
+            pending_approval_count: 1,
+            queued_count: 1,
+            running_count: 0,
+            succeeded_count: 2,
+            failed_count: 0,
+            skipped_count: 1,
+            latest_activity: [
+              {
+                retraining_run_id: "retraining-run-1",
+                policy_id: "policy-1",
+                deployment_id: "deployment-1",
+                trigger_type: "drift",
+                status: "pending_approval",
+                training_run_id: null,
+                drift_report_id: "drift-report-1",
+                alert_event_id: null,
+                created_at: "2026-08-11T18:05:00Z",
+              },
+            ],
+          },
         });
       }
 

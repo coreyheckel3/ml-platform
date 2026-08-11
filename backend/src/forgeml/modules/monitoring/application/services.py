@@ -2,6 +2,7 @@ from uuid import UUID
 
 from forgeml.modules.monitoring.domain.entities import (
     InferenceEndpointMonitoringSummary,
+    MonitoringOperationsOverview,
     ProjectMonitoringSummary,
 )
 from forgeml.modules.monitoring.repositories.interfaces import MonitoringRepository
@@ -52,6 +53,17 @@ class MonitoringService:
     ) -> list[InferenceEndpointMonitoringSummary]:
         self._require(principal, "monitoring:read")
         return self._repository.list_inference_endpoint_summaries(
+            UUID(principal.organization_id),
+            project_id,
+        )
+
+    def get_operations_overview(
+        self,
+        project_id: UUID,
+        principal: Principal,
+    ) -> MonitoringOperationsOverview:
+        self._require(principal, "monitoring:read")
+        return self._repository.get_operations_overview(
             UUID(principal.organization_id),
             project_id,
         )

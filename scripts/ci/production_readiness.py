@@ -28,6 +28,9 @@ try:
     from scripts.ci.check_mlflow_tracking_contract import (
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
     )
+    from scripts.ci.check_monitoring_dashboard_contract import (
+        check_monitoring_dashboard_contract as verify_monitoring_dashboard_contract,
+    )
     from scripts.ci.check_release_evidence_workflow import (
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
     )
@@ -58,6 +61,9 @@ except ModuleNotFoundError:
     )
     from check_mlflow_tracking_contract import (  # type: ignore[no-redef]
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
+    )
+    from check_monitoring_dashboard_contract import (  # type: ignore[no-redef]
+        check_monitoring_dashboard_contract as verify_monitoring_dashboard_contract,
     )
     from check_release_evidence_workflow import (  # type: ignore[no-redef]
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
@@ -157,6 +163,13 @@ REQUIRED_FILES = (
     "contracts/runtime/deployment-serving.v1.json",
     "backend/tests/unit/platform/test_serving_runtime.py",
     "backend/tests/unit/ops/test_deployment_runtime_contract.py",
+    "scripts/ci/check_monitoring_dashboard_contract.py",
+    "contracts/observability/monitoring-dashboard.v1.json",
+    "backend/src/forgeml/modules/monitoring/application/services.py",
+    "backend/src/forgeml/modules/monitoring/infrastructure/sqlalchemy_repositories.py",
+    "backend/tests/unit/monitoring/test_monitoring_service.py",
+    "backend/tests/api/test_monitoring_api.py",
+    "frontend/src/modules/monitoring/pages/MonitoringPage.test.tsx",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -226,6 +239,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_mlflow_tracking_contract(repo_root),
         check_airflow_orchestration_contract(repo_root),
         check_deployment_runtime_contract(repo_root),
+        check_monitoring_dashboard_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -810,6 +824,64 @@ def check_deployment_runtime_contract(repo_root: Path) -> ReadinessCheck:
     )
 
 
+def check_monitoring_dashboard_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/observability/monitoring-dashboard.v1.json"
+    has_ci_gate = "python scripts/ci/check_monitoring_dashboard_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="monitoring dashboard contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    api_surface = set(contract.get("api_surface", []))
+    signal_families = set(contract.get("operations_signal_families", []))
+    frontend_sections = set(contract.get("frontend_sections", []))
+    contract_current, contract_detail = verify_monitoring_dashboard_contract(contract_path)
+    has_operations_api = (
+        "GET /api/v1/projects/{project_id}/monitoring/operations" in api_surface
+    )
+    has_signal_families = {
+        "inference_latency_percentiles",
+        "inference_error_breakdown",
+        "drift_trends",
+        "training_failures",
+        "retraining_activity",
+    }.issubset(signal_families)
+    has_frontend_sections = {
+        "Latency Percentiles",
+        "Inference Errors",
+        "Drift Trends",
+        "Training Failures",
+        "Retraining Activity",
+    }.issubset(frontend_sections)
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_operations_api
+        and has_signal_families
+        and has_frontend_sections
+    )
+    return ReadinessCheck(
+        name="monitoring dashboard contract",
+        passed=passed,
+        detail=(
+            "Monitoring operations overview, signal families, and dashboard sections are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_operations_api={has_operations_api}, "
+                f"has_signal_families={has_signal_families}, "
+                f"has_frontend_sections={has_frontend_sections}"
+            )
+        ),
+    )
+
+
 def check_frontend_supply_chain_contract(repo_root: Path) -> ReadinessCheck:
     ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     package_lock = json.loads(
@@ -1389,6 +1461,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/database/sqlalchemy-schema.v1.json",
         "contracts/security/api-authorization.v1.json",
         "contracts/observability/request-log-event.v1.json",
+        "contracts/observability/monitoring-dashboard.v1.json",
         "contracts/mlflow/mlflow-tracking.v1.json",
         "contracts/orchestration/airflow-training.v1.json",
         "contracts/runtime/deployment-serving.v1.json",
@@ -1410,6 +1483,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
         "deployment_runtime_contract",
+        "monitoring_dashboard_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)

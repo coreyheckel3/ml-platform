@@ -37,6 +37,12 @@
       "required": true
     },
     {
+      "kind": "observability_contract",
+      "name": "monitoring_dashboard_contract",
+      "path": "contracts/observability/monitoring-dashboard.v1.json",
+      "required": true
+    },
+    {
       "kind": "database_contract",
       "name": "alembic_migration_contract",
       "path": "contracts/database/alembic-migrations.v1.json",
@@ -179,6 +185,7 @@
     "mlflow_tracking_contract",
     "airflow_orchestration_contract",
     "deployment_runtime_contract",
+    "monitoring_dashboard_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",
@@ -213,7 +220,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 17,
-    "required_artifact_count": 21
+    "quality_gate_count": 18,
+    "required_artifact_count": 22
   }
 }

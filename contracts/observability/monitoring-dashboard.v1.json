@@ -1,0 +1,37 @@
+{
+  "api_surface": [
+    "GET /api/v1/projects/{project_id}/monitoring/summary",
+    "GET /api/v1/projects/{project_id}/monitoring/operations",
+    "GET /api/v1/projects/{project_id}/monitoring/inference-endpoints"
+  ],
+  "frontend_sections": [
+    "Latency Percentiles",
+    "Inference Errors",
+    "Drift Trends",
+    "Training Failures",
+    "Retraining Activity",
+    "Endpoint Drilldown",
+    "Alert Evaluation"
+  ],
+  "generated_from": [
+    "forgeml.modules.monitoring.domain.entities",
+    "forgeml.modules.monitoring.application.services",
+    "forgeml.modules.monitoring.infrastructure.sqlalchemy_repositories",
+    "forgeml.modules.monitoring.api.routes",
+    "frontend.src.modules.monitoring.pages.MonitoringPage"
+  ],
+  "operations_signal_families": [
+    "inference_latency_percentiles",
+    "inference_error_breakdown",
+    "drift_trends",
+    "training_failures",
+    "retraining_activity"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_monitoring_dashboard_contract.py",
+    "backend/tests/unit/monitoring/test_monitoring_service.py",
+    "backend/tests/api/test_monitoring_api.py",
+    "frontend/src/modules/monitoring/pages/MonitoringPage.test.tsx"
+  ],
+  "schema_version": "forgeml.monitoring_dashboard_contract.v1"
+}

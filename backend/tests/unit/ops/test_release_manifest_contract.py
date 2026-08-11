@@ -71,6 +71,7 @@ def test_release_manifest_contract_shape() -> None:
     assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
     assert "contracts/orchestration/airflow-training.v1.json" in artifact_paths
     assert "contracts/runtime/deployment-serving.v1.json" in artifact_paths
+    assert "contracts/observability/monitoring-dashboard.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
@@ -81,3 +82,4 @@ def test_release_manifest_contract_shape() -> None:
     assert "mlflow_tracking_contract" in parsed["quality_gates"]
     assert "airflow_orchestration_contract" in parsed["quality_gates"]
     assert "deployment_runtime_contract" in parsed["quality_gates"]
+    assert "monitoring_dashboard_contract" in parsed["quality_gates"]

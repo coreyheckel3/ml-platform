@@ -191,6 +191,16 @@ Sprint 12 adds Prometheus scrape configuration and Grafana provisioning under
 `infra/observability`. The local `full` Compose profile mounts the dashboard
 and datasource configuration automatically.
 
+The v2 Monitoring page adds a project operations overview backed by
+`GET /api/v1/projects/{project_id}/monitoring/operations`. This read model
+aggregates inference latency percentiles, endpoint error breakdowns, drift
+trend signals, training failure activity, and retraining activity into one
+response so operators can triage production behavior before drilling into an
+endpoint, drift report, training run, or retraining policy. The checked
+dashboard contract in `contracts/observability/monitoring-dashboard.v1.json`
+keeps the backend route, API schema, frontend panels, tests, CI gate, and
+release manifest evidence aligned.
+
 ## Alerting
 
 Initial alert rules:

@@ -131,6 +131,7 @@ Contract tests should protect boundaries:
 - SQLAlchemy schema metadata contract for registered tables, column shape, keys, constraints, and foreign-key index coverage.
 - Runtime configuration policy contract enforced before production-like API startup.
 - Structured request logging contract with sensitive query-parameter redaction.
+- Monitoring dashboard contract for project operations overview, inference errors, latency percentiles, drift trends, training failures, retraining activity, and frontend section coverage.
 - Release smoke operations contract for the live API surfaces required during release-candidate validation.
 - Release manifest operations contract for release artifact hashes, image targets, evidence types, and quality gates.
 - Release evidence workflow contract for CI manifest publication behavior.
@@ -153,6 +154,10 @@ Deployment runtime tests cover serving traffic planning, deployment service
 canary and rollback behavior, runtime health probes, inference endpoint
 revision resolution, API serialization, checked OpenAPI coverage, and CI
 contract wiring.
+
+Monitoring dashboard tests cover project operations aggregation, API
+serialization, frontend rendering of inference, drift, training, and retraining
+panels, checked OpenAPI coverage, and CI contract wiring.
 
 ## Release Smoke Tests
 

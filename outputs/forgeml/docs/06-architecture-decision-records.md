@@ -415,3 +415,27 @@ Options considered:
 Recommendation: Verify manifests with a deterministic CLI and gate verifier behavior in CI plus production-readiness.
 
 Justification: Release provenance should not stop at generating JSON. Internal ML platforms need promotion evidence that can be rechecked by operators, auditors, and interview reviewers without trusting memory or screenshots. A verifier closes the loop between CI output and source-controlled contracts.
+
+## ADR-024: Project Monitoring Operations Read Model
+
+Status: Accepted
+
+Decision: Expose a project-scoped monitoring operations API that aggregates
+inference, drift, training failure, and retraining activity signals for the
+dashboard.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Project operations read model | Gives the UI one stable operational contract and keeps aggregation close to repositories | Adds one purpose-built read path to maintain |
+| Compose many existing endpoints in the frontend | Reuses current APIs directly | Pushes operational joins, loading states, and consistency concerns into browser code |
+| Prometheus-only dashboard | Excellent for infrastructure metrics | Does not include product metadata such as projects, endpoints, drift reports, policies, and training run lineage |
+
+Recommendation: Use a backend-owned project operations read model and keep
+Prometheus as the source for low-level infrastructure and route metrics.
+
+Justification: ML operators need a fast triage page that connects platform
+metadata with runtime signals. Aggregating those signals behind
+`monitoring:read` gives the dashboard a stable contract, makes tests more
+deterministic, and preserves extraction paths for a future monitoring service.

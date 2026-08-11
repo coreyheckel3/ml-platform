@@ -13,9 +13,16 @@ import { DataPanel } from "../../../shared/ui/DataPanel";
 import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import {
+  getProjectMonitoringOperations,
   getProjectMonitoringSummary,
   listInferenceEndpointMonitoringSummaries,
   type InferenceEndpointMonitoringSummary,
+  type MonitoringDriftSignal,
+  type MonitoringInferenceErrorBreakdown,
+  type MonitoringLatencyPercentile,
+  type MonitoringOperationsOverview,
+  type MonitoringRetrainingActivity,
+  type MonitoringTrainingFailure,
 } from "../api/monitoring";
 
 export function MonitoringPage() {
@@ -38,6 +45,11 @@ export function MonitoringPage() {
       listInferenceEndpointMonitoringSummaries(projectId ?? "", token ?? ""),
     enabled: canLoadMonitoring,
   });
+  const operationsQuery = useQuery({
+    queryKey: ["monitoring-operations", projectId],
+    queryFn: () => getProjectMonitoringOperations(projectId ?? "", token ?? ""),
+    enabled: canLoadMonitoring,
+  });
   const rulesQuery = useQuery({
     queryKey: ["alert-rules", projectId],
     queryFn: () => listAlertRules(projectId ?? "", token ?? ""),
@@ -49,6 +61,7 @@ export function MonitoringPage() {
     enabled: canLoadMonitoring,
   });
   const summary = summaryQuery.data;
+  const operations = operationsQuery.data;
   const endpoints = useMemo(
     () => endpointsQuery.data?.items ?? [],
     [endpointsQuery.data?.items],
@@ -112,6 +125,9 @@ export function MonitoringPage() {
       queryClient.invalidateQueries({ queryKey: ["alert-events", projectId] });
       queryClient.invalidateQueries({
         queryKey: ["monitoring-summary", projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["monitoring-operations", projectId],
       });
     },
     onError: (error) => {
@@ -198,6 +214,15 @@ export function MonitoringPage() {
           {operationError}
         </div>
       ) : null}
+      <div className="mt-6">
+        {operationsQuery.error ? (
+          <StateMessage message="Operations overview request failed." tone="danger" />
+        ) : operations ? (
+          <OperationsDashboard operations={operations} />
+        ) : canLoadMonitoring ? (
+          <StateMessage message="Loading operations overview." />
+        ) : null}
+      </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <DataPanel title="Inference Endpoint Health">
@@ -434,6 +459,360 @@ export function MonitoringPage() {
   );
 }
 
+function OperationsDashboard({
+  operations,
+}: {
+  operations: MonitoringOperationsOverview;
+}) {
+  return (
+    <div className="grid gap-4 xl:grid-cols-2">
+      <DataPanel title="Latency Percentiles">
+        <div className="grid gap-3">
+          <MetricStrip
+            items={[
+              {
+                label: "weighted p50",
+                value: `${operations.inference.weighted_p50_latency_ms.toFixed(1)}ms`,
+              },
+              {
+                label: "weighted p95",
+                value: `${operations.inference.weighted_p95_latency_ms.toFixed(1)}ms`,
+              },
+              {
+                label: "predictions",
+                value: String(operations.inference.prediction_count),
+              },
+            ]}
+          />
+          {operations.inference.latency_percentiles.length === 0 ? (
+            <StateMessage message="No latency snapshots are available." />
+          ) : (
+            <div className="space-y-3">
+              {operations.inference.latency_percentiles.slice(0, 5).map((row) => (
+                <LatencyPercentileRow key={row.endpoint_id} row={row} />
+              ))}
+            </div>
+          )}
+        </div>
+      </DataPanel>
+
+      <DataPanel title="Inference Errors">
+        <div className="grid gap-3">
+          <MetricStrip
+            items={[
+              {
+                label: "error rate",
+                value: formatPercent(operations.inference.error_rate),
+                tone:
+                  operations.inference.error_rate > errorRateBudget
+                    ? "danger"
+                    : "success",
+              },
+              {
+                label: "errors",
+                value: String(operations.inference.error_count),
+              },
+              {
+                label: "requests",
+                value: String(operations.inference.request_count),
+              },
+            ]}
+          />
+          {operations.inference.error_breakdown.length === 0 ? (
+            <StateMessage message="No inference error signals are available." />
+          ) : (
+            <div className="space-y-3">
+              {operations.inference.error_breakdown.slice(0, 5).map((row) => (
+                <InferenceErrorRow key={row.endpoint_id} row={row} />
+              ))}
+            </div>
+          )}
+        </div>
+      </DataPanel>
+
+      <DataPanel title="Drift Trends">
+        <div className="grid gap-3">
+          <MetricStrip
+            items={[
+              {
+                label: "latest score",
+                value: operations.drift.latest_drift_score.toFixed(3),
+                tone:
+                  operations.drift.breached_report_count > 0
+                    ? "warning"
+                    : "success",
+              },
+              {
+                label: "breaches",
+                value: String(operations.drift.breached_report_count),
+              },
+              {
+                label: "failed",
+                value: String(operations.drift.failed_report_count),
+                tone:
+                  operations.drift.failed_report_count > 0
+                    ? "danger"
+                    : "neutral",
+              },
+            ]}
+          />
+          {operations.drift.signals.length === 0 ? (
+            <StateMessage message="No drift reports are available." />
+          ) : (
+            <div className="space-y-3">
+              {operations.drift.signals.map((signal) => (
+                <DriftSignalRow key={signal.drift_report_id} signal={signal} />
+              ))}
+            </div>
+          )}
+        </div>
+      </DataPanel>
+
+      <DataPanel title="Training Failures">
+        <div className="grid gap-3">
+          <MetricStrip
+            items={[
+              {
+                label: "failure rate",
+                value: formatPercent(operations.training.failure_rate),
+                tone:
+                  operations.training.failure_rate > 0
+                    ? "danger"
+                    : "success",
+              },
+              {
+                label: "running",
+                value: String(operations.training.running_count),
+              },
+              {
+                label: "avg time",
+                value: formatDuration(
+                  operations.training.average_training_time_seconds,
+                ),
+              },
+            ]}
+          />
+          {operations.training.latest_failures.length === 0 ? (
+            <StateMessage message="No training failures are available." />
+          ) : (
+            <div className="space-y-3">
+              {operations.training.latest_failures.map((failure) => (
+                <TrainingFailureRow
+                  key={failure.training_run_id}
+                  failure={failure}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </DataPanel>
+
+      <DataPanel title="Retraining Activity">
+        <div className="grid gap-3">
+          <MetricStrip
+            items={[
+              {
+                label: "enabled policies",
+                value: `${operations.retraining.enabled_policy_count}/${operations.retraining.policy_count}`,
+              },
+              {
+                label: "pending",
+                value: String(operations.retraining.pending_approval_count),
+                tone:
+                  operations.retraining.pending_approval_count > 0
+                    ? "warning"
+                    : "neutral",
+              },
+              {
+                label: "queued",
+                value: String(operations.retraining.queued_count),
+              },
+            ]}
+          />
+          {operations.retraining.latest_activity.length === 0 ? (
+            <StateMessage message="No retraining activity is available." />
+          ) : (
+            <div className="space-y-3">
+              {operations.retraining.latest_activity.map((activity) => (
+                <RetrainingActivityRow
+                  key={activity.retraining_run_id}
+                  activity={activity}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </DataPanel>
+    </div>
+  );
+}
+
+function MetricStrip({
+  items,
+}: {
+  items: Array<{
+    label: string;
+    value: string;
+    tone?: "neutral" | "success" | "warning" | "danger";
+  }>;
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.label} className="border-b border-slate-100 pb-2">
+          <div className="text-xs font-semibold uppercase text-steel">
+            {item.label}
+          </div>
+          <div
+            className={[
+              "mt-1 text-lg font-semibold",
+              metricToneClass(item.tone ?? "neutral"),
+            ].join(" ")}
+          >
+            {item.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LatencyPercentileRow({
+  row,
+}: {
+  row: MonitoringLatencyPercentile;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-medium">{row.endpoint_name}</span>
+        <span className="text-xs text-steel">
+          p50 {row.p50_latency_ms.toFixed(1)}ms / p95{" "}
+          {row.p95_latency_ms.toFixed(1)}ms
+        </span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded bg-field">
+        <div
+          className={
+            row.p95_latency_ms > latencyBudgetMs ? "h-full bg-risk" : "h-full bg-signal"
+          }
+          style={{ width: barWidth(row.p95_latency_ms, latencyBudgetMs) }}
+        />
+      </div>
+      <div className="mt-1 text-xs text-steel">
+        {row.prediction_count} predictions, {row.latest_window_seconds}s window
+      </div>
+    </div>
+  );
+}
+
+function InferenceErrorRow({
+  row,
+}: {
+  row: MonitoringInferenceErrorBreakdown;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-medium">{row.endpoint_name}</span>
+        <span
+          className={
+            row.error_rate > errorRateBudget
+              ? "text-xs font-semibold text-risk"
+              : "text-xs font-semibold text-signal"
+          }
+        >
+          {formatPercent(row.error_rate)}
+        </span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded bg-field">
+        <div
+          className={
+            row.error_rate > errorRateBudget ? "h-full bg-risk" : "h-full bg-signal"
+          }
+          style={{ width: barWidth(row.error_rate, errorRateBudget) }}
+        />
+      </div>
+      <div className="mt-1 text-xs text-steel">
+        {row.error_count} errors across {row.request_count} requests, {row.status}
+      </div>
+    </div>
+  );
+}
+
+function DriftSignalRow({ signal }: { signal: MonitoringDriftSignal }) {
+  const breached = signal.drift_score >= signal.drift_threshold;
+  return (
+    <div className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-medium">report {shortId(signal.drift_report_id)}</span>
+        <span
+          className={
+            breached
+              ? "rounded bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700"
+              : "rounded bg-emerald-50 px-2 py-1 text-xs font-semibold text-signal"
+          }
+        >
+          {breached ? "breached" : signal.status}
+        </span>
+      </div>
+      <div className="mt-2 text-xs text-steel">
+        score {signal.drift_score.toFixed(3)} / {signal.drift_threshold.toFixed(3)},{" "}
+        {signal.drifted_feature_count}/{signal.evaluated_feature_count} features
+      </div>
+      <div className="mt-1 text-xs text-steel">{formatDate(signal.created_at)}</div>
+    </div>
+  );
+}
+
+function TrainingFailureRow({
+  failure,
+}: {
+  failure: MonitoringTrainingFailure;
+}) {
+  return (
+    <div className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-medium">{failure.algorithm}</span>
+        <span className="rounded bg-rose-50 px-2 py-1 text-xs font-semibold text-risk">
+          {failure.status}
+        </span>
+      </div>
+      <div className="mt-2 text-xs text-steel">
+        {failure.model_type}, objective {failure.objective_metric_name}, attempt{" "}
+        {failure.attempt_count}
+      </div>
+      <div className="mt-1 text-xs text-steel">
+        {failure.error_message ?? "No error message recorded."}
+      </div>
+    </div>
+  );
+}
+
+function RetrainingActivityRow({
+  activity,
+}: {
+  activity: MonitoringRetrainingActivity;
+}) {
+  return (
+    <div className="border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="font-medium">{activity.trigger_type}</span>
+        <span className="rounded bg-cloud px-2 py-1 text-xs font-semibold text-steel">
+          {activity.status}
+        </span>
+      </div>
+      <div className="mt-2 text-xs text-steel">
+        run {shortId(activity.retraining_run_id)}
+        {activity.training_run_id
+          ? `, training ${shortId(activity.training_run_id)}`
+          : ""}
+      </div>
+      <div className="mt-1 text-xs text-steel">{formatDate(activity.created_at)}</div>
+    </div>
+  );
+}
+
 const errorRateBudget = 0.05;
 const latencyBudgetMs = 500;
 
@@ -611,6 +990,52 @@ function StateMessage({
       ? "rounded border border-rose-200 bg-rose-50 p-4 text-sm text-risk"
       : "rounded border border-slate-200 bg-cloud p-4 text-sm text-steel";
   return <div className={className}>{message}</div>;
+}
+
+function metricToneClass(tone: "neutral" | "success" | "warning" | "danger") {
+  if (tone === "success") {
+    return "text-signal";
+  }
+  if (tone === "warning") {
+    return "text-amber-600";
+  }
+  if (tone === "danger") {
+    return "text-risk";
+  }
+  return "text-ink";
+}
+
+function barWidth(value: number, budget: number): string {
+  if (budget <= 0) {
+    return "0%";
+  }
+  return `${Math.min(value / budget, 1) * 100}%`;
+}
+
+function shortId(value: string): string {
+  return value.slice(0, 8);
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds <= 0) {
+    return "0s";
+  }
+  if (seconds < 60) {
+    return `${seconds.toFixed(0)}s`;
+  }
+  return `${(seconds / 60).toFixed(1)}m`;
+}
+
+function formatDate(value: string | null): string {
+  if (!value) {
+    return "not recorded";
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function formatMetric(metric: string): string {

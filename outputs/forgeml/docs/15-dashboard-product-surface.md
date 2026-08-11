@@ -221,6 +221,12 @@ Capabilities:
 - API latency and errors
 - Training duration and failures
 - Inference throughput and latency
+- Project operations overview
+- Latency percentile panel
+- Endpoint error breakdown panel
+- Drift trend panel
+- Training failure panel
+- Retraining activity panel
 - Prediction count
 - Endpoint health table
 - Endpoint drilldown
@@ -232,6 +238,10 @@ Capabilities:
 - Feature drift
 - Inference errors
 - Pipeline failures
+
+The Monitoring page keeps the existing endpoint drilldown for investigation
+while adding an operations overview for first-pass triage across model serving,
+data quality, training reliability, and retraining automation.
 
 ## Drift
 

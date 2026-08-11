@@ -1775,6 +1775,41 @@ Implemented scope:
 - The Deployments page exposes revision probes and 10 percent canary simulation from the rollout console.
 - `contracts/runtime/deployment-serving.v1.json` and `scripts/ci/check_deployment_runtime_contract.py` lock serving semantics and CI wiring.
 
+## Sprint 56: Monitoring Dashboards v2
+
+Goal: Turn monitoring from endpoint-only triage into a project operations
+overview spanning inference, drift, training reliability, and retraining
+activity.
+
+Scope:
+
+- Project-scoped monitoring operations API
+- Inference latency percentile overview
+- Inference error breakdown by endpoint
+- Drift trend signals from recent drift reports
+- Training failure summary and latest failures
+- Retraining policy and run activity summary
+- Frontend dashboard panels for the new signal families
+- Release and production-readiness contract wiring
+
+Acceptance criteria:
+
+- Operators can load one monitoring API response that summarizes inference, drift, training, and retraining signals for a project.
+- The Monitoring page surfaces latency p50/p95 and error-rate breakdowns without replacing the existing endpoint drilldown.
+- Drift reports contribute latest drift score, breach counts, failed report counts, and recent signals.
+- Training runs contribute failure rate, dead-letter count, average duration, and recent failure details.
+- Retraining runs contribute enabled policy count, pending approvals, queued runs, and recent activity.
+- CI and production-readiness gates validate the monitoring dashboard contract.
+
+Implemented scope:
+
+- `MonitoringOperationsOverview` now models inference, drift, training, and retraining dashboard read data.
+- `GET /api/v1/projects/{project_id}/monitoring/operations` returns a single project-scoped operations overview behind `monitoring:read`.
+- `SqlAlchemyMonitoringRepository` aggregates inference snapshots, alert counts, drift reports, training runs, and retraining runs into dashboard read models.
+- The Monitoring page now includes Latency Percentiles, Inference Errors, Drift Trends, Training Failures, and Retraining Activity panels.
+- Frontend tests cover the v2 dashboard sections while preserving alert evaluation against the selected endpoint.
+- `contracts/observability/monitoring-dashboard.v1.json` and `scripts/ci/check_monitoring_dashboard_contract.py` lock the API surface, signal families, frontend sections, tests, CI wiring, and release evidence.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1794,7 +1829,7 @@ sequence.
 | 53 | MLflow Integration Layer | Completed | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, failure-safe sync reports, and adapter contract tests. |
 | 54 | Airflow Orchestration Adapter | Completed | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, state mapping, and orchestration contract tests. |
 | 55 | Deployment Runtime Hardening | Completed | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
-| 56 | Monitoring Dashboards v2 | Planned | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
+| 56 | Monitoring Dashboards v2 | Completed | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
 | 57 | Security and Multi-Tenant Hardening | Planned | Organization isolation tests, RBAC matrix tests, rate-limit tests, audit-log coverage expansion, secrets policy, and configuration documentation. |
 | 58 | Developer Experience / Demo Readiness | Planned | One-command local bootstrap, guided demo script, seeded data refresh, screenshots, architecture walkthrough, and reviewer-facing setup path. |
 

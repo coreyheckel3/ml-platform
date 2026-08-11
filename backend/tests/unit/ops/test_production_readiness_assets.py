@@ -180,6 +180,26 @@ def test_deployment_runtime_contract_gate_is_enforced() -> None:
     assert "InMemoryServingRuntimeGateway" in serving_source
 
 
+def test_monitoring_dashboard_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/observability/monitoring-dashboard.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    monitoring_page = Path(
+        "frontend/src/modules/monitoring/pages/MonitoringPage.tsx"
+    ).read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_monitoring_dashboard_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.monitoring_dashboard_contract.v1"
+    assert "GET /api/v1/projects/{project_id}/monitoring/operations" in contract["api_surface"]
+    assert "training_failures" in contract["operations_signal_families"]
+    assert "retraining_activity" in contract["operations_signal_families"]
+    assert "Latency Percentiles" in monitoring_page
+    assert "Retraining Activity" in monitoring_page
+
+
 def test_problem_details_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(Path("contracts/api/problem-details.v1.json").read_text(encoding="utf-8"))
@@ -324,6 +344,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/artifacts/artifact-manifest.v1.json" in artifact_paths
     assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
     assert "contracts/orchestration/airflow-training.v1.json" in artifact_paths
+    assert "contracts/observability/monitoring-dashboard.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths

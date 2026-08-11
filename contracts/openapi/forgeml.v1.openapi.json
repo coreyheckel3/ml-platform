@@ -3355,6 +3355,526 @@
         "title": "ModelVersionResponse",
         "type": "object"
       },
+      "MonitoringDriftOverviewResponse": {
+        "properties": {
+          "breached_report_count": {
+            "title": "Breached Report Count",
+            "type": "integer"
+          },
+          "drifted_feature_count": {
+            "title": "Drifted Feature Count",
+            "type": "integer"
+          },
+          "failed_report_count": {
+            "title": "Failed Report Count",
+            "type": "integer"
+          },
+          "latest_drift_score": {
+            "title": "Latest Drift Score",
+            "type": "number"
+          },
+          "report_count": {
+            "title": "Report Count",
+            "type": "integer"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/MonitoringDriftSignalResponse"
+            },
+            "title": "Signals",
+            "type": "array"
+          }
+        },
+        "required": [
+          "report_count",
+          "failed_report_count",
+          "breached_report_count",
+          "latest_drift_score",
+          "drifted_feature_count",
+          "signals"
+        ],
+        "title": "MonitoringDriftOverviewResponse",
+        "type": "object"
+      },
+      "MonitoringDriftSignalResponse": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "deployment_id": {
+            "title": "Deployment Id",
+            "type": "string"
+          },
+          "drift_report_id": {
+            "title": "Drift Report Id",
+            "type": "string"
+          },
+          "drift_score": {
+            "title": "Drift Score",
+            "type": "number"
+          },
+          "drift_threshold": {
+            "title": "Drift Threshold",
+            "type": "number"
+          },
+          "drifted_feature_count": {
+            "title": "Drifted Feature Count",
+            "type": "integer"
+          },
+          "endpoint_id": {
+            "title": "Endpoint Id",
+            "type": "string"
+          },
+          "evaluated_feature_count": {
+            "title": "Evaluated Feature Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "drift_report_id",
+          "endpoint_id",
+          "deployment_id",
+          "status",
+          "drift_score",
+          "drift_threshold",
+          "drifted_feature_count",
+          "evaluated_feature_count",
+          "created_at"
+        ],
+        "title": "MonitoringDriftSignalResponse",
+        "type": "object"
+      },
+      "MonitoringInferenceErrorBreakdownResponse": {
+        "properties": {
+          "endpoint_id": {
+            "title": "Endpoint Id",
+            "type": "string"
+          },
+          "endpoint_name": {
+            "title": "Endpoint Name",
+            "type": "string"
+          },
+          "error_count": {
+            "title": "Error Count",
+            "type": "integer"
+          },
+          "error_rate": {
+            "title": "Error Rate",
+            "type": "number"
+          },
+          "request_count": {
+            "title": "Request Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint_id",
+          "endpoint_name",
+          "error_count",
+          "request_count",
+          "error_rate",
+          "status"
+        ],
+        "title": "MonitoringInferenceErrorBreakdownResponse",
+        "type": "object"
+      },
+      "MonitoringInferenceOverviewResponse": {
+        "properties": {
+          "endpoint_count": {
+            "title": "Endpoint Count",
+            "type": "integer"
+          },
+          "error_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/MonitoringInferenceErrorBreakdownResponse"
+            },
+            "title": "Error Breakdown",
+            "type": "array"
+          },
+          "error_count": {
+            "title": "Error Count",
+            "type": "integer"
+          },
+          "error_rate": {
+            "title": "Error Rate",
+            "type": "number"
+          },
+          "latency_percentiles": {
+            "items": {
+              "$ref": "#/components/schemas/MonitoringLatencyPercentileResponse"
+            },
+            "title": "Latency Percentiles",
+            "type": "array"
+          },
+          "prediction_count": {
+            "title": "Prediction Count",
+            "type": "integer"
+          },
+          "request_count": {
+            "title": "Request Count",
+            "type": "integer"
+          },
+          "weighted_p50_latency_ms": {
+            "title": "Weighted P50 Latency Ms",
+            "type": "number"
+          },
+          "weighted_p95_latency_ms": {
+            "title": "Weighted P95 Latency Ms",
+            "type": "number"
+          }
+        },
+        "required": [
+          "endpoint_count",
+          "prediction_count",
+          "error_count",
+          "request_count",
+          "error_rate",
+          "weighted_p50_latency_ms",
+          "weighted_p95_latency_ms",
+          "latency_percentiles",
+          "error_breakdown"
+        ],
+        "title": "MonitoringInferenceOverviewResponse",
+        "type": "object"
+      },
+      "MonitoringLatencyPercentileResponse": {
+        "properties": {
+          "endpoint_id": {
+            "title": "Endpoint Id",
+            "type": "string"
+          },
+          "endpoint_name": {
+            "title": "Endpoint Name",
+            "type": "string"
+          },
+          "latest_window_seconds": {
+            "title": "Latest Window Seconds",
+            "type": "integer"
+          },
+          "p50_latency_ms": {
+            "title": "P50 Latency Ms",
+            "type": "number"
+          },
+          "p95_latency_ms": {
+            "title": "P95 Latency Ms",
+            "type": "number"
+          },
+          "prediction_count": {
+            "title": "Prediction Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "endpoint_id",
+          "endpoint_name",
+          "p50_latency_ms",
+          "p95_latency_ms",
+          "prediction_count",
+          "latest_window_seconds"
+        ],
+        "title": "MonitoringLatencyPercentileResponse",
+        "type": "object"
+      },
+      "MonitoringOperationsOverviewResponse": {
+        "properties": {
+          "active_alert_count": {
+            "title": "Active Alert Count",
+            "type": "integer"
+          },
+          "drift": {
+            "$ref": "#/components/schemas/MonitoringDriftOverviewResponse"
+          },
+          "inference": {
+            "$ref": "#/components/schemas/MonitoringInferenceOverviewResponse"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "retraining": {
+            "$ref": "#/components/schemas/MonitoringRetrainingOverviewResponse"
+          },
+          "training": {
+            "$ref": "#/components/schemas/MonitoringTrainingOverviewResponse"
+          }
+        },
+        "required": [
+          "project_id",
+          "active_alert_count",
+          "inference",
+          "drift",
+          "training",
+          "retraining"
+        ],
+        "title": "MonitoringOperationsOverviewResponse",
+        "type": "object"
+      },
+      "MonitoringRetrainingActivityResponse": {
+        "properties": {
+          "alert_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Event Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "deployment_id": {
+            "title": "Deployment Id",
+            "type": "string"
+          },
+          "drift_report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drift Report Id"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "retraining_run_id": {
+            "title": "Retraining Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "training_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Run Id"
+          },
+          "trigger_type": {
+            "title": "Trigger Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "retraining_run_id",
+          "policy_id",
+          "deployment_id",
+          "trigger_type",
+          "status",
+          "training_run_id",
+          "drift_report_id",
+          "alert_event_id",
+          "created_at"
+        ],
+        "title": "MonitoringRetrainingActivityResponse",
+        "type": "object"
+      },
+      "MonitoringRetrainingOverviewResponse": {
+        "properties": {
+          "enabled_policy_count": {
+            "title": "Enabled Policy Count",
+            "type": "integer"
+          },
+          "failed_count": {
+            "title": "Failed Count",
+            "type": "integer"
+          },
+          "latest_activity": {
+            "items": {
+              "$ref": "#/components/schemas/MonitoringRetrainingActivityResponse"
+            },
+            "title": "Latest Activity",
+            "type": "array"
+          },
+          "pending_approval_count": {
+            "title": "Pending Approval Count",
+            "type": "integer"
+          },
+          "policy_count": {
+            "title": "Policy Count",
+            "type": "integer"
+          },
+          "queued_count": {
+            "title": "Queued Count",
+            "type": "integer"
+          },
+          "run_count": {
+            "title": "Run Count",
+            "type": "integer"
+          },
+          "running_count": {
+            "title": "Running Count",
+            "type": "integer"
+          },
+          "skipped_count": {
+            "title": "Skipped Count",
+            "type": "integer"
+          },
+          "succeeded_count": {
+            "title": "Succeeded Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "policy_count",
+          "enabled_policy_count",
+          "run_count",
+          "pending_approval_count",
+          "queued_count",
+          "running_count",
+          "succeeded_count",
+          "failed_count",
+          "skipped_count",
+          "latest_activity"
+        ],
+        "title": "MonitoringRetrainingOverviewResponse",
+        "type": "object"
+      },
+      "MonitoringTrainingFailureResponse": {
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "attempt_count": {
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "objective_metric_name": {
+            "title": "Objective Metric Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "training_run_id": {
+            "title": "Training Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "training_run_id",
+          "algorithm",
+          "model_type",
+          "status",
+          "objective_metric_name",
+          "error_message",
+          "attempt_count",
+          "completed_at"
+        ],
+        "title": "MonitoringTrainingFailureResponse",
+        "type": "object"
+      },
+      "MonitoringTrainingOverviewResponse": {
+        "properties": {
+          "average_training_time_seconds": {
+            "title": "Average Training Time Seconds",
+            "type": "number"
+          },
+          "dead_lettered_count": {
+            "title": "Dead Lettered Count",
+            "type": "integer"
+          },
+          "failed_count": {
+            "title": "Failed Count",
+            "type": "integer"
+          },
+          "failure_rate": {
+            "title": "Failure Rate",
+            "type": "number"
+          },
+          "latest_failures": {
+            "items": {
+              "$ref": "#/components/schemas/MonitoringTrainingFailureResponse"
+            },
+            "title": "Latest Failures",
+            "type": "array"
+          },
+          "running_count": {
+            "title": "Running Count",
+            "type": "integer"
+          },
+          "total_run_count": {
+            "title": "Total Run Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_run_count",
+          "running_count",
+          "failed_count",
+          "dead_lettered_count",
+          "failure_rate",
+          "average_training_time_seconds",
+          "latest_failures"
+        ],
+        "title": "MonitoringTrainingOverviewResponse",
+        "type": "object"
+      },
       "PredictRequest": {
         "properties": {
           "payload": {
@@ -9327,6 +9847,54 @@
           }
         ],
         "summary": "List Inference Endpoint Monitoring Summaries",
+        "tags": [
+          "monitoring"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/monitoring/operations": {
+      "get": {
+        "operationId": "get_project_monitoring_operations_api_v1_projects__project_id__monitoring_operations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringOperationsOverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Project Monitoring Operations",
         "tags": [
           "monitoring"
         ]

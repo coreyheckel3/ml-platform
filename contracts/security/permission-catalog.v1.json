@@ -419,8 +419,9 @@
       "code": "monitoring:read",
       "description": "Read monitoring summaries and endpoint dashboards.",
       "enforced_at": [
-        "backend/src/forgeml/modules/monitoring/application/services.py:21",
-        "backend/src/forgeml/modules/monitoring/application/services.py:53"
+        "backend/src/forgeml/modules/monitoring/application/services.py:22",
+        "backend/src/forgeml/modules/monitoring/application/services.py:54",
+        "backend/src/forgeml/modules/monitoring/application/services.py:65"
       ],
       "module": "monitoring"
     },

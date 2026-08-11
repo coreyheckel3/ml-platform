@@ -83,6 +83,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="monitoring_dashboard_contract",
+        kind="observability_contract",
+        path="contracts/observability/monitoring-dashboard.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="alembic_migration_contract",
         kind="database_contract",
         path="contracts/database/alembic-migrations.v1.json",
@@ -215,6 +221,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "mlflow_tracking_contract",
     "airflow_orchestration_contract",
     "deployment_runtime_contract",
+    "monitoring_dashboard_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",

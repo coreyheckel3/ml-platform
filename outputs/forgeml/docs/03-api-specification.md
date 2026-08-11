@@ -249,6 +249,7 @@ Prediction response:
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/projects/{project_id}/monitoring/summary` | Project inference, error, latency, and active alert summary |
+| `GET` | `/projects/{project_id}/monitoring/operations` | Project operations overview across inference, drift, training failures, and retraining activity |
 | `GET` | `/projects/{project_id}/monitoring/inference-endpoints` | Per-endpoint prediction, request, error-rate, and latency summaries |
 
 ## Drift Detection

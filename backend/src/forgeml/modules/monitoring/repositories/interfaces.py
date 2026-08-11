@@ -1,7 +1,10 @@
 from typing import Protocol
 from uuid import UUID
 
-from forgeml.modules.monitoring.domain.entities import InferenceEndpointMonitoringSummary
+from forgeml.modules.monitoring.domain.entities import (
+    InferenceEndpointMonitoringSummary,
+    MonitoringOperationsOverview,
+)
 
 
 class MonitoringRepository(Protocol):
@@ -13,4 +16,11 @@ class MonitoringRepository(Protocol):
         raise NotImplementedError
 
     def count_active_alerts(self, organization_id: UUID, project_id: UUID) -> int:
+        raise NotImplementedError
+
+    def get_operations_overview(
+        self,
+        organization_id: UUID,
+        project_id: UUID,
+    ) -> MonitoringOperationsOverview:
         raise NotImplementedError
