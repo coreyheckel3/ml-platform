@@ -8,10 +8,12 @@ from forgeml.modules.deployments.domain.entities import (
 from forgeml.modules.deployments.domain.policies import (
     build_deployment_slug,
     parse_deployment_environment,
+    validate_canary_request_count,
     validate_deployable_model_version,
     validate_health_check,
     validate_rollback_target,
     validate_traffic_percentage,
+    validate_traffic_target_status,
 )
 from forgeml.platform.domain.errors import DomainValidationError
 
@@ -44,6 +46,19 @@ def test_deployable_model_version_requires_approved_status(model_version_referen
 def test_validate_traffic_percentage_rejects_invalid_values() -> None:
     with pytest.raises(DomainValidationError):
         validate_traffic_percentage(101)
+
+
+def test_validate_traffic_target_status_requires_runtime_ready_revision() -> None:
+    validate_traffic_target_status(DeploymentRevisionStatus.HEALTHY)
+    validate_traffic_target_status(DeploymentRevisionStatus.DEGRADED)
+    with pytest.raises(DomainValidationError):
+        validate_traffic_target_status(DeploymentRevisionStatus.DEPLOYING)
+
+
+def test_validate_canary_request_count_bounds_simulation_size() -> None:
+    validate_canary_request_count(1000)
+    with pytest.raises(DomainValidationError):
+        validate_canary_request_count(0)
 
 
 def test_validate_health_check_rejects_invalid_error_rate() -> None:

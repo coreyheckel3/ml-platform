@@ -8,21 +8,26 @@ from forgeml.modules.deployments.application.services import (
     CreateDeploymentCommand,
     CreateDeploymentRevisionCommand,
     DeploymentService,
+    ProbeDeploymentRevisionCommand,
     RecordDeploymentHealthCommand,
     RollbackDeploymentCommand,
+    SimulateCanaryTrafficCommand,
     UpdateDeploymentTrafficCommand,
 )
 from forgeml.modules.deployments.domain.entities import (
     Deployment,
+    DeploymentEnvironment,
     DeploymentEvent,
     DeploymentHealthCheck,
     DeploymentHealthStatus,
     DeploymentRevision,
     DeploymentRevisionStatus,
+    DeploymentStatus,
     ModelVersionDeploymentReference,
 )
 from forgeml.platform.domain.errors import ConflictError, DomainValidationError
 from forgeml.platform.security.rbac import Principal
+from forgeml.platform.serving import ServingHealthProbeResult
 
 
 class FakeDeploymentRepository:
@@ -122,10 +127,16 @@ class FakeDeploymentRepository:
 
 
 class FakeDeploymentOrchestrator:
+    def __init__(self) -> None:
+        self.traffic_updates: list[tuple[UUID, UUID, int]] = []
+        self.rollbacks: list[tuple[UUID, UUID, UUID | None]] = []
+        self.probes: list[UUID] = []
+
     def deploy_revision(self, deployment: Deployment, revision: DeploymentRevision) -> str:
         return f"serving:{deployment.id}:{revision.id}"
 
     def update_traffic(self, deployment: Deployment, revision: DeploymentRevision) -> str:
+        self.traffic_updates.append((deployment.id, revision.id, revision.traffic_percentage))
         return f"traffic:{deployment.id}:{revision.id}:{revision.traffic_percentage}"
 
     def rollback(
@@ -134,8 +145,31 @@ class FakeDeploymentOrchestrator:
         target_revision: DeploymentRevision,
         previous_revision: DeploymentRevision | None,
     ) -> str:
+        self.rollbacks.append(
+            (
+                deployment.id,
+                target_revision.id,
+                previous_revision.id if previous_revision else None,
+            )
+        )
         previous = str(previous_revision.id) if previous_revision else "none"
         return f"rollback:{deployment.id}:{previous}:{target_revision.id}"
+
+    def probe_revision(
+        self,
+        deployment: Deployment,
+        revision: DeploymentRevision,
+    ) -> ServingHealthProbeResult:
+        self.probes.append(revision.id)
+        return ServingHealthProbeResult(
+            deployment_id=deployment.id,
+            deployment_revision_id=revision.id,
+            status="healthy",
+            latency_ms=14.2,
+            error_rate=0.001,
+            details={"runtime_deployment_id": revision.orchestrator_deployment_id},
+            observed_at=datetime.now(UTC),
+        )
 
 
 class FakeAuditLogRepository:
@@ -269,6 +303,148 @@ def test_deployment_service_creates_revision_health_and_rollback() -> None:
     assert audit_log.events[-1].metadata["target_revision_id"] == str(revision.id)
 
 
+def test_deployment_service_plans_canary_traffic_and_simulates_routing() -> None:
+    repository = FakeDeploymentRepository()
+    orchestrator = FakeDeploymentOrchestrator()
+    service = DeploymentService(repository=repository, orchestrator=orchestrator)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    model_version_id = uuid4()
+    deployment = _deployment(organization_id, project_id, user_id)
+    repository.deployments[deployment.id] = deployment
+    baseline = _revision(
+        deployment.id,
+        model_version_id,
+        revision=1,
+        status=DeploymentRevisionStatus.HEALTHY,
+        traffic_percentage=100,
+    )
+    canary = _revision(
+        deployment.id,
+        model_version_id,
+        revision=2,
+        status=DeploymentRevisionStatus.HEALTHY,
+        traffic_percentage=0,
+    )
+    repository.revisions[baseline.id] = baseline
+    repository.revisions[canary.id] = canary
+    actor = principal(
+        organization_id,
+        user_id,
+        {"deployment_revisions:traffic", "deployments:read"},
+    )
+
+    updated_canary = service.update_traffic(
+        UpdateDeploymentTrafficCommand(revision_id=canary.id, traffic_percentage=10),
+        actor,
+    )
+    simulation = service.simulate_canary_traffic(
+        SimulateCanaryTrafficCommand(
+            deployment_id=deployment.id,
+            canary_revision_id=canary.id,
+            request_count=1000,
+            routing_seed="fixed-seed",
+        ),
+        actor,
+    )
+
+    assert updated_canary.traffic_percentage == 10
+    assert repository.revisions[baseline.id].traffic_percentage == 90
+    assert repository.revisions[canary.id].traffic_percentage == 10
+    assert sorted(traffic for _, _, traffic in orchestrator.traffic_updates) == [10, 90]
+    assert sum(allocation.simulated_request_count for allocation in simulation.allocations) == 1000
+    assert {allocation.traffic_percentage for allocation in simulation.allocations} == {10, 90}
+
+
+def test_deployment_service_probe_records_runtime_health_check() -> None:
+    repository = FakeDeploymentRepository()
+    orchestrator = FakeDeploymentOrchestrator()
+    service = DeploymentService(repository=repository, orchestrator=orchestrator)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    model_version_id = uuid4()
+    deployment = _deployment(organization_id, project_id, user_id)
+    revision = _revision(
+        deployment.id,
+        model_version_id,
+        revision=1,
+        status=DeploymentRevisionStatus.DEPLOYING,
+        traffic_percentage=10,
+    )
+    repository.deployments[deployment.id] = deployment
+    repository.revisions[revision.id] = revision
+    actor = principal(organization_id, user_id, {"deployment_health:write"})
+
+    health_check = service.probe_revision_health(
+        ProbeDeploymentRevisionCommand(revision_id=revision.id),
+        actor,
+    )
+
+    assert health_check.status == DeploymentHealthStatus.HEALTHY
+    assert health_check.latency_ms == 14.2
+    assert health_check.details["runtime_deployment_id"] == revision.orchestrator_deployment_id
+    assert repository.revisions[revision.id].status == DeploymentRevisionStatus.HEALTHY
+    assert orchestrator.probes == [revision.id]
+    assert {event.event_type for event in repository.events} >= {
+        "health_checked",
+        "health_probed",
+    }
+
+
+def test_deployment_service_rollback_drains_all_active_non_target_revisions() -> None:
+    repository = FakeDeploymentRepository()
+    orchestrator = FakeDeploymentOrchestrator()
+    service = DeploymentService(repository=repository, orchestrator=orchestrator)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    model_version_id = uuid4()
+    deployment = _deployment(organization_id, project_id, user_id)
+    target = _revision(
+        deployment.id,
+        model_version_id,
+        revision=1,
+        status=DeploymentRevisionStatus.HEALTHY,
+        traffic_percentage=0,
+    )
+    active = _revision(
+        deployment.id,
+        model_version_id,
+        revision=2,
+        status=DeploymentRevisionStatus.HEALTHY,
+        traffic_percentage=90,
+    )
+    canary = _revision(
+        deployment.id,
+        model_version_id,
+        revision=3,
+        status=DeploymentRevisionStatus.DEGRADED,
+        traffic_percentage=10,
+    )
+    repository.deployments[deployment.id] = deployment
+    for revision in (target, active, canary):
+        repository.revisions[revision.id] = revision
+    actor = principal(organization_id, user_id, {"deployments:rollback"})
+
+    rolled_back = service.rollback_deployment(
+        RollbackDeploymentCommand(
+            deployment_id=deployment.id,
+            target_revision_id=target.id,
+        ),
+        actor,
+    )
+
+    assert rolled_back.traffic_percentage == 100
+    assert repository.revisions[active.id].traffic_percentage == 0
+    assert repository.revisions[canary.id].traffic_percentage == 0
+    assert repository.revisions[active.id].status == DeploymentRevisionStatus.ROLLED_BACK
+    assert repository.revisions[canary.id].status == DeploymentRevisionStatus.ROLLED_BACK
+    assert orchestrator.rollbacks == [(deployment.id, target.id, canary.id)]
+    assert sorted(update[2] for update in orchestrator.traffic_updates) == [0, 0]
+
+
 def test_deployment_service_rejects_duplicate_deployment_slug() -> None:
     repository = FakeDeploymentRepository()
     service = DeploymentService(
@@ -343,3 +519,39 @@ def test_deployment_service_rejects_unapproved_model_version() -> None:
             ),
             actor,
         )
+
+
+def _deployment(organization_id: UUID, project_id: UUID, user_id: UUID) -> Deployment:
+    return Deployment(
+        id=uuid4(),
+        organization_id=organization_id,
+        project_id=project_id,
+        name="Fraud Risk Production",
+        slug="fraud-risk-production",
+        description="Production risk scoring endpoint.",
+        environment=DeploymentEnvironment.PRODUCTION,
+        status=DeploymentStatus.ACTIVE,
+        created_by=user_id,
+    )
+
+
+def _revision(
+    deployment_id: UUID,
+    model_version_id: UUID,
+    *,
+    revision: int,
+    status: DeploymentRevisionStatus,
+    traffic_percentage: int,
+) -> DeploymentRevision:
+    return DeploymentRevision(
+        id=uuid4(),
+        deployment_id=deployment_id,
+        model_version_id=model_version_id,
+        revision=revision,
+        serving_image="ghcr.io/forgeml/serving/xgboost:1.0.0",
+        runtime_config={"replicas": 3},
+        traffic_percentage=traffic_percentage,
+        status=status,
+        orchestrator_deployment_id=f"serving-{revision}",
+        created_by=uuid4(),
+    )

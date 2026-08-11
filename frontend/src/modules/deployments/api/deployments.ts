@@ -43,6 +43,22 @@ export type DeploymentEvent = {
   metadata: Record<string, unknown>;
 };
 
+export type DeploymentCanarySimulationAllocation = {
+  deployment_revision_id: string;
+  revision: number;
+  traffic_percentage: number;
+  simulated_request_count: number;
+};
+
+export type DeploymentCanarySimulation = {
+  deployment_id: string;
+  canary_revision_id: string;
+  request_count: number;
+  routing_seed: string;
+  allocations: DeploymentCanarySimulationAllocation[];
+  metadata: Record<string, unknown>;
+};
+
 export type DeploymentListResponse = {
   items: Deployment[];
   next_cursor: string | null;
@@ -89,6 +105,13 @@ export type RecordDeploymentHealthPayload = {
 
 export type RollbackDeploymentPayload = {
   target_revision_id: string;
+};
+
+export type SimulateCanaryTrafficPayload = {
+  canary_revision_id: string;
+  request_count: number;
+  canary_percentage: number;
+  routing_seed: string;
 };
 
 export function createDeployment(
@@ -171,6 +194,17 @@ export function listDeploymentHealthChecks(
   );
 }
 
+export function probeDeploymentRevisionHealth(
+  revisionId: string,
+  token: string,
+): Promise<DeploymentHealthCheck> {
+  return apiPost<Record<string, never>, DeploymentHealthCheck>(
+    `/api/v1/deployment-revisions/${revisionId}/health-probe`,
+    {},
+    { token },
+  );
+}
+
 export function rollbackDeployment(
   deploymentId: string,
   payload: RollbackDeploymentPayload,
@@ -178,6 +212,18 @@ export function rollbackDeployment(
 ): Promise<DeploymentRevision> {
   return apiPost<RollbackDeploymentPayload, DeploymentRevision>(
     `/api/v1/deployments/${deploymentId}/rollback`,
+    payload,
+    { token },
+  );
+}
+
+export function simulateDeploymentCanaryTraffic(
+  deploymentId: string,
+  payload: SimulateCanaryTrafficPayload,
+  token: string,
+): Promise<DeploymentCanarySimulation> {
+  return apiPost<SimulateCanaryTrafficPayload, DeploymentCanarySimulation>(
+    `/api/v1/deployments/${deploymentId}/canary-simulation`,
     payload,
     { token },
   );

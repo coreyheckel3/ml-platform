@@ -60,6 +60,9 @@ def test_checked_in_openapi_contract_covers_core_platform_groups() -> None:
     assert "/api/v1/projects/{project_id}/training-runs" in paths
     assert "/api/v1/training-runs/{training_run_id}/orchestration-status" in paths
     assert "/api/v1/models/{model_id}/versions/promote-training-run" in paths
+    assert "/api/v1/deployments/{deployment_id}/canary-simulation" in paths
+    assert "/api/v1/deployment-revisions/{revision_id}/health-probe" in paths
     assert "/api/v1/inference-endpoints/{endpoint_id}/predict" in paths
+    assert "/api/v1/inference-endpoints/{endpoint_id}/health-probe" in paths
     assert "/api/v1/projects/{project_id}/drift-reports" in paths
     assert "/api/v1/retraining-policies/{policy_id}/trigger" in paths

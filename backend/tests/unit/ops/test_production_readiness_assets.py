@@ -163,6 +163,23 @@ def test_airflow_orchestration_contract_gate_is_enforced() -> None:
     assert "AirflowTrainingWorkflowOrchestrator" in orchestrator_source
 
 
+def test_deployment_runtime_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/runtime/deployment-serving.v1.json").read_text(encoding="utf-8")
+    )
+    serving_source = Path("backend/src/forgeml/platform/serving/runtime.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_deployment_runtime_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.deployment_runtime_contract.v1"
+    assert contract["serving_runtime_schema_version"] == "forgeml.serving_runtime.v1"
+    assert contract["adapter_boundary"]["gateway_protocol"] == "ServingRuntimeGateway"
+    assert "rollback" in contract["traffic_semantics"]
+    assert "InMemoryServingRuntimeGateway" in serving_source
+
+
 def test_problem_details_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(Path("contracts/api/problem-details.v1.json").read_text(encoding="utf-8"))

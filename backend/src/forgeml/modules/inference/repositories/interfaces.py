@@ -4,6 +4,7 @@ from uuid import UUID
 from forgeml.modules.inference.domain.entities import (
     DeploymentRevisionServingReference,
     InferenceEndpoint,
+    InferenceHealthProbeResult,
     InferenceMetricSnapshot,
     InferencePredictionResult,
     InferenceRequestLog,
@@ -34,6 +35,12 @@ class InferenceRepository(Protocol):
     ) -> DeploymentRevisionServingReference | None:
         raise NotImplementedError
 
+    def list_deployment_serving_references(
+        self,
+        deployment_id: UUID,
+    ) -> list[DeploymentRevisionServingReference]:
+        raise NotImplementedError
+
     def add_request_log(self, request_log: InferenceRequestLog) -> InferenceRequestLog:
         raise NotImplementedError
 
@@ -59,4 +66,10 @@ class InferenceRuntime(Protocol):
         reference: DeploymentRevisionServingReference,
         payload: dict[str, object],
     ) -> InferencePredictionResult:
+        raise NotImplementedError
+
+    def health_probe(
+        self,
+        reference: DeploymentRevisionServingReference,
+    ) -> InferenceHealthProbeResult:
         raise NotImplementedError

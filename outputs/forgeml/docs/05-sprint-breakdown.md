@@ -1734,6 +1734,47 @@ Implemented scope:
 - `.env.example`, API routes, retraining launch, and the training worker use the same orchestrator factory.
 - `contracts/orchestration/airflow-training.v1.json` and `scripts/ci/check_airflow_orchestration_contract.py` lock the adapter boundary and CI wiring.
 
+## Sprint 55: Deployment Runtime Hardening
+
+Goal: Harden deployment serving semantics behind a replaceable runtime boundary
+while making rollout safety visible through the API and web console.
+
+Scope:
+
+- Serving runtime gateway protocol
+- Deterministic local serving runtime adapter
+- Deployment orchestrator adapter backed by the serving gateway
+- Traffic plan validation for full promotion and canary rollout
+- Deterministic canary traffic simulation
+- Rollback draining for all active non-target revisions
+- Deployment revision runtime health probes
+- Inference endpoint health probes
+- Endpoint prediction revision resolution through current traffic weights
+- Release and production-readiness contract wiring
+
+Acceptance criteria:
+
+- Deployment orchestration uses a serving gateway abstraction that can be replaced by Kubernetes, SageMaker, KServe, or another runtime adapter.
+- Assigning positive traffic requires a healthy or degraded serving revision.
+- Full promotion drains active peer revisions to zero traffic.
+- Canary rollout keeps a healthy baseline revision on the remaining traffic allocation.
+- Rollback sends the target revision to full traffic and drains every active non-target revision.
+- Predictions resolve the actual serving revision from current deployment traffic, not stale endpoint metadata alone.
+- Health probes exercise the same serving/runtime resolution path used by deployment and inference operations.
+- CI and production-readiness gates validate the deployment runtime contract.
+
+Implemented scope:
+
+- `forgeml.platform.serving` now defines `ServingRuntimeGateway`, request/result contracts, traffic planning helpers, and an in-memory local adapter.
+- `LocalDeploymentOrchestrator` delegates deploy, traffic, rollback, and health probe operations through the serving gateway boundary.
+- `DeploymentService` builds explicit traffic plans for canary, promotion, drain, and rollback workflows and records rollout metadata in events and audit logs.
+- `POST /api/v1/deployment-revisions/{revision_id}/health-probe` records runtime-observed revision health.
+- `POST /api/v1/deployments/{deployment_id}/canary-simulation` returns deterministic weighted request allocation for rollout review.
+- `InferenceService` resolves predictions and endpoint probes against current deployment traffic using deterministic request-id weighted routing.
+- `GET /api/v1/inference-endpoints/{endpoint_id}/health-probe` exposes endpoint runtime health without making a prediction request.
+- The Deployments page exposes revision probes and 10 percent canary simulation from the rollout console.
+- `contracts/runtime/deployment-serving.v1.json` and `scripts/ci/check_deployment_runtime_contract.py` lock serving semantics and CI wiring.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1752,7 +1793,7 @@ sequence.
 | 52 | Artifact Storage Abstraction | Completed | S3-compatible manifest storage boundary, dataset and model artifact manifests, checksum validation, lineage, contracts, and CI wiring. |
 | 53 | MLflow Integration Layer | Completed | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, failure-safe sync reports, and adapter contract tests. |
 | 54 | Airflow Orchestration Adapter | Completed | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, state mapping, and orchestration contract tests. |
-| 55 | Deployment Runtime Hardening | Planned | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
+| 55 | Deployment Runtime Hardening | Completed | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
 | 56 | Monitoring Dashboards v2 | Planned | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
 | 57 | Security and Multi-Tenant Hardening | Planned | Organization isolation tests, RBAC matrix tests, rate-limit tests, audit-log coverage expansion, secrets policy, and configuration documentation. |
 | 58 | Developer Experience / Demo Readiness | Planned | One-command local bootstrap, guided demo script, seeded data refresh, screenshots, architecture walkthrough, and reviewer-facing setup path. |

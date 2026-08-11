@@ -78,6 +78,29 @@ class RollbackDeploymentRequest(BaseModel):
     target_revision_id: str
 
 
+class SimulateCanaryTrafficRequest(BaseModel):
+    canary_revision_id: str
+    request_count: int = Field(default=1000, ge=1, le=100000)
+    canary_percentage: int | None = Field(default=None, ge=1, le=99)
+    routing_seed: str = Field(default="forgeml-canary-simulation", min_length=1, max_length=160)
+
+
+class DeploymentCanarySimulationAllocationResponse(BaseModel):
+    deployment_revision_id: str
+    revision: int
+    traffic_percentage: int
+    simulated_request_count: int
+
+
+class DeploymentCanarySimulationResponse(BaseModel):
+    deployment_id: str
+    canary_revision_id: str
+    request_count: int
+    routing_seed: str
+    allocations: list[DeploymentCanarySimulationAllocationResponse]
+    metadata: dict[str, object]
+
+
 class DeploymentEventResponse(BaseModel):
     id: str
     deployment_id: str

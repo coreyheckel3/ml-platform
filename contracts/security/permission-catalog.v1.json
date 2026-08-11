@@ -122,7 +122,8 @@
       "code": "deployment_health:write",
       "description": "Record deployment revision health checks.",
       "enforced_at": [
-        "backend/src/forgeml/modules/deployments/application/services.py:248"
+        "backend/src/forgeml/modules/deployments/application/services.py:278",
+        "backend/src/forgeml/modules/deployments/application/services.py:383"
       ],
       "module": "deployments"
     },
@@ -131,7 +132,7 @@
       "code": "deployment_revisions:create",
       "description": "Create deployment revisions.",
       "enforced_at": [
-        "backend/src/forgeml/modules/deployments/application/services.py:136"
+        "backend/src/forgeml/modules/deployments/application/services.py:156"
       ],
       "module": "deployments"
     },
@@ -140,7 +141,7 @@
       "code": "deployment_revisions:traffic",
       "description": "Update deployment revision traffic allocations.",
       "enforced_at": [
-        "backend/src/forgeml/modules/deployments/application/services.py:211"
+        "backend/src/forgeml/modules/deployments/application/services.py:231"
       ],
       "module": "deployments"
     },
@@ -149,7 +150,7 @@
       "code": "deployments:create",
       "description": "Create deployments.",
       "enforced_at": [
-        "backend/src/forgeml/modules/deployments/application/services.py:96"
+        "backend/src/forgeml/modules/deployments/application/services.py:116"
       ],
       "module": "deployments"
     },
@@ -158,11 +159,12 @@
       "code": "deployments:read",
       "description": "Read deployments.",
       "enforced_at": [
-        "backend/src/forgeml/modules/deployments/application/services.py:124",
-        "backend/src/forgeml/modules/deployments/application/services.py:128",
-        "backend/src/forgeml/modules/deployments/application/services.py:202",
-        "backend/src/forgeml/modules/deployments/application/services.py:283",
-        "backend/src/forgeml/modules/deployments/application/services.py:342"
+        "backend/src/forgeml/modules/deployments/application/services.py:144",
+        "backend/src/forgeml/modules/deployments/application/services.py:148",
+        "backend/src/forgeml/modules/deployments/application/services.py:222",
+        "backend/src/forgeml/modules/deployments/application/services.py:313",
+        "backend/src/forgeml/modules/deployments/application/services.py:417",
+        "backend/src/forgeml/modules/deployments/application/services.py:468"
       ],
       "module": "deployments"
     },
@@ -171,7 +173,7 @@
       "code": "deployments:rollback",
       "description": "Roll back deployments to a prior healthy revision.",
       "enforced_at": [
-        "backend/src/forgeml/modules/deployments/application/services.py:292"
+        "backend/src/forgeml/modules/deployments/application/services.py:322"
       ],
       "module": "deployments"
     },
@@ -326,7 +328,7 @@
       "code": "inference:predict",
       "description": "Invoke online prediction endpoints.",
       "enforced_at": [
-        "backend/src/forgeml/modules/inference/application/services.py:123"
+        "backend/src/forgeml/modules/inference/application/services.py:126"
       ],
       "module": "inference"
     },
@@ -335,7 +337,7 @@
       "code": "inference_endpoints:create",
       "description": "Create inference endpoints.",
       "enforced_at": [
-        "backend/src/forgeml/modules/inference/application/services.py:76"
+        "backend/src/forgeml/modules/inference/application/services.py:79"
       ],
       "module": "inference"
     },
@@ -344,10 +346,11 @@
       "code": "inference_endpoints:read",
       "description": "Read inference endpoints and prediction request logs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/inference/application/services.py:115",
-        "backend/src/forgeml/modules/inference/application/services.py:119",
-        "backend/src/forgeml/modules/inference/application/services.py:172",
-        "backend/src/forgeml/modules/inference/application/services.py:207"
+        "backend/src/forgeml/modules/inference/application/services.py:118",
+        "backend/src/forgeml/modules/inference/application/services.py:122",
+        "backend/src/forgeml/modules/inference/application/services.py:176",
+        "backend/src/forgeml/modules/inference/application/services.py:199",
+        "backend/src/forgeml/modules/inference/application/services.py:234"
       ],
       "module": "inference"
     },
@@ -356,7 +359,7 @@
       "code": "inference_metrics:write",
       "description": "Record inference metric snapshots.",
       "enforced_at": [
-        "backend/src/forgeml/modules/inference/application/services.py:181"
+        "backend/src/forgeml/modules/inference/application/services.py:208"
       ],
       "module": "inference"
     },

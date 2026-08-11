@@ -113,6 +113,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="deployment_runtime_contract",
+        kind="runtime_contract",
+        path="contracts/runtime/deployment-serving.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="release_smoke_contract",
         kind="operations_contract",
         path="contracts/ops/release-smoke.v1.json",
@@ -208,6 +214,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "artifact_manifest_contract",
     "mlflow_tracking_contract",
     "airflow_orchestration_contract",
+    "deployment_runtime_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",

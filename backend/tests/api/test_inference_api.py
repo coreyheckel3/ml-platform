@@ -8,6 +8,7 @@ from forgeml.modules.inference.api.routes import get_inference_service
 from forgeml.modules.inference.domain.entities import (
     InferenceEndpoint,
     InferenceEndpointStatus,
+    InferenceHealthProbe,
     InferenceMetricSnapshot,
     InferencePrediction,
     InferenceRequestLog,
@@ -69,6 +70,17 @@ class FakeInferenceService:
                 error_message=None,
             )
         ]
+
+    def probe_endpoint(self, endpoint_id, principal):
+        assert endpoint_id == self.endpoint_id
+        return InferenceHealthProbe(
+            endpoint_id=self.endpoint_id,
+            deployment_revision_id=self.revision_id,
+            status="healthy",
+            latency_ms=9.4,
+            error_rate=0.001,
+            details={"model_version_id": "model-version-1"},
+        )
 
     def record_metric_snapshot(self, command, principal):
         assert command.prediction_count == 1200
@@ -145,6 +157,7 @@ def test_inference_routes_expose_endpoint_prediction_and_metric_lifecycle() -> N
         json={"request_id": "req-001", "payload": {"amount": 128.45}},
     )
     requests = client.get(f"/api/v1/inference-endpoints/{service.endpoint_id}/requests")
+    probe = client.get(f"/api/v1/inference-endpoints/{service.endpoint_id}/health-probe")
     recorded_snapshot = client.post(
         f"/api/v1/inference-endpoints/{service.endpoint_id}/metric-snapshots",
         json={
@@ -169,6 +182,9 @@ def test_inference_routes_expose_endpoint_prediction_and_metric_lifecycle() -> N
     assert prediction.json()["output_payload"]["score"] == 0.81
     assert requests.status_code == 200
     assert requests.json()["items"][0]["request_id"] == "req-001"
+    assert probe.status_code == 200
+    assert probe.json()["deployment_revision_id"] == str(service.revision_id)
+    assert probe.json()["status"] == "healthy"
     assert recorded_snapshot.status_code == 201
     assert recorded_snapshot.json()["p95_latency_ms"] == 46.8
     assert snapshots.status_code == 200

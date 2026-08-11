@@ -2,8 +2,10 @@ from dataclasses import dataclass
 from uuid import UUID, uuid4
 
 from forgeml.modules.inference.domain.entities import (
+    DeploymentRevisionServingReference,
     InferenceEndpoint,
     InferenceEndpointStatus,
+    InferenceHealthProbe,
     InferenceMetricSnapshot,
     InferencePrediction,
     InferenceRequestLog,
@@ -13,6 +15,7 @@ from forgeml.modules.inference.domain.policies import (
     build_endpoint_slug,
     build_route_path,
     normalize_route_path,
+    select_serving_reference_for_request,
     validate_endpoint_name,
     validate_endpoint_status,
     validate_metric_snapshot,
@@ -126,16 +129,16 @@ class InferenceService:
         validate_prediction_payload(command.payload)
         if self._repository.request_id_exists(endpoint.id, request_id):
             raise ConflictError("An inference request already uses this request id.")
+        deployment_revision_id = endpoint.deployment_revision_id
         try:
             validate_endpoint_status(endpoint.status)
-            reference = self._repository.get_serving_reference(endpoint.deployment_revision_id)
-            if reference is None:
-                raise ResourceNotFoundError("Deployment revision was not found.")
-            validate_serving_reference(reference)
+            reference = self._resolve_serving_reference(endpoint, routing_key=request_id)
+            deployment_revision_id = reference.deployment_revision_id
             result = self._runtime.predict(reference, command.payload)
         except Exception as exc:
             self._record_request_log(
                 endpoint=endpoint,
+                deployment_revision_id=deployment_revision_id,
                 request_id=request_id,
                 status=InferenceRequestStatus.REJECTED,
                 latency_ms=0.0,
@@ -147,6 +150,7 @@ class InferenceService:
 
         request_log = self._record_request_log(
             endpoint=endpoint,
+            deployment_revision_id=deployment_revision_id,
             request_id=request_id,
             status=InferenceRequestStatus.SUCCEEDED,
             latency_ms=result.latency_ms,
@@ -157,11 +161,34 @@ class InferenceService:
         return InferencePrediction(
             log_id=request_log.id,
             endpoint_id=endpoint.id,
-            deployment_revision_id=endpoint.deployment_revision_id,
+            deployment_revision_id=request_log.deployment_revision_id,
             request_id=request_log.request_id,
             status=request_log.status,
             latency_ms=request_log.latency_ms,
             output_payload=request_log.output_payload,
+        )
+
+    def probe_endpoint(
+        self,
+        endpoint_id: UUID,
+        principal: Principal,
+    ) -> InferenceHealthProbe:
+        self._require(principal, "inference_endpoints:read")
+        endpoint = self._get_scoped_endpoint(endpoint_id, principal)
+        validate_endpoint_status(endpoint.status)
+        reference = self._resolve_serving_reference(
+            endpoint,
+            routing_key=f"health-probe:{endpoint.id}",
+        )
+        validate_serving_reference(reference)
+        result = self._runtime.health_probe(reference)
+        return InferenceHealthProbe(
+            endpoint_id=endpoint.id,
+            deployment_revision_id=reference.deployment_revision_id,
+            status=result.status,
+            latency_ms=result.latency_ms,
+            error_rate=result.error_rate,
+            details=result.details,
         )
 
     def list_request_logs(
@@ -212,6 +239,7 @@ class InferenceService:
         self,
         *,
         endpoint: InferenceEndpoint,
+        deployment_revision_id: UUID,
         request_id: str,
         status: InferenceRequestStatus,
         latency_ms: float,
@@ -224,7 +252,7 @@ class InferenceService:
             InferenceRequestLog(
                 id=uuid4(),
                 endpoint_id=endpoint.id,
-                deployment_revision_id=endpoint.deployment_revision_id,
+                deployment_revision_id=deployment_revision_id,
                 request_id=request_id,
                 status=status,
                 latency_ms=latency_ms,
@@ -243,6 +271,28 @@ class InferenceService:
         if endpoint is None or str(endpoint.organization_id) != principal.organization_id:
             raise ResourceNotFoundError("Inference endpoint was not found.")
         return endpoint
+
+    def _resolve_serving_reference(
+        self,
+        endpoint: InferenceEndpoint,
+        *,
+        routing_key: str,
+    ) -> DeploymentRevisionServingReference:
+        references = self._repository.list_deployment_serving_references(
+            endpoint.deployment_id
+        )
+        if not references:
+            reference = self._repository.get_serving_reference(endpoint.deployment_revision_id)
+            if reference is None:
+                raise ResourceNotFoundError("Deployment revision was not found.")
+            references = [reference]
+        reference = select_serving_reference_for_request(
+            endpoint_revision_id=endpoint.deployment_revision_id,
+            references=references,
+            routing_key=routing_key,
+        )
+        validate_serving_reference(reference)
+        return reference
 
     def _require(self, principal: Principal, permission: str) -> None:
         if not principal.has(permission):

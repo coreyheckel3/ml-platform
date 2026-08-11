@@ -207,14 +207,17 @@ Training job request:
 | `POST` | `/deployment-revisions/{revision_id}/traffic` | Update revision traffic allocation |
 | `POST` | `/deployment-revisions/{revision_id}/health-checks` | Record revision health |
 | `GET` | `/deployment-revisions/{revision_id}/health-checks` | List revision health checks |
+| `POST` | `/deployment-revisions/{revision_id}/health-probe` | Probe the serving runtime and record revision health |
+| `POST` | `/deployments/{deployment_id}/canary-simulation` | Simulate deterministic weighted traffic for a canary revision |
 | `POST` | `/deployments/{deployment_id}/rollback` | Roll back to prior healthy revision |
 | `GET` | `/deployments/{deployment_id}/events` | Get rollout events |
 
 ## Inference
 
-Inference endpoints are project scoped and bind to a specific deployment revision. This keeps
-prediction logs attributable to the exact model version and serving configuration used for a
-request.
+Inference endpoints are project scoped and are created from a deployment
+revision. Prediction and probe requests resolve the current servable deployment
+revision from deployment traffic weights, then log the exact model version and
+serving configuration used for the request.
 
 | Method | Path | Description |
 | --- | --- | --- |
@@ -222,6 +225,7 @@ request.
 | `GET` | `/projects/{project_id}/inference-endpoints` | List project inference endpoints |
 | `GET` | `/inference-endpoints/{endpoint_id}` | Get inference endpoint metadata |
 | `POST` | `/inference-endpoints/{endpoint_id}/predict` | Run online prediction through the endpoint runtime |
+| `GET` | `/inference-endpoints/{endpoint_id}/health-probe` | Probe the resolved endpoint runtime revision |
 | `GET` | `/inference-endpoints/{endpoint_id}/requests` | List immutable prediction request logs |
 | `POST` | `/inference-endpoints/{endpoint_id}/metric-snapshots` | Record aggregated prediction, error, and latency metrics |
 | `GET` | `/inference-endpoints/{endpoint_id}/metric-snapshots` | List endpoint metric snapshots |

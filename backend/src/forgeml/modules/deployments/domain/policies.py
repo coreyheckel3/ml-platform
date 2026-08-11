@@ -10,6 +10,10 @@ from forgeml.platform.domain.errors import DomainValidationError
 
 _SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
 _SERVING_IMAGE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/@-]*$")
+_TRAFFIC_READY_REVISION_STATUSES = {
+    DeploymentRevisionStatus.HEALTHY,
+    DeploymentRevisionStatus.DEGRADED,
+}
 
 
 def build_deployment_slug(name: str) -> str:
@@ -58,6 +62,20 @@ def validate_runtime_config(runtime_config: dict[str, object]) -> None:
 def validate_traffic_percentage(traffic_percentage: int) -> None:
     if traffic_percentage < 0 or traffic_percentage > 100:
         raise DomainValidationError("Traffic percentage must be between 0 and 100.")
+
+
+def validate_traffic_target_status(status: DeploymentRevisionStatus) -> None:
+    if status not in _TRAFFIC_READY_REVISION_STATUSES:
+        raise DomainValidationError(
+            "Deployment traffic can only target healthy or degraded revisions."
+        )
+
+
+def validate_canary_request_count(request_count: int) -> None:
+    if request_count <= 0 or request_count > 100_000:
+        raise DomainValidationError(
+            "Canary traffic simulation request count must be between 1 and 100000."
+        )
 
 
 def validate_health_check(

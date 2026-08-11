@@ -8,6 +8,7 @@ from forgeml.modules.deployments.domain.entities import (
     DeploymentRevision,
     ModelVersionDeploymentReference,
 )
+from forgeml.platform.serving import ServingHealthProbeResult
 
 
 class DeploymentRepository(Protocol):
@@ -78,4 +79,11 @@ class DeploymentOrchestrator(Protocol):
         target_revision: DeploymentRevision,
         previous_revision: DeploymentRevision | None,
     ) -> str:
+        raise NotImplementedError
+
+    def probe_revision(
+        self,
+        deployment: Deployment,
+        revision: DeploymentRevision,
+    ) -> ServingHealthProbeResult:
         raise NotImplementedError

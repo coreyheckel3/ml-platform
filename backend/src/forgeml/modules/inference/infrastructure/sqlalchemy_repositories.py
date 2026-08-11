@@ -109,18 +109,35 @@ class SqlAlchemyInferenceRepository:
         ).one_or_none()
         if row is None:
             return None
-        deployment, revision, model_version, registered_model = row
-        return DeploymentRevisionServingReference(
-            deployment_id=deployment.id,
-            deployment_revision_id=revision.id,
-            organization_id=registered_model.organization_id,
-            project_id=registered_model.project_id,
-            deployment_status=deployment.status,
-            revision_status=revision.status,
-            traffic_percentage=revision.traffic_percentage,
-            model_version_id=model_version.id,
-            model_signature=model_version.signature_json,
-        )
+        return _serving_reference_to_domain(*row)
+
+    def list_deployment_serving_references(
+        self,
+        deployment_id: UUID,
+    ) -> list[DeploymentRevisionServingReference]:
+        rows = self._session.execute(
+            select(
+                DeploymentModel,
+                DeploymentRevisionModel,
+                ModelVersionModel,
+                RegisteredModelModel,
+            )
+            .join(
+                DeploymentRevisionModel,
+                DeploymentRevisionModel.deployment_id == DeploymentModel.id,
+            )
+            .join(
+                ModelVersionModel,
+                ModelVersionModel.id == DeploymentRevisionModel.model_version_id,
+            )
+            .join(
+                RegisteredModelModel,
+                RegisteredModelModel.id == ModelVersionModel.registered_model_id,
+            )
+            .where(DeploymentRevisionModel.deployment_id == deployment_id)
+            .order_by(DeploymentRevisionModel.revision.desc())
+        ).all()
+        return [_serving_reference_to_domain(*row) for row in rows]
 
     def add_request_log(self, request_log: InferenceRequestLog) -> InferenceRequestLog:
         model = InferenceRequestLogModel(
@@ -227,6 +244,25 @@ def _metric_snapshot_to_domain(model: InferenceMetricSnapshotModel) -> Inference
         error_count=model.error_count,
         p50_latency_ms=float(model.p50_latency_ms),
         p95_latency_ms=float(model.p95_latency_ms),
+    )
+
+
+def _serving_reference_to_domain(
+    deployment: DeploymentModel,
+    revision: DeploymentRevisionModel,
+    model_version: ModelVersionModel,
+    registered_model: RegisteredModelModel,
+) -> DeploymentRevisionServingReference:
+    return DeploymentRevisionServingReference(
+        deployment_id=deployment.id,
+        deployment_revision_id=revision.id,
+        organization_id=registered_model.organization_id,
+        project_id=registered_model.project_id,
+        deployment_status=deployment.status,
+        revision_status=revision.status,
+        traffic_percentage=revision.traffic_percentage,
+        model_version_id=model_version.id,
+        model_signature=model_version.signature_json,
     )
 
 

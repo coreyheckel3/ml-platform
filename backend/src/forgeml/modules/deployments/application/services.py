@@ -1,3 +1,4 @@
+import hashlib
 from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
@@ -5,6 +6,8 @@ from forgeml.modules.administration.application.audit import record_user_audit_e
 from forgeml.modules.administration.repositories.interfaces import AuditEventRecorder
 from forgeml.modules.deployments.domain.entities import (
     Deployment,
+    DeploymentCanarySimulation,
+    DeploymentCanarySimulationAllocation,
     DeploymentEvent,
     DeploymentHealthCheck,
     DeploymentHealthStatus,
@@ -15,6 +18,7 @@ from forgeml.modules.deployments.domain.entities import (
 from forgeml.modules.deployments.domain.policies import (
     build_deployment_slug,
     parse_deployment_environment,
+    validate_canary_request_count,
     validate_deployable_model_version,
     validate_deployment_name,
     validate_health_check,
@@ -22,6 +26,7 @@ from forgeml.modules.deployments.domain.policies import (
     validate_runtime_config,
     validate_serving_image,
     validate_traffic_percentage,
+    validate_traffic_target_status,
 )
 from forgeml.modules.deployments.repositories.interfaces import (
     DeploymentOrchestrator,
@@ -29,6 +34,7 @@ from forgeml.modules.deployments.repositories.interfaces import (
 )
 from forgeml.platform.domain.errors import (
     ConflictError,
+    DomainValidationError,
     PermissionDeniedError,
     ResourceNotFoundError,
 )
@@ -74,6 +80,20 @@ class RecordDeploymentHealthCommand:
 class RollbackDeploymentCommand:
     deployment_id: UUID
     target_revision_id: UUID
+
+
+@dataclass(frozen=True)
+class ProbeDeploymentRevisionCommand:
+    revision_id: UUID
+
+
+@dataclass(frozen=True)
+class SimulateCanaryTrafficCommand:
+    deployment_id: UUID
+    canary_revision_id: UUID
+    request_count: int
+    canary_percentage: int | None = None
+    routing_seed: str = "forgeml-canary-simulation"
 
 
 class DeploymentService:
@@ -212,15 +232,24 @@ class DeploymentService:
         revision = self._get_scoped_revision(command.revision_id, principal)
         deployment = self._get_scoped_deployment(revision.deployment_id, principal)
         validate_traffic_percentage(command.traffic_percentage)
-        updated = replace(revision, traffic_percentage=command.traffic_percentage)
-        self._orchestrator.update_traffic(deployment, updated)
-        saved = self._repository.update_revision(updated)
+        if command.traffic_percentage > 0:
+            validate_traffic_target_status(revision.status)
+        planned_revisions = self._build_traffic_plan(
+            deployment=deployment,
+            target=revision,
+            traffic_percentage=command.traffic_percentage,
+        )
+        saved_revisions = self._apply_traffic_plan(deployment, planned_revisions)
+        saved = _find_revision(saved_revisions, revision.id)
         self._record_event(
             deployment.id,
             saved.id,
             "traffic_updated",
             "Deployment traffic allocation was updated.",
-            {"traffic_percentage": saved.traffic_percentage},
+            {
+                "traffic_percentage": saved.traffic_percentage,
+                "traffic_plan": _traffic_plan_payload(saved_revisions),
+            },
         )
         record_user_audit_event(
             self._audit_log,
@@ -236,6 +265,7 @@ class DeploymentService:
                 "revision": saved.revision,
                 "previous_traffic_percentage": revision.traffic_percentage,
                 "traffic_percentage": saved.traffic_percentage,
+                "traffic_plan": _traffic_plan_payload(saved_revisions),
             },
         )
         return saved
@@ -295,21 +325,26 @@ class DeploymentService:
         if target is None or target.deployment_id != deployment.id:
             raise ResourceNotFoundError("Rollback target revision was not found.")
         validate_rollback_target(target.status)
-        previous = self._repository.get_active_revision(deployment.id)
-        if previous is not None and previous.id != target.id:
-            self._repository.update_revision(
-                replace(
-                    previous,
-                    traffic_percentage=0,
-                    status=DeploymentRevisionStatus.ROLLED_BACK,
-                )
-            )
+        active_revisions = [
+            revision
+            for revision in self._repository.list_revisions(deployment.id)
+            if revision.traffic_percentage > 0 and revision.id != target.id
+        ]
+        previous = max(active_revisions, key=lambda revision: revision.revision, default=None)
         updated_target = replace(
             target,
             traffic_percentage=100,
             status=DeploymentRevisionStatus.HEALTHY,
         )
         self._orchestrator.rollback(deployment, updated_target, previous)
+        for active_revision in active_revisions:
+            drained = replace(
+                active_revision,
+                traffic_percentage=0,
+                status=DeploymentRevisionStatus.ROLLED_BACK,
+            )
+            self._orchestrator.update_traffic(deployment, drained)
+            self._repository.update_revision(drained)
         saved = self._repository.update_revision(updated_target)
         self._record_event(
             deployment.id,
@@ -319,6 +354,7 @@ class DeploymentService:
             {
                 "target_revision": saved.revision,
                 "previous_revision_id": str(previous.id) if previous else None,
+                "drained_revision_ids": [str(revision.id) for revision in active_revisions],
             },
         )
         record_user_audit_event(
@@ -334,14 +370,179 @@ class DeploymentService:
                 "target_revision_id": str(saved.id),
                 "target_revision": saved.revision,
                 "previous_revision_id": str(previous.id) if previous else None,
+                "drained_revision_ids": [str(revision.id) for revision in active_revisions],
             },
         )
         return saved
+
+    def probe_revision_health(
+        self,
+        command: ProbeDeploymentRevisionCommand,
+        principal: Principal,
+    ) -> DeploymentHealthCheck:
+        self._require(principal, "deployment_health:write")
+        revision = self._get_scoped_revision(command.revision_id, principal)
+        deployment = self._get_scoped_deployment(revision.deployment_id, principal)
+        probe = self._orchestrator.probe_revision(deployment, revision)
+        health_check = self.record_health(
+            RecordDeploymentHealthCommand(
+                revision_id=revision.id,
+                status=_health_status_from_probe(probe.status),
+                latency_ms=probe.latency_ms,
+                error_rate=probe.error_rate,
+                details={
+                    **probe.details,
+                    "probe_observed_at": probe.observed_at.isoformat(),
+                },
+            ),
+            principal,
+        )
+        self._record_event(
+            deployment.id,
+            revision.id,
+            "health_probed",
+            f"Deployment revision probe reported {health_check.status.value}.",
+            {
+                "latency_ms": health_check.latency_ms,
+                "error_rate": health_check.error_rate,
+            },
+        )
+        return health_check
+
+    def simulate_canary_traffic(
+        self,
+        command: SimulateCanaryTrafficCommand,
+        principal: Principal,
+    ) -> DeploymentCanarySimulation:
+        self._require(principal, "deployments:read")
+        deployment = self._get_scoped_deployment(command.deployment_id, principal)
+        canary = self._repository.get_revision(command.canary_revision_id)
+        if canary is None or canary.deployment_id != deployment.id:
+            raise ResourceNotFoundError("Canary revision was not found.")
+        validate_canary_request_count(command.request_count)
+        canary_percentage = (
+            canary.traffic_percentage
+            if command.canary_percentage is None
+            else command.canary_percentage
+        )
+        validate_traffic_percentage(canary_percentage)
+        if canary_percentage <= 0 or canary_percentage >= 100:
+            raise DomainValidationError(
+                "Canary simulation requires a traffic percentage between 1 and 99."
+            )
+        validate_traffic_target_status(canary.status)
+        planned_revisions = self._build_traffic_plan(
+            deployment=deployment,
+            target=canary,
+            traffic_percentage=canary_percentage,
+        )
+        simulated_counts = _simulate_weighted_traffic(
+            planned_revisions,
+            request_count=command.request_count,
+            routing_seed=command.routing_seed,
+        )
+        allocations = tuple(
+            DeploymentCanarySimulationAllocation(
+                deployment_revision_id=revision.id,
+                revision=revision.revision,
+                traffic_percentage=revision.traffic_percentage,
+                simulated_request_count=simulated_counts[revision.id],
+            )
+            for revision in planned_revisions
+        )
+        return DeploymentCanarySimulation(
+            deployment_id=deployment.id,
+            canary_revision_id=canary.id,
+            request_count=command.request_count,
+            routing_seed=command.routing_seed,
+            allocations=allocations,
+            metadata={
+                "traffic_plan": _traffic_plan_payload(planned_revisions),
+                "total_traffic_percentage": sum(
+                    revision.traffic_percentage for revision in planned_revisions
+                ),
+            },
+        )
 
     def list_events(self, deployment_id: UUID, principal: Principal) -> list[DeploymentEvent]:
         self._require(principal, "deployments:read")
         deployment = self._get_scoped_deployment(deployment_id, principal)
         return self._repository.list_events(deployment.id)
+
+    def _build_traffic_plan(
+        self,
+        *,
+        deployment: Deployment,
+        target: DeploymentRevision,
+        traffic_percentage: int,
+    ) -> tuple[DeploymentRevision, ...]:
+        revisions = {
+            revision.id: revision for revision in self._repository.list_revisions(deployment.id)
+        }
+        revisions[target.id] = target
+        if traffic_percentage == 0:
+            return (replace(target, traffic_percentage=0),)
+        if traffic_percentage == 100:
+            return tuple(
+                replace(
+                    revision,
+                    traffic_percentage=100 if revision.id == target.id else 0,
+                )
+                for revision in sorted(revisions.values(), key=lambda revision: revision.revision)
+                if revision.id == target.id or revision.traffic_percentage > 0
+            )
+
+        baseline = self._select_canary_baseline(
+            target=target,
+            revisions=tuple(revisions.values()),
+        )
+        planned: list[DeploymentRevision] = [
+            replace(target, traffic_percentage=traffic_percentage),
+            replace(baseline, traffic_percentage=100 - traffic_percentage),
+        ]
+        planned.extend(
+            replace(revision, traffic_percentage=0)
+            for revision in revisions.values()
+            if revision.id not in {target.id, baseline.id}
+            and revision.traffic_percentage > 0
+        )
+        return tuple(sorted(planned, key=lambda revision: revision.revision))
+
+    def _select_canary_baseline(
+        self,
+        *,
+        target: DeploymentRevision,
+        revisions: tuple[DeploymentRevision, ...],
+    ) -> DeploymentRevision:
+        candidates = [
+            revision
+            for revision in revisions
+            if revision.id != target.id
+            and revision.traffic_percentage > 0
+            and revision.status in {
+                DeploymentRevisionStatus.HEALTHY,
+                DeploymentRevisionStatus.DEGRADED,
+            }
+        ]
+        if not candidates:
+            raise ConflictError(
+                "Canary traffic requires an existing healthy baseline revision with active traffic."
+            )
+        return max(
+            candidates,
+            key=lambda revision: (revision.traffic_percentage, revision.revision),
+        )
+
+    def _apply_traffic_plan(
+        self,
+        deployment: Deployment,
+        revisions: tuple[DeploymentRevision, ...],
+    ) -> tuple[DeploymentRevision, ...]:
+        saved: list[DeploymentRevision] = []
+        for revision in revisions:
+            self._orchestrator.update_traffic(deployment, revision)
+            saved.append(self._repository.update_revision(revision))
+        return tuple(saved)
 
     def _get_scoped_deployment(self, deployment_id: UUID, principal: Principal) -> Deployment:
         deployment = self._repository.get_deployment(deployment_id)
@@ -392,3 +593,55 @@ def _revision_status_from_health(
     if status == DeploymentHealthStatus.DEGRADED:
         return DeploymentRevisionStatus.DEGRADED
     return DeploymentRevisionStatus.FAILED
+
+
+def _health_status_from_probe(status: str) -> DeploymentHealthStatus:
+    try:
+        return DeploymentHealthStatus(status)
+    except ValueError:
+        return DeploymentHealthStatus.UNHEALTHY
+
+
+def _traffic_plan_payload(revisions: tuple[DeploymentRevision, ...]) -> list[dict[str, object]]:
+    return [
+        {
+            "deployment_revision_id": str(revision.id),
+            "revision": revision.revision,
+            "traffic_percentage": revision.traffic_percentage,
+            "status": revision.status.value,
+        }
+        for revision in revisions
+    ]
+
+
+def _find_revision(
+    revisions: tuple[DeploymentRevision, ...],
+    revision_id: UUID,
+) -> DeploymentRevision:
+    for revision in revisions:
+        if revision.id == revision_id:
+            return revision
+    raise RuntimeError("Traffic plan did not include the target revision.")
+
+
+def _simulate_weighted_traffic(
+    revisions: tuple[DeploymentRevision, ...],
+    *,
+    request_count: int,
+    routing_seed: str,
+) -> dict[UUID, int]:
+    active_revisions = [revision for revision in revisions if revision.traffic_percentage > 0]
+    total_weight = sum(revision.traffic_percentage for revision in active_revisions)
+    if total_weight <= 0:
+        raise DomainValidationError("Canary simulation requires positive traffic allocations.")
+    counts = {revision.id: 0 for revision in revisions}
+    for index in range(request_count):
+        digest = hashlib.sha256(f"{routing_seed}:{index}".encode()).hexdigest()
+        bucket = int(digest[:8], 16) % total_weight
+        cursor = 0
+        for revision in active_revisions:
+            cursor += revision.traffic_percentage
+            if bucket < cursor:
+                counts[revision.id] += 1
+                break
+    return counts

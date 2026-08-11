@@ -51,6 +51,8 @@ jobs:
         run: python scripts/ci/check_mlflow_tracking_contract.py
       - name: Check Airflow orchestration contract
         run: python scripts/ci/check_airflow_orchestration_contract.py
+      - name: Check deployment runtime contract
+        run: python scripts/ci/check_deployment_runtime_contract.py
       - name: Check OpenAPI contract
         run: python scripts/ci/generate_openapi_contract.py --check
       - name: Check problem details contract

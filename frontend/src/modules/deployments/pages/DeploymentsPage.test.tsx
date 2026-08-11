@@ -76,6 +76,38 @@ describe("DeploymentsPage", () => {
     });
 
     fireEvent.click(
+      await screen.findByRole("button", { name: "Probe revision 2" }),
+    );
+    expect(
+      await screen.findByText("Revision 2 probe is healthy."),
+    ).toBeInTheDocument();
+    expect(
+      findFetchCall(
+        fetchMock,
+        "/deployment-revisions/revision-2/health-probe",
+        "POST",
+      ),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Simulate revision 2 canary traffic",
+      }),
+    );
+    expect(await screen.findByText("Canary Simulation")).toBeInTheDocument();
+    expect(await screen.findByText("revision 2: 100/1000 at 10%")).toBeInTheDocument();
+    const simulationCall = findFetchCall(
+      fetchMock,
+      `/api/v1/deployments/${deploymentId}/canary-simulation`,
+      "POST",
+    );
+    expect(JSON.parse(String(simulationCall[1]?.body))).toMatchObject({
+      canary_revision_id: "revision-2",
+      request_count: 1000,
+      canary_percentage: 10,
+    });
+
+    fireEvent.click(
       await screen.findByRole("button", {
         name: "Promote revision 2 to full traffic",
       }),
@@ -251,6 +283,47 @@ function mockDeploymentWorkflow() {
           ...events,
         ];
         return jsonResponse(recorded);
+      }
+
+      if (
+        method === "POST" &&
+        path === "/api/v1/deployment-revisions/revision-2/health-probe"
+      ) {
+        const recorded = healthCheck("health-probe-2", "revision-2", "healthy");
+        healthChecksByRevision["revision-2"] = [recorded];
+        revisions = revisions.map((revision) =>
+          revision.id === "revision-2"
+            ? { ...revision, status: "healthy" }
+            : revision,
+        );
+        return jsonResponse(recorded);
+      }
+
+      if (
+        method === "POST" &&
+        path === `/api/v1/deployments/${deploymentId}/canary-simulation`
+      ) {
+        return jsonResponse({
+          deployment_id: deploymentId,
+          canary_revision_id: "revision-2",
+          request_count: 1000,
+          routing_seed: "fixed-seed",
+          allocations: [
+            {
+              deployment_revision_id: "revision-1",
+              revision: 1,
+              traffic_percentage: 90,
+              simulated_request_count: 900,
+            },
+            {
+              deployment_revision_id: "revision-2",
+              revision: 2,
+              traffic_percentage: 10,
+              simulated_request_count: 100,
+            },
+          ],
+          metadata: { total_traffic_percentage: 100 },
+        });
       }
 
       if (

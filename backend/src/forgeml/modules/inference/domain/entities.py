@@ -55,6 +55,24 @@ class InferenceMetricSnapshot:
 
 
 @dataclass(frozen=True)
+class InferenceHealthProbe:
+    endpoint_id: UUID
+    deployment_revision_id: UUID
+    status: str
+    latency_ms: float
+    error_rate: float
+    details: dict[str, object]
+
+
+@dataclass(frozen=True)
+class InferenceHealthProbeResult:
+    status: str
+    latency_ms: float
+    error_rate: float
+    details: dict[str, object]
+
+
+@dataclass(frozen=True)
 class DeploymentRevisionServingReference:
     deployment_id: UUID
     deployment_revision_id: UUID

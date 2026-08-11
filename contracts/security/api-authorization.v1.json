@@ -154,6 +154,16 @@
     {
       "authorization": "principal",
       "method": "POST",
+      "operation_id": "probe_deployment_revision_health_api_v1_deployment_revisions__revision_id__health_probe_post",
+      "path": "/api/v1/deployment-revisions/{revision_id}/health-probe",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
       "operation_id": "update_deployment_traffic_api_v1_deployment_revisions__revision_id__traffic_post",
       "path": "/api/v1/deployment-revisions/{revision_id}/traffic",
       "reason": "Requires get_current_principal dependency.",
@@ -166,6 +176,16 @@
       "method": "GET",
       "operation_id": "get_deployment_api_v1_deployments__deployment_id__get",
       "path": "/api/v1/deployments/{deployment_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "deployments"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "simulate_deployment_canary_traffic_api_v1_deployments__deployment_id__canary_simulation_post",
+      "path": "/api/v1/deployments/{deployment_id}/canary-simulation",
       "reason": "Requires get_current_principal dependency.",
       "tags": [
         "deployments"
@@ -406,6 +426,16 @@
       "method": "GET",
       "operation_id": "get_inference_endpoint_api_v1_inference_endpoints__endpoint_id__get",
       "path": "/api/v1/inference-endpoints/{endpoint_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "inference"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "probe_inference_endpoint_api_v1_inference_endpoints__endpoint_id__health_probe_get",
+      "path": "/api/v1/inference-endpoints/{endpoint_id}/health-probe",
       "reason": "Requires get_current_principal dependency.",
       "tags": [
         "inference"
@@ -1031,8 +1061,8 @@
   ],
   "schema_version": "forgeml.api_authorization.v1",
   "summary": {
-    "protected_route_count": 93,
+    "protected_route_count": 96,
     "public_route_count": 6,
-    "total_route_count": 99
+    "total_route_count": 102
   }
 }

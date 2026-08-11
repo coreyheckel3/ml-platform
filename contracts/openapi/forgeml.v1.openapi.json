@@ -1131,6 +1131,76 @@
         "title": "DatasetVersionResponse",
         "type": "object"
       },
+      "DeploymentCanarySimulationAllocationResponse": {
+        "properties": {
+          "deployment_revision_id": {
+            "title": "Deployment Revision Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "simulated_request_count": {
+            "title": "Simulated Request Count",
+            "type": "integer"
+          },
+          "traffic_percentage": {
+            "title": "Traffic Percentage",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deployment_revision_id",
+          "revision",
+          "traffic_percentage",
+          "simulated_request_count"
+        ],
+        "title": "DeploymentCanarySimulationAllocationResponse",
+        "type": "object"
+      },
+      "DeploymentCanarySimulationResponse": {
+        "properties": {
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/DeploymentCanarySimulationAllocationResponse"
+            },
+            "title": "Allocations",
+            "type": "array"
+          },
+          "canary_revision_id": {
+            "title": "Canary Revision Id",
+            "type": "string"
+          },
+          "deployment_id": {
+            "title": "Deployment Id",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "request_count": {
+            "title": "Request Count",
+            "type": "integer"
+          },
+          "routing_seed": {
+            "title": "Routing Seed",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deployment_id",
+          "canary_revision_id",
+          "request_count",
+          "routing_seed",
+          "allocations",
+          "metadata"
+        ],
+        "title": "DeploymentCanarySimulationResponse",
+        "type": "object"
+      },
       "DeploymentEventListResponse": {
         "properties": {
           "items": {
@@ -2738,6 +2808,45 @@
         "title": "InferenceEndpointResponse",
         "type": "object"
       },
+      "InferenceHealthProbeResponse": {
+        "properties": {
+          "deployment_revision_id": {
+            "title": "Deployment Revision Id",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "endpoint_id": {
+            "title": "Endpoint Id",
+            "type": "string"
+          },
+          "error_rate": {
+            "title": "Error Rate",
+            "type": "number"
+          },
+          "latency_ms": {
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint_id",
+          "deployment_revision_id",
+          "status",
+          "latency_ms",
+          "error_rate",
+          "details"
+        ],
+        "title": "InferenceHealthProbeResponse",
+        "type": "object"
+      },
       "InferenceMetricSnapshotListResponse": {
         "properties": {
           "items": {
@@ -4288,6 +4397,46 @@
           "nullable"
         ],
         "title": "SchemaFieldPayload",
+        "type": "object"
+      },
+      "SimulateCanaryTrafficRequest": {
+        "properties": {
+          "canary_percentage": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canary Percentage"
+          },
+          "canary_revision_id": {
+            "title": "Canary Revision Id",
+            "type": "string"
+          },
+          "request_count": {
+            "default": 1000,
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Request Count",
+            "type": "integer"
+          },
+          "routing_seed": {
+            "default": "forgeml-canary-simulation",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Routing Seed",
+            "type": "string"
+          }
+        },
+        "required": [
+          "canary_revision_id"
+        ],
+        "title": "SimulateCanaryTrafficRequest",
         "type": "object"
       },
       "StartExperimentRunRequest": {
@@ -5919,6 +6068,54 @@
         ]
       }
     },
+    "/api/v1/deployment-revisions/{revision_id}/health-probe": {
+      "post": {
+        "operationId": "probe_deployment_revision_health_api_v1_deployment_revisions__revision_id__health_probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revision_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Revision Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentHealthCheckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Probe Deployment Revision Health",
+        "tags": [
+          "deployments"
+        ]
+      }
+    },
     "/api/v1/deployment-revisions/{revision_id}/traffic": {
       "post": {
         "operationId": "update_deployment_traffic_api_v1_deployment_revisions__revision_id__traffic_post",
@@ -6020,6 +6217,64 @@
           }
         ],
         "summary": "Get Deployment",
+        "tags": [
+          "deployments"
+        ]
+      }
+    },
+    "/api/v1/deployments/{deployment_id}/canary-simulation": {
+      "post": {
+        "operationId": "simulate_deployment_canary_traffic_api_v1_deployments__deployment_id__canary_simulation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deployment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Deployment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateCanaryTrafficRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentCanarySimulationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Simulate Deployment Canary Traffic",
         "tags": [
           "deployments"
         ]
@@ -7250,6 +7505,54 @@
           }
         ],
         "summary": "Get Inference Endpoint",
+        "tags": [
+          "inference"
+        ]
+      }
+    },
+    "/api/v1/inference-endpoints/{endpoint_id}/health-probe": {
+      "get": {
+        "operationId": "probe_inference_endpoint_api_v1_inference_endpoints__endpoint_id__health_probe_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InferenceHealthProbeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Probe Inference Endpoint",
         "tags": [
           "inference"
         ]

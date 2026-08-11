@@ -79,6 +79,24 @@ class DeploymentEvent:
 
 
 @dataclass(frozen=True)
+class DeploymentCanarySimulationAllocation:
+    deployment_revision_id: UUID
+    revision: int
+    traffic_percentage: int
+    simulated_request_count: int
+
+
+@dataclass(frozen=True)
+class DeploymentCanarySimulation:
+    deployment_id: UUID
+    canary_revision_id: UUID
+    request_count: int
+    routing_seed: str
+    allocations: tuple[DeploymentCanarySimulationAllocation, ...]
+    metadata: dict[str, object]
+
+
+@dataclass(frozen=True)
 class ModelVersionDeploymentReference:
     id: UUID
     registered_model_id: UUID

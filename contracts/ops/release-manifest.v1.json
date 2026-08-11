@@ -67,6 +67,12 @@
       "required": true
     },
     {
+      "kind": "runtime_contract",
+      "name": "deployment_runtime_contract",
+      "path": "contracts/runtime/deployment-serving.v1.json",
+      "required": true
+    },
+    {
       "kind": "operations_contract",
       "name": "release_smoke_contract",
       "path": "contracts/ops/release-smoke.v1.json",
@@ -172,6 +178,7 @@
     "artifact_manifest_contract",
     "mlflow_tracking_contract",
     "airflow_orchestration_contract",
+    "deployment_runtime_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",
@@ -206,7 +213,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 16,
-    "required_artifact_count": 20
+    "quality_gate_count": 17,
+    "required_artifact_count": 21
   }
 }

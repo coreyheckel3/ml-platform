@@ -9,6 +9,7 @@ from forgeml.modules.administration.infrastructure.sqlalchemy_repositories impor
 from forgeml.modules.deployments.api.schemas import (
     CreateDeploymentRequest,
     CreateDeploymentRevisionRequest,
+    DeploymentCanarySimulationResponse,
     DeploymentEventListResponse,
     DeploymentEventResponse,
     DeploymentHealthCheckListResponse,
@@ -19,18 +20,22 @@ from forgeml.modules.deployments.api.schemas import (
     DeploymentRevisionResponse,
     RecordDeploymentHealthRequest,
     RollbackDeploymentRequest,
+    SimulateCanaryTrafficRequest,
     UpdateDeploymentTrafficRequest,
 )
 from forgeml.modules.deployments.application.services import (
     CreateDeploymentCommand,
     CreateDeploymentRevisionCommand,
     DeploymentService,
+    ProbeDeploymentRevisionCommand,
     RecordDeploymentHealthCommand,
     RollbackDeploymentCommand,
+    SimulateCanaryTrafficCommand,
     UpdateDeploymentTrafficCommand,
 )
 from forgeml.modules.deployments.domain.entities import (
     Deployment,
+    DeploymentCanarySimulation,
     DeploymentEvent,
     DeploymentHealthCheck,
     DeploymentHealthStatus,
@@ -210,6 +215,24 @@ def list_deployment_health_checks(
 
 
 @router.post(
+    "/deployment-revisions/{revision_id}/health-probe",
+    response_model=DeploymentHealthCheckResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def probe_deployment_revision_health(
+    revision_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+    service: DeploymentService = Depends(get_deployment_service),
+) -> DeploymentHealthCheckResponse:
+    return _health_check_response(
+        service.probe_revision_health(
+            ProbeDeploymentRevisionCommand(revision_id=revision_id),
+            principal,
+        )
+    )
+
+
+@router.post(
     "/deployments/{deployment_id}/rollback",
     response_model=DeploymentRevisionResponse,
 )
@@ -228,6 +251,29 @@ def rollback_deployment(
             principal,
         )
     )
+
+
+@router.post(
+    "/deployments/{deployment_id}/canary-simulation",
+    response_model=DeploymentCanarySimulationResponse,
+)
+def simulate_deployment_canary_traffic(
+    deployment_id: UUID,
+    request: SimulateCanaryTrafficRequest,
+    principal: Principal = Depends(get_current_principal),
+    service: DeploymentService = Depends(get_deployment_service),
+) -> DeploymentCanarySimulationResponse:
+    simulation = service.simulate_canary_traffic(
+        SimulateCanaryTrafficCommand(
+            deployment_id=deployment_id,
+            canary_revision_id=UUID(request.canary_revision_id),
+            request_count=request.request_count,
+            canary_percentage=request.canary_percentage,
+            routing_seed=request.routing_seed,
+        ),
+        principal,
+    )
+    return _canary_simulation_response(simulation)
 
 
 @router.get("/deployments/{deployment_id}/events", response_model=DeploymentEventListResponse)
@@ -278,6 +324,27 @@ def _health_check_response(health_check: DeploymentHealthCheck) -> DeploymentHea
         latency_ms=health_check.latency_ms,
         error_rate=health_check.error_rate,
         details=health_check.details,
+    )
+
+
+def _canary_simulation_response(
+    simulation: DeploymentCanarySimulation,
+) -> DeploymentCanarySimulationResponse:
+    return DeploymentCanarySimulationResponse(
+        deployment_id=str(simulation.deployment_id),
+        canary_revision_id=str(simulation.canary_revision_id),
+        request_count=simulation.request_count,
+        routing_seed=simulation.routing_seed,
+        allocations=[
+            {
+                "deployment_revision_id": str(allocation.deployment_revision_id),
+                "revision": allocation.revision,
+                "traffic_percentage": allocation.traffic_percentage,
+                "simulated_request_count": allocation.simulated_request_count,
+            }
+            for allocation in simulation.allocations
+        ],
+        metadata=simulation.metadata,
     )
 
 

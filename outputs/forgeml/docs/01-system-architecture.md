@@ -137,6 +137,27 @@ versioned `forgeml.training_airflow_dag_run.v1` configuration payload, and the
 API exposes an orchestration-status polling endpoint that maps Airflow states
 back into ForgeML training statuses.
 
+## Deployment Runtime
+
+Deployment serving is owned through a ForgeML adapter boundary instead of being
+embedded directly in deployment or inference application services.
+
+- `ServingRuntimeGateway` defines deploy, traffic-plan, rollback, and health
+  probe operations.
+- `LocalDeploymentOrchestrator` translates Deployment module use cases into the
+  serving gateway contract.
+- The local in-memory runtime gives deterministic behavior for development,
+  CI, and browser demos.
+- The contract in `contracts/runtime/deployment-serving.v1.json` locks traffic,
+  rollback, revision resolution, and health-probe semantics.
+
+Traffic routing is resolved from the current deployment revisions at request
+time. An inference endpoint can keep a stable route while predictions are
+served by the active revision selected through deterministic request-id
+weighted routing. This preserves request-log attribution to the exact revision
+that served a prediction and lets rollout, canary, rollback, and monitoring
+logic evolve without leaking a specific serving platform into product APIs.
+
 ## Experiment and Model Tracking
 
 MLflow should be integrated behind ForgeML-owned ports:

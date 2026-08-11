@@ -25,9 +25,12 @@ import {
   listDeploymentHealthChecks,
   listDeploymentRevisions,
   listDeployments,
+  probeDeploymentRevisionHealth,
   recordDeploymentHealth,
   rollbackDeployment,
+  simulateDeploymentCanaryTraffic,
   updateDeploymentTraffic,
+  type DeploymentCanarySimulation,
   type DeploymentRevision,
 } from "../api/deployments";
 
@@ -54,6 +57,8 @@ export function DeploymentsPage() {
   );
   const [healthLatencyMs, setHealthLatencyMs] = useState("85");
   const [healthErrorRate, setHealthErrorRate] = useState("0.01");
+  const [canarySimulation, setCanarySimulation] =
+    useState<DeploymentCanarySimulation | null>(null);
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const deploymentsQuery = useQuery({
@@ -280,6 +285,59 @@ export function DeploymentsPage() {
     onError: () => {
       setOperationMessage(null);
       setOperationError("Traffic update failed.");
+    },
+  });
+  const probeMutation = useMutation({
+    mutationFn: (revision: DeploymentRevision) => {
+      if (!token) {
+        throw new Error("Runtime probes require API access.");
+      }
+      return probeDeploymentRevisionHealth(revision.id, token);
+    },
+    onSuccess: (healthCheck, revision) => {
+      setOperationError(null);
+      setOperationMessage(
+        `Revision ${revision.revision} probe is ${healthCheck.status}.`,
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["deployment-revisions", activeDeploymentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["deployment-health-checks", revision.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["deployment-events", activeDeploymentId],
+      });
+    },
+    onError: () => {
+      setOperationMessage(null);
+      setOperationError("Runtime probe failed.");
+    },
+  });
+  const canarySimulationMutation = useMutation({
+    mutationFn: (revision: DeploymentRevision) => {
+      if (!selectedDeployment || !token) {
+        throw new Error("Canary simulation requires a selected deployment.");
+      }
+      return simulateDeploymentCanaryTraffic(
+        selectedDeployment.id,
+        {
+          canary_revision_id: revision.id,
+          request_count: 1000,
+          canary_percentage: 10,
+          routing_seed: `deployment:${selectedDeployment.id}:revision:${revision.id}`,
+        },
+        token,
+      );
+    },
+    onSuccess: (simulation) => {
+      setOperationError(null);
+      setCanarySimulation(simulation);
+      setOperationMessage("Canary simulation completed.");
+    },
+    onError: () => {
+      setOperationMessage(null);
+      setOperationError("Canary simulation failed.");
     },
   });
   const rollbackMutation = useMutation({
@@ -727,6 +785,21 @@ export function DeploymentsPage() {
                   />
                 </label>
               </div>
+              {canarySimulation ? (
+                <div className="rounded border border-slate-200 bg-field p-3 text-sm">
+                  <div className="font-medium">Canary Simulation</div>
+                  <div className="mt-2 grid gap-2 text-xs text-steel sm:grid-cols-2">
+                    {canarySimulation.allocations.map((allocation) => (
+                      <div key={allocation.deployment_revision_id}>
+                        revision {allocation.revision}:{" "}
+                        {allocation.simulated_request_count}/
+                        {canarySimulation.request_count} at{" "}
+                        {allocation.traffic_percentage}%
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {revisions.map((revision) => (
                 <div
                   key={revision.id}
@@ -773,6 +846,29 @@ export function DeploymentsPage() {
                         {status}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      aria-label={`Probe revision ${revision.revision}`}
+                      onClick={() => probeMutation.mutate(revision)}
+                      disabled={probeMutation.isPending}
+                      className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-3 text-xs font-semibold text-ink transition hover:border-signal disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Activity className="h-3.5 w-3.5" />
+                      Probe
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Simulate revision ${revision.revision} canary traffic`}
+                      onClick={() => canarySimulationMutation.mutate(revision)}
+                      disabled={
+                        canarySimulationMutation.isPending ||
+                        revision.status !== "healthy"
+                      }
+                      className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-3 text-xs font-semibold text-ink transition hover:border-signal disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Gauge className="h-3.5 w-3.5" />
+                      10%
+                    </button>
                     <button
                       type="button"
                       aria-label={`Promote revision ${revision.revision} to full traffic`}

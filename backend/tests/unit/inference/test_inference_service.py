@@ -1,3 +1,4 @@
+from dataclasses import replace
 from uuid import UUID, uuid4
 
 import pytest
@@ -11,6 +12,7 @@ from forgeml.modules.inference.application.services import (
 from forgeml.modules.inference.domain.entities import (
     DeploymentRevisionServingReference,
     InferenceEndpoint,
+    InferenceHealthProbeResult,
     InferenceMetricSnapshot,
     InferencePredictionResult,
     InferenceRequestLog,
@@ -59,6 +61,16 @@ class FakeInferenceRepository:
     ) -> DeploymentRevisionServingReference | None:
         return self.references.get(deployment_revision_id)
 
+    def list_deployment_serving_references(
+        self,
+        deployment_id: UUID,
+    ) -> list[DeploymentRevisionServingReference]:
+        return [
+            reference
+            for reference in self.references.values()
+            if reference.deployment_id == deployment_id
+        ]
+
     def add_request_log(self, request_log: InferenceRequestLog) -> InferenceRequestLog:
         self.request_logs.append(request_log)
         return request_log
@@ -90,11 +102,16 @@ class FakeInferenceRepository:
 
 
 class FakeInferenceRuntime:
+    def __init__(self) -> None:
+        self.predicted_revision_ids: list[UUID] = []
+        self.probed_revision_ids: list[UUID] = []
+
     def predict(
         self,
         reference: DeploymentRevisionServingReference,
         payload: dict[str, object],
     ) -> InferencePredictionResult:
+        self.predicted_revision_ids.append(reference.deployment_revision_id)
         return InferencePredictionResult(
             output_payload={
                 "model_version_id": str(reference.model_version_id),
@@ -102,6 +119,18 @@ class FakeInferenceRuntime:
                 "score": 0.81,
             },
             latency_ms=17.4,
+        )
+
+    def health_probe(
+        self,
+        reference: DeploymentRevisionServingReference,
+    ) -> InferenceHealthProbeResult:
+        self.probed_revision_ids.append(reference.deployment_revision_id)
+        return InferenceHealthProbeResult(
+            status="healthy",
+            latency_ms=9.4,
+            error_rate=0.001,
+            details={"model_version_id": str(reference.model_version_id)},
         )
 
 
@@ -116,7 +145,8 @@ def principal(organization_id: UUID, user_id: UUID, permissions: set[str]) -> Pr
 
 def test_inference_service_creates_endpoint_predicts_and_records_metrics() -> None:
     repository = FakeInferenceRepository()
-    service = InferenceService(repository=repository, runtime=FakeInferenceRuntime())
+    runtime = FakeInferenceRuntime()
+    service = InferenceService(repository=repository, runtime=runtime)
     organization_id = uuid4()
     project_id = uuid4()
     user_id = uuid4()
@@ -177,9 +207,80 @@ def test_inference_service_creates_endpoint_predicts_and_records_metrics() -> No
     assert endpoint.route_path == "/inference/fraud-risk-online"
     assert prediction.request_id == "req-001"
     assert prediction.output_payload["score"] == 0.81
+    assert runtime.predicted_revision_ids == [revision_id]
     assert service.list_request_logs(endpoint.id, actor)[0].latency_ms == 17.4
     assert snapshot.p95_latency_ms == 46.8
     assert service.list_metric_snapshots(endpoint.id, actor)[0].prediction_count == 1200
+
+
+def test_inference_service_resolves_current_traffic_revision_for_prediction_and_probe() -> None:
+    repository = FakeInferenceRepository()
+    runtime = FakeInferenceRuntime()
+    service = InferenceService(repository=repository, runtime=runtime)
+    organization_id = uuid4()
+    project_id = uuid4()
+    user_id = uuid4()
+    deployment_id = uuid4()
+    original_revision_id = uuid4()
+    active_revision_id = uuid4()
+    repository.references[original_revision_id] = _serving_reference(
+        organization_id=organization_id,
+        project_id=project_id,
+        deployment_id=deployment_id,
+        revision_id=original_revision_id,
+        revision_status="healthy",
+        traffic_percentage=100,
+    )
+    repository.references[active_revision_id] = _serving_reference(
+        organization_id=organization_id,
+        project_id=project_id,
+        deployment_id=deployment_id,
+        revision_id=active_revision_id,
+        revision_status="healthy",
+        traffic_percentage=100,
+    )
+    actor = principal(
+        organization_id,
+        user_id,
+        {
+            "inference_endpoints:create",
+            "inference_endpoints:read",
+            "inference:predict",
+        },
+    )
+    endpoint = service.create_endpoint(
+        CreateInferenceEndpointCommand(
+            organization_id=organization_id,
+            project_id=project_id,
+            deployment_id=deployment_id,
+            deployment_revision_id=original_revision_id,
+            name="Fraud Risk Online",
+            description="Real-time fraud scoring.",
+            route_path=None,
+            created_by=user_id,
+        ),
+        actor,
+    )
+    repository.references[original_revision_id] = replace(
+        repository.references[original_revision_id],
+        traffic_percentage=0,
+    )
+
+    prediction = service.predict(
+        PredictCommand(
+            endpoint_id=endpoint.id,
+            payload={"amount": 128.45},
+            request_id="req-active",
+        ),
+        actor,
+    )
+    probe = service.probe_endpoint(endpoint.id, actor)
+
+    assert prediction.deployment_revision_id == active_revision_id
+    assert repository.request_logs[0].deployment_revision_id == active_revision_id
+    assert probe.deployment_revision_id == active_revision_id
+    assert runtime.predicted_revision_ids == [active_revision_id]
+    assert runtime.probed_revision_ids == [active_revision_id]
 
 
 def test_inference_service_rejects_duplicate_route() -> None:

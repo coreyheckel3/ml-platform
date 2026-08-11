@@ -60,6 +60,15 @@ class InferenceRequestLogListResponse(BaseModel):
     next_cursor: str | None = None
 
 
+class InferenceHealthProbeResponse(BaseModel):
+    endpoint_id: str
+    deployment_revision_id: str
+    status: str
+    latency_ms: float
+    error_rate: float
+    details: dict[str, object]
+
+
 class RecordInferenceMetricSnapshotRequest(BaseModel):
     window_seconds: int = Field(gt=0, le=86_400)
     prediction_count: int = Field(ge=0)

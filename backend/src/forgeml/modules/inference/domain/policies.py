@@ -1,4 +1,7 @@
+import hashlib
 import re
+from collections.abc import Sequence
+from uuid import UUID
 
 from forgeml.modules.inference.domain.entities import (
     DeploymentRevisionServingReference,
@@ -66,6 +69,46 @@ def validate_serving_reference(reference: DeploymentRevisionServingReference) ->
         )
     if reference.traffic_percentage <= 0:
         raise DomainValidationError("Inference endpoints require a revision with active traffic.")
+
+
+def select_serving_reference_for_request(
+    *,
+    endpoint_revision_id: UUID,
+    references: Sequence[DeploymentRevisionServingReference],
+    routing_key: str,
+) -> DeploymentRevisionServingReference:
+    candidates = [
+        reference
+        for reference in references
+        if reference.revision_status in _SERVABLE_REVISION_STATUSES
+        and reference.traffic_percentage > 0
+    ]
+    if not candidates:
+        fallback = next(
+            (
+                reference
+                for reference in references
+                if reference.deployment_revision_id == endpoint_revision_id
+            ),
+            None,
+        )
+        if fallback is None:
+            raise DomainValidationError("Inference endpoint has no servable deployment revision.")
+        return fallback
+
+    ordered_candidates = sorted(
+        candidates,
+        key=lambda reference: str(reference.deployment_revision_id),
+    )
+    total_weight = sum(reference.traffic_percentage for reference in ordered_candidates)
+    digest = hashlib.sha256(routing_key.encode("utf-8")).hexdigest()
+    bucket = int(digest[:8], 16) % total_weight
+    cursor = 0
+    for reference in ordered_candidates:
+        cursor += reference.traffic_percentage
+        if bucket < cursor:
+            return reference
+    return ordered_candidates[-1]
 
 
 def validate_endpoint_status(status: InferenceEndpointStatus) -> None:

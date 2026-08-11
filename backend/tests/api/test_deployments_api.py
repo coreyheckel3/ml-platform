@@ -7,6 +7,8 @@ from forgeml.main import create_app
 from forgeml.modules.deployments.api.routes import get_deployment_service
 from forgeml.modules.deployments.domain.entities import (
     Deployment,
+    DeploymentCanarySimulation,
+    DeploymentCanarySimulationAllocation,
     DeploymentEnvironment,
     DeploymentEvent,
     DeploymentHealthCheck,
@@ -65,6 +67,29 @@ class FakeDeploymentService:
     def rollback_deployment(self, command, principal):
         assert command.target_revision_id == self.revision_id
         return self._revision(DeploymentRevisionStatus.HEALTHY, traffic_percentage=100)
+
+    def probe_revision_health(self, command, principal):
+        assert command.revision_id == self.revision_id
+        return self._health_check()
+
+    def simulate_canary_traffic(self, command, principal):
+        assert command.deployment_id == self.deployment_id
+        assert command.canary_revision_id == self.revision_id
+        return DeploymentCanarySimulation(
+            deployment_id=self.deployment_id,
+            canary_revision_id=self.revision_id,
+            request_count=command.request_count,
+            routing_seed=command.routing_seed,
+            allocations=(
+                DeploymentCanarySimulationAllocation(
+                    deployment_revision_id=self.revision_id,
+                    revision=1,
+                    traffic_percentage=25,
+                    simulated_request_count=250,
+                ),
+            ),
+            metadata={"total_traffic_percentage": 100},
+        )
 
     def list_events(self, deployment_id, principal):
         assert deployment_id == self.deployment_id
@@ -180,6 +205,16 @@ def test_deployment_routes_expose_rollout_health_and_rollback_lifecycle() -> Non
         f"/api/v1/deployments/{service.deployment_id}/rollback",
         json={"target_revision_id": str(service.revision_id)},
     )
+    probe = client.post(f"/api/v1/deployment-revisions/{service.revision_id}/health-probe")
+    simulation = client.post(
+        f"/api/v1/deployments/{service.deployment_id}/canary-simulation",
+        json={
+            "canary_revision_id": str(service.revision_id),
+            "request_count": 1000,
+            "canary_percentage": 25,
+            "routing_seed": "fixed-seed",
+        },
+    )
     events = client.get(f"/api/v1/deployments/{service.deployment_id}/events")
 
     assert created.status_code == 201
@@ -194,5 +229,9 @@ def test_deployment_routes_expose_rollout_health_and_rollback_lifecycle() -> Non
     assert traffic.json()["traffic_percentage"] == 25
     assert rollback.status_code == 200
     assert rollback.json()["status"] == "healthy"
+    assert probe.status_code == 201
+    assert probe.json()["latency_ms"] == 18.2
+    assert simulation.status_code == 200
+    assert simulation.json()["allocations"][0]["traffic_percentage"] == 25
     assert events.status_code == 200
     assert events.json()["items"][0]["event_type"] == "revision_created"

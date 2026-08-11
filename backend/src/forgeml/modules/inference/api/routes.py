@@ -7,6 +7,7 @@ from forgeml.modules.inference.api.schemas import (
     CreateInferenceEndpointRequest,
     InferenceEndpointListResponse,
     InferenceEndpointResponse,
+    InferenceHealthProbeResponse,
     InferenceMetricSnapshotListResponse,
     InferenceMetricSnapshotResponse,
     InferenceRequestLogListResponse,
@@ -23,6 +24,7 @@ from forgeml.modules.inference.application.services import (
 )
 from forgeml.modules.inference.domain.entities import (
     InferenceEndpoint,
+    InferenceHealthProbe,
     InferenceMetricSnapshot,
     InferencePrediction,
     InferenceRequestLog,
@@ -140,6 +142,18 @@ def list_inference_requests(
     )
 
 
+@router.get(
+    "/inference-endpoints/{endpoint_id}/health-probe",
+    response_model=InferenceHealthProbeResponse,
+)
+def probe_inference_endpoint(
+    endpoint_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+    service: InferenceService = Depends(get_inference_service),
+) -> InferenceHealthProbeResponse:
+    return _health_probe_response(service.probe_endpoint(endpoint_id, principal))
+
+
 @router.post(
     "/inference-endpoints/{endpoint_id}/metric-snapshots",
     response_model=InferenceMetricSnapshotResponse,
@@ -221,6 +235,17 @@ def _request_log_response(request_log: InferenceRequestLog) -> InferenceRequestL
         input_payload=request_log.input_payload,
         output_payload=request_log.output_payload,
         error_message=request_log.error_message,
+    )
+
+
+def _health_probe_response(probe: InferenceHealthProbe) -> InferenceHealthProbeResponse:
+    return InferenceHealthProbeResponse(
+        endpoint_id=str(probe.endpoint_id),
+        deployment_revision_id=str(probe.deployment_revision_id),
+        status=probe.status,
+        latency_ms=probe.latency_ms,
+        error_rate=probe.error_rate,
+        details=probe.details,
     )
 
 

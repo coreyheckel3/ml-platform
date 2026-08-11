@@ -22,6 +22,9 @@ try:
     from scripts.ci.check_artifact_manifest_contract import (
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
     )
+    from scripts.ci.check_deployment_runtime_contract import (
+        check_deployment_runtime_contract as verify_deployment_runtime_contract,
+    )
     from scripts.ci.check_mlflow_tracking_contract import (
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
     )
@@ -49,6 +52,9 @@ except ModuleNotFoundError:
     )
     from check_artifact_manifest_contract import (  # type: ignore[no-redef]
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
+    )
+    from check_deployment_runtime_contract import (  # type: ignore[no-redef]
+        check_deployment_runtime_contract as verify_deployment_runtime_contract,
     )
     from check_mlflow_tracking_contract import (  # type: ignore[no-redef]
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
@@ -144,6 +150,13 @@ REQUIRED_FILES = (
     "backend/tests/unit/training/test_training_orchestrator.py",
     "backend/tests/unit/ops/test_airflow_orchestration_contract.py",
     "pipelines/airflow/dags/forgeml_training_pipeline.py",
+    "backend/src/forgeml/platform/serving/runtime.py",
+    "backend/src/forgeml/platform/serving/__init__.py",
+    "scripts/ci/check_deployment_runtime_contract.py",
+    "contracts/runtime/README.md",
+    "contracts/runtime/deployment-serving.v1.json",
+    "backend/tests/unit/platform/test_serving_runtime.py",
+    "backend/tests/unit/ops/test_deployment_runtime_contract.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -212,6 +225,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_artifact_manifest_contract(repo_root),
         check_mlflow_tracking_contract(repo_root),
         check_airflow_orchestration_contract(repo_root),
+        check_deployment_runtime_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -731,6 +745,66 @@ def check_airflow_orchestration_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_api_polling={has_api_polling}, "
                 f"has_lineage_conf={has_lineage_conf}, "
                 f"has_status_mapping={has_status_mapping}"
+            )
+        ),
+    )
+
+
+def check_deployment_runtime_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/runtime/deployment-serving.v1.json"
+    has_ci_gate = "python scripts/ci/check_deployment_runtime_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="deployment runtime contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    adapter_boundary = contract.get("adapter_boundary", {})
+    traffic_semantics = contract.get("traffic_semantics", {})
+    api_surface = set(contract.get("api_surface", []))
+    contract_current, contract_detail = verify_deployment_runtime_contract(contract_path)
+    has_adapter_boundary = (
+        adapter_boundary.get("gateway_protocol") == "ServingRuntimeGateway"
+        and adapter_boundary.get("local_gateway") == "InMemoryServingRuntimeGateway"
+        and adapter_boundary.get("deployment_orchestrator") == "LocalDeploymentOrchestrator"
+    )
+    has_api_surface = {
+        "POST /api/v1/deployment-revisions/{revision_id}/health-probe",
+        "POST /api/v1/deployments/{deployment_id}/canary-simulation",
+        "GET /api/v1/inference-endpoints/{endpoint_id}/health-probe",
+    }.issubset(api_surface)
+    has_runtime_semantics = {
+        "full_promotion",
+        "canary",
+        "rollback",
+        "routing",
+    }.issubset(traffic_semantics)
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_adapter_boundary
+        and has_api_surface
+        and has_runtime_semantics
+    )
+    return ReadinessCheck(
+        name="deployment runtime contract",
+        passed=passed,
+        detail=(
+            (
+                "Serving adapter, revision routing, canary simulation, rollback, "
+                "and probes are configured"
+            )
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_adapter_boundary={has_adapter_boundary}, "
+                f"has_api_surface={has_api_surface}, "
+                f"has_runtime_semantics={has_runtime_semantics}"
             )
         ),
     )
@@ -1317,6 +1391,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/observability/request-log-event.v1.json",
         "contracts/mlflow/mlflow-tracking.v1.json",
         "contracts/orchestration/airflow-training.v1.json",
+        "contracts/runtime/deployment-serving.v1.json",
         "contracts/ops/release-smoke.v1.json",
         "contracts/ops/release-manifest.v1.json",
         "contracts/ops/release-evidence-workflow.v1.json",
@@ -1334,6 +1409,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_manifest_verifier_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
+        "deployment_runtime_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)

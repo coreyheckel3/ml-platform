@@ -1,0 +1,46 @@
+{
+  "adapter_boundary": {
+    "deployment_operations": [
+      "deploy_revision",
+      "apply_traffic_plan",
+      "rollback",
+      "probe_revision"
+    ],
+    "deployment_orchestrator": "LocalDeploymentOrchestrator",
+    "gateway_protocol": "ServingRuntimeGateway",
+    "local_gateway": "InMemoryServingRuntimeGateway"
+  },
+  "api_surface": [
+    "POST /api/v1/deployment-revisions/{revision_id}/health-probe",
+    "POST /api/v1/deployments/{deployment_id}/canary-simulation",
+    "GET /api/v1/inference-endpoints/{endpoint_id}/health-probe"
+  ],
+  "generated_from": [
+    "forgeml.platform.serving.runtime",
+    "forgeml.modules.deployments.infrastructure.orchestrator",
+    "forgeml.modules.deployments.application.services",
+    "forgeml.modules.inference.application.services",
+    "forgeml.modules.inference.domain.policies",
+    "forgeml.modules.inference.infrastructure.runtime"
+  ],
+  "health_probe_semantics": {
+    "deployment_probe": "serving runtime probe records a normal deployment health check",
+    "inference_probe": "endpoint probe resolves the same runtime revision path used by prediction"
+  },
+  "quality_gates": [
+    "python scripts/ci/check_deployment_runtime_contract.py",
+    "backend/tests/unit/platform/test_serving_runtime.py",
+    "backend/tests/unit/deployments/test_deployment_service.py",
+    "backend/tests/unit/inference/test_inference_service.py",
+    "backend/tests/api/test_deployments_api.py",
+    "backend/tests/api/test_inference_api.py"
+  ],
+  "schema_version": "forgeml.deployment_runtime_contract.v1",
+  "serving_runtime_schema_version": "forgeml.serving_runtime.v1",
+  "traffic_semantics": {
+    "canary": "target revision receives 1-99 percent traffic and a healthy baseline receives the remainder",
+    "full_promotion": "target revision receives 100 percent traffic and active peers drain to 0",
+    "rollback": "target healthy revision receives 100 percent traffic and all active non-target revisions are drained",
+    "routing": "inference selects a servable deployment revision by deterministic request-id weighted routing"
+  }
+}
