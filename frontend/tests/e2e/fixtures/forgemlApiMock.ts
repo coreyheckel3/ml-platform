@@ -550,6 +550,12 @@ async function handleTrainingRunAction(
   runId: string,
   action: string | undefined,
 ): Promise<void> {
+  if (method === "GET" && action === "orchestration-status") {
+    const run = findTrainingRun(state, runId);
+    return run
+      ? fulfillJson(route, trainingOrchestrationStatus(run))
+      : fulfillJson(route, { detail: "Training run not found" }, 404);
+  }
   if (method === "GET" && action === "events") {
     return fulfillJson(route, listResponse(state.trainingEventsByRun.get(runId) ?? []));
   }
@@ -1173,6 +1179,31 @@ function trainingLog(
     message,
     metadata: { orchestrator_run_id: `airflow-${runId}` },
     created_at: null,
+  };
+}
+
+function trainingOrchestrationStatus(run: TrainingRun): Entity {
+  const status = stringValue(run.status, "queued");
+  const orchestratorRunId = stringValue(
+    run.orchestrator_run_id,
+    `airflow-${run.id}`,
+  );
+  return {
+    training_run_id: run.id,
+    orchestrator_run_id: orchestratorRunId,
+    orchestrator: "airflow",
+    external_status: status,
+    mapped_training_status: status,
+    is_terminal: ["succeeded", "failed", "canceled", "dead_lettered"].includes(
+      status,
+    ),
+    external_url: `http://airflow.local/dags/forgeml_training_pipeline/grid?dag_run_id=${orchestratorRunId}`,
+    metadata: {
+      dag_id: "forgeml_training_pipeline",
+      project_id: run.project_id,
+      training_run_id: run.id,
+    },
+    observed_at: "2026-08-05T20:00:00Z",
   };
 }
 

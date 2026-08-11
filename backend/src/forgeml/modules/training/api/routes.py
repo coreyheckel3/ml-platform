@@ -9,6 +9,7 @@ from forgeml.modules.administration.infrastructure.sqlalchemy_repositories impor
 from forgeml.modules.training.api.schemas import (
     RecordTrainingResultRequest,
     StartTrainingRunRequest,
+    TrainingOrchestrationStatusResponse,
     TrainingRunEventListResponse,
     TrainingRunEventResponse,
     TrainingRunListResponse,
@@ -29,7 +30,9 @@ from forgeml.modules.training.domain.entities import (
     TrainingRunStatus,
 )
 from forgeml.modules.training.infrastructure.execution import LocalExampleTrainingRunner
-from forgeml.modules.training.infrastructure.orchestrator import LocalTrainingWorkflowOrchestrator
+from forgeml.modules.training.infrastructure.orchestrator import (
+    build_training_workflow_orchestrator,
+)
 from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyExperimentRunRecorder,
     SqlAlchemyTrainingRunRepository,
@@ -49,7 +52,7 @@ def get_training_run_service(
     return TrainingRunService(
         training_runs=SqlAlchemyTrainingRunRepository(session),
         experiment_runs=SqlAlchemyExperimentRunRecorder(session),
-        orchestrator=LocalTrainingWorkflowOrchestrator(),
+        orchestrator=build_training_workflow_orchestrator(settings),
         artifact_bucket=settings.object_storage_bucket,
         runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
         audit_log=SqlAlchemyAuditLogRepository(session),
@@ -181,6 +184,31 @@ def list_training_run_logs(
 ) -> TrainingRunLogListResponse:
     return TrainingRunLogListResponse(
         items=[_log_response(log) for log in service.list_logs(training_run_id, principal)]
+    )
+
+
+@router.get(
+    "/training-runs/{training_run_id}/orchestration-status",
+    response_model=TrainingOrchestrationStatusResponse,
+)
+def get_training_run_orchestration_status(
+    training_run_id: UUID,
+    principal: Principal = Depends(get_current_principal),
+    service: TrainingRunService = Depends(get_training_run_service),
+) -> TrainingOrchestrationStatusResponse:
+    status = service.get_orchestration_status(training_run_id, principal)
+    return TrainingOrchestrationStatusResponse(
+        training_run_id=str(status.training_run_id),
+        orchestrator_run_id=status.orchestrator_run_id,
+        orchestrator=status.orchestrator,
+        external_status=status.external_status,
+        mapped_training_status=(
+            status.mapped_training_status.value if status.mapped_training_status else None
+        ),
+        is_terminal=status.is_terminal,
+        external_url=status.external_url,
+        metadata=status.metadata,
+        observed_at=_datetime_response(status.observed_at),
     )
 
 

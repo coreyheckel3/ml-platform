@@ -5,6 +5,7 @@ from uuid import UUID
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.domain.entities import (
     TrainingExecutionResult,
+    TrainingOrchestrationStatus,
     TrainingRun,
     TrainingRunEvent,
     TrainingRunLog,
@@ -112,6 +113,9 @@ class TrainingWorkflowOrchestrator(Protocol):
         raise NotImplementedError
 
     def cancel_training(self, training_run: TrainingRun) -> str:
+        raise NotImplementedError
+
+    def get_training_status(self, training_run: TrainingRun) -> TrainingOrchestrationStatus:
         raise NotImplementedError
 
 

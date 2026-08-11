@@ -58,6 +58,7 @@ def test_checked_in_openapi_contract_covers_core_platform_groups() -> None:
     assert "/api/v1/projects" in paths
     assert "/api/v1/projects/{project_id}/datasets" in paths
     assert "/api/v1/projects/{project_id}/training-runs" in paths
+    assert "/api/v1/training-runs/{training_run_id}/orchestration-status" in paths
     assert "/api/v1/models/{model_id}/versions/promote-training-run" in paths
     assert "/api/v1/inference-endpoints/{endpoint_id}/predict" in paths
     assert "/api/v1/projects/{project_id}/drift-reports" in paths

@@ -34,10 +34,13 @@ forgeml/
         main.py
         config.py
         platform/
+          airflow/
           api/
           application/
+          artifacts/
           domain/
           infrastructure/
+          mlflow/
           observability/
           security/
           database/
@@ -134,7 +137,15 @@ forgeml/
     migrations/
     seed/
   contracts/
+    api/
+    artifacts/
+    database/
+    mlflow/
+    observability/
     openapi/
+    ops/
+    orchestration/
+    security/
     events/
   benchmarks/
   security/
@@ -219,4 +230,3 @@ Modules most likely to become independent services later:
 | Model Registry | Approval workflows and cross-environment promotion. |
 
 Extraction should require replacing in-process adapters with network adapters, not rewriting domain logic.
-

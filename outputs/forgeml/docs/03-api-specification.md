@@ -147,6 +147,7 @@ Dataset upload should use signed object-storage URLs:
 | `POST` | `/training-runs/{training_run_id}/cancel` | Cancel run |
 | `GET` | `/training-runs/{training_run_id}/events` | List lifecycle events |
 | `GET` | `/training-runs/{training_run_id}/logs` | List training worker and lifecycle logs |
+| `GET` | `/training-runs/{training_run_id}/orchestration-status` | Poll local or Airflow orchestration status |
 | `POST` | `/projects/{project_id}/hyperparameter-searches` | Start tuning workflow |
 
 When MLflow sync is enabled, terminal training results also add
@@ -154,6 +155,11 @@ When MLflow sync is enabled, terminal training results also add
 schema version `forgeml.mlflow_tracking_sync.v1` and records sync status, MLflow
 run id, logged parameter count, metric count, artifact-reference count, and any
 tracking error message.
+
+When Airflow orchestration is enabled, training submission triggers the
+configured training DAG using a versioned `forgeml.training_airflow_dag_run.v1`
+configuration payload. The orchestration-status endpoint returns the external
+state, mapped ForgeML status, terminal flag, Airflow URL, and adapter metadata.
 
 Training job request:
 

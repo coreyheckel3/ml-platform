@@ -71,6 +71,27 @@ class Settings(BaseSettings):
         default="http://localhost:8080",
         alias="FORGEML_AIRFLOW_BASE_URL",
     )
+    airflow_orchestration_enabled: bool = Field(
+        default=False,
+        alias="FORGEML_AIRFLOW_ORCHESTRATION_ENABLED",
+    )
+    airflow_training_dag_id: str = Field(
+        default="forgeml_training_pipeline",
+        alias="FORGEML_AIRFLOW_TRAINING_DAG_ID",
+    )
+    airflow_username: str | None = Field(
+        default=None,
+        alias="FORGEML_AIRFLOW_USERNAME",
+    )
+    airflow_password: str | None = Field(
+        default=None,
+        alias="FORGEML_AIRFLOW_PASSWORD",
+    )
+    airflow_http_timeout_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        alias="FORGEML_AIRFLOW_HTTP_TIMEOUT_SECONDS",
+    )
     jwt_secret: str = Field(
         default="change-me-for-local-development",
         alias="FORGEML_JWT_SECRET",

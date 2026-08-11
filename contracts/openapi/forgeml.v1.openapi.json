@@ -4442,6 +4442,81 @@
         "title": "TokenResponse",
         "type": "object"
       },
+      "TrainingOrchestrationStatusResponse": {
+        "properties": {
+          "external_status": {
+            "title": "External Status",
+            "type": "string"
+          },
+          "external_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Url"
+          },
+          "is_terminal": {
+            "title": "Is Terminal",
+            "type": "boolean"
+          },
+          "mapped_training_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapped Training Status"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "orchestrator": {
+            "title": "Orchestrator",
+            "type": "string"
+          },
+          "orchestrator_run_id": {
+            "title": "Orchestrator Run Id",
+            "type": "string"
+          },
+          "training_run_id": {
+            "title": "Training Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "training_run_id",
+          "orchestrator_run_id",
+          "orchestrator",
+          "external_status",
+          "mapped_training_status",
+          "is_terminal",
+          "external_url",
+          "metadata",
+          "observed_at"
+        ],
+        "title": "TrainingOrchestrationStatusResponse",
+        "type": "object"
+      },
       "TrainingRunEventListResponse": {
         "properties": {
           "items": {
@@ -9705,6 +9780,54 @@
           }
         ],
         "summary": "List Training Run Logs",
+        "tags": [
+          "training-runs"
+        ]
+      }
+    },
+    "/api/v1/training-runs/{training_run_id}/orchestration-status": {
+      "get": {
+        "operationId": "get_training_run_orchestration_status_api_v1_training_runs__training_run_id__orchestration_status_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "training_run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Training Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingOrchestrationStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Training Run Orchestration Status",
         "tags": [
           "training-runs"
         ]

@@ -136,13 +136,17 @@ Contract tests should protect boundaries:
 - Release evidence workflow contract for CI manifest publication behavior.
 - Release manifest verification contract for artifact integrity and evidence linkage.
 - MLflow tracking contract for adapter boundaries, REST endpoints, lineage tags, artifact-reference logging, and best-effort failure semantics.
+- Airflow orchestration contract for gateway boundaries, REST DAG-run operations, training DAG conf payloads, state mapping, and polling API coverage.
 - Inference runtime request/response schema.
 - Event payload schemas under `contracts/events`.
-- Airflow DAG trigger and status interface.
 
 MLflow integration tests cover the pure record builder, in-memory sync adapter,
 HTTP REST request sequence, missing-experiment creation path, training service
 sync reports, and sync-failure preservation of training terminal status.
+
+Airflow orchestration tests cover local fallback status reporting, DAG trigger
+payloads, deterministic DAG run ids, REST trigger/poll/cancel calls, external
+state mapping, and API serialization of orchestration polling results.
 
 ## Release Smoke Tests
 

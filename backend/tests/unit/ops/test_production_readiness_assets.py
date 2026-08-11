@@ -142,6 +142,27 @@ def test_mlflow_tracking_contract_gate_is_enforced() -> None:
     assert "MLflowHttpTrackingGateway" in tracking_source
 
 
+def test_airflow_orchestration_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/orchestration/airflow-training.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    orchestrator_source = Path(
+        "backend/src/forgeml/modules/training/infrastructure/orchestrator.py"
+    ).read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_airflow_orchestration_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.airflow_training_orchestration_contract.v1"
+    assert contract["airflow_schema_version"] == "forgeml.airflow_orchestration.v1"
+    assert contract["training_conf_schema_version"] == "forgeml.training_airflow_dag_run.v1"
+    assert contract["gateway_boundary"]["gateway_protocol"] == "AirflowWorkflowGateway"
+    assert contract["gateway_boundary"]["local_fallback"] == "LocalTrainingWorkflowOrchestrator"
+    assert contract["status_mapping"]["success"] == "succeeded"
+    assert "AirflowTrainingWorkflowOrchestrator" in orchestrator_source
+
+
 def test_problem_details_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(Path("contracts/api/problem-details.v1.json").read_text(encoding="utf-8"))
@@ -285,6 +306,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
     assert "contracts/artifacts/artifact-manifest.v1.json" in artifact_paths
     assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
+    assert "contracts/orchestration/airflow-training.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths

@@ -13,6 +13,9 @@ for import_path in (REPO_ROOT, BACKEND_SRC):
         sys.path.insert(0, import_path_value)
 
 try:
+    from scripts.ci.check_airflow_orchestration_contract import (
+        check_airflow_orchestration_contract as verify_airflow_orchestration_contract,
+    )
     from scripts.ci.check_alembic_migration_contract import (
         check_migration_contract as verify_alembic_migration_contract,
     )
@@ -38,6 +41,9 @@ try:
         check_schema_contract as verify_sqlalchemy_schema_contract,
     )
 except ModuleNotFoundError:
+    from check_airflow_orchestration_contract import (  # type: ignore[no-redef]
+        check_airflow_orchestration_contract as verify_airflow_orchestration_contract,
+    )
     from check_alembic_migration_contract import (  # type: ignore[no-redef]
         check_migration_contract as verify_alembic_migration_contract,
     )
@@ -72,6 +78,7 @@ SCAN_ROOTS = (
     "infra",
     "load",
     "ml",
+    "pipelines",
     "examples",
     "scripts",
     "docs",
@@ -128,6 +135,15 @@ REQUIRED_FILES = (
     "contracts/mlflow/mlflow-tracking.v1.json",
     "backend/tests/unit/platform/test_mlflow_tracking.py",
     "backend/tests/unit/ops/test_mlflow_tracking_contract.py",
+    "backend/src/forgeml/platform/airflow/workflows.py",
+    "backend/src/forgeml/platform/airflow/__init__.py",
+    "scripts/ci/check_airflow_orchestration_contract.py",
+    "contracts/orchestration/README.md",
+    "contracts/orchestration/airflow-training.v1.json",
+    "backend/tests/unit/platform/test_airflow_workflows.py",
+    "backend/tests/unit/training/test_training_orchestrator.py",
+    "backend/tests/unit/ops/test_airflow_orchestration_contract.py",
+    "pipelines/airflow/dags/forgeml_training_pipeline.py",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -195,6 +211,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_sqlalchemy_schema_contract(repo_root),
         check_artifact_manifest_contract(repo_root),
         check_mlflow_tracking_contract(repo_root),
+        check_airflow_orchestration_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -651,6 +668,69 @@ def check_mlflow_tracking_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_rest_depth={has_rest_depth}, "
                 f"has_lineage_tags={has_lineage_tags}, "
                 f"preserves_training_status={preserves_training_status}"
+            )
+        ),
+    )
+
+
+def check_airflow_orchestration_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/orchestration/airflow-training.v1.json"
+    has_ci_gate = "python scripts/ci/check_airflow_orchestration_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="airflow orchestration contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    gateway_boundary = contract.get("gateway_boundary", {})
+    dag_contract = contract.get("training_dag_contract", {})
+    status_mapping = contract.get("status_mapping", {})
+    api_surface = set(contract.get("api_surface", []))
+    required_conf_fields = set(dag_contract.get("required_conf_fields", []))
+    contract_current, contract_detail = verify_airflow_orchestration_contract(contract_path)
+    has_gateway_boundary = (
+        gateway_boundary.get("gateway_protocol") == "AirflowWorkflowGateway"
+        and gateway_boundary.get("training_adapter") == "AirflowTrainingWorkflowOrchestrator"
+        and gateway_boundary.get("local_fallback") == "LocalTrainingWorkflowOrchestrator"
+    )
+    has_api_polling = (
+        "GET /api/v1/training-runs/{training_run_id}/orchestration-status" in api_surface
+    )
+    has_lineage_conf = {
+        "organization_id",
+        "project_id",
+        "experiment_run_id",
+        "training_run_id",
+        "artifact_uri",
+    }.issubset(required_conf_fields)
+    has_status_mapping = status_mapping.get("success") == "succeeded" and status_mapping.get(
+        "failed"
+    ) == "failed"
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_gateway_boundary
+        and has_api_polling
+        and has_lineage_conf
+        and has_status_mapping
+    )
+    return ReadinessCheck(
+        name="airflow orchestration contract",
+        passed=passed,
+        detail=(
+            "Airflow gateway, training DAG contract, polling API, and state mapping are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_gateway_boundary={has_gateway_boundary}, "
+                f"has_api_polling={has_api_polling}, "
+                f"has_lineage_conf={has_lineage_conf}, "
+                f"has_status_mapping={has_status_mapping}"
             )
         ),
     )
@@ -1236,6 +1316,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/security/api-authorization.v1.json",
         "contracts/observability/request-log-event.v1.json",
         "contracts/mlflow/mlflow-tracking.v1.json",
+        "contracts/orchestration/airflow-training.v1.json",
         "contracts/ops/release-smoke.v1.json",
         "contracts/ops/release-manifest.v1.json",
         "contracts/ops/release-evidence-workflow.v1.json",
@@ -1252,6 +1333,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_evidence_workflow_contract",
         "release_manifest_verifier_contract",
         "mlflow_tracking_contract",
+        "airflow_orchestration_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)

@@ -125,7 +125,17 @@ Airflow should own long-running workflows:
 - Drift analysis
 - Retraining
 
-ForgeML should not expose raw Airflow concepts directly in the product UI. The application layer should translate platform workflows into Airflow DAG runs through an orchestration interface.
+ForgeML should not expose raw Airflow concepts directly in the product UI. The
+application layer should translate platform workflows into Airflow DAG runs
+through an orchestration interface.
+
+The current training implementation uses `AirflowWorkflowGateway` and
+`AirflowTrainingWorkflowOrchestrator` when
+`FORGEML_AIRFLOW_ORCHESTRATION_ENABLED=true`; otherwise it falls back to the
+local orchestrator used by the developer workflow. Training DAG runs receive a
+versioned `forgeml.training_airflow_dag_run.v1` configuration payload, and the
+API exposes an orchestration-status polling endpoint that maps Airflow states
+back into ForgeML training statuses.
 
 ## Experiment and Model Tracking
 

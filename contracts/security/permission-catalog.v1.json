@@ -501,7 +501,7 @@
       "code": "training_runs:cancel",
       "description": "Cancel queued or running training runs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/training/application/services.py:737"
+        "backend/src/forgeml/modules/training/application/services.py:747"
       ],
       "module": "training"
     },
@@ -510,7 +510,7 @@
       "code": "training_runs:create",
       "description": "Queue training runs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/training/application/services.py:159"
+        "backend/src/forgeml/modules/training/application/services.py:160"
       ],
       "module": "training"
     },
@@ -519,10 +519,11 @@
       "code": "training_runs:read",
       "description": "Read training runs, events, and logs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/training/application/services.py:285",
-        "backend/src/forgeml/modules/training/application/services.py:289",
-        "backend/src/forgeml/modules/training/application/services.py:798",
-        "backend/src/forgeml/modules/training/application/services.py:807"
+        "backend/src/forgeml/modules/training/application/services.py:286",
+        "backend/src/forgeml/modules/training/application/services.py:290",
+        "backend/src/forgeml/modules/training/application/services.py:414",
+        "backend/src/forgeml/modules/training/application/services.py:808",
+        "backend/src/forgeml/modules/training/application/services.py:817"
       ],
       "module": "training"
     },
@@ -531,10 +532,10 @@
       "code": "training_runs:write",
       "description": "Record training results and execute training runs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/training/application/services.py:297",
-        "backend/src/forgeml/modules/training/application/services.py:312",
-        "backend/src/forgeml/modules/training/application/services.py:332",
-        "backend/src/forgeml/modules/training/application/services.py:396"
+        "backend/src/forgeml/modules/training/application/services.py:298",
+        "backend/src/forgeml/modules/training/application/services.py:313",
+        "backend/src/forgeml/modules/training/application/services.py:333",
+        "backend/src/forgeml/modules/training/application/services.py:397"
       ],
       "module": "training"
     }

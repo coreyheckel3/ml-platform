@@ -34,12 +34,14 @@ import { MetricCard } from "../../../shared/ui/MetricCard";
 import { PageHeader } from "../../../shared/ui/PageHeader";
 import {
   cancelTrainingRun,
+  getTrainingRunOrchestrationStatus,
   getTrainingRun,
   listTrainingRunEvents,
   listTrainingRunLogs,
   listTrainingRuns,
   recordTrainingResult,
   startTrainingRun,
+  type TrainingOrchestrationStatus,
   type TrainingRun,
   type TrainingRunEvent,
   type TrainingRunLog,
@@ -150,7 +152,14 @@ export function TrainingRunsPage() {
     queryFn: () => listTrainingRunLogs(selectedRun?.id ?? "", token ?? ""),
     enabled: Boolean(token && selectedRun),
   });
+  const orchestrationStatusQuery = useQuery({
+    queryKey: ["training-run-orchestration-status", selectedRun?.id],
+    queryFn: () =>
+      getTrainingRunOrchestrationStatus(selectedRun?.id ?? "", token ?? ""),
+    enabled: Boolean(token && selectedRun),
+  });
   const selectedRunDetail = selectedRunQuery.data ?? selectedRun;
+  const orchestrationStatus = orchestrationStatusQuery.data;
   const events = useMemo(
     () => eventsQuery.data?.items ?? [],
     [eventsQuery.data?.items],
@@ -342,6 +351,9 @@ export function TrainingRunsPage() {
     queryClient.invalidateQueries({ queryKey: ["training-run", runId] });
     queryClient.invalidateQueries({ queryKey: ["training-run-events", runId] });
     queryClient.invalidateQueries({ queryKey: ["training-run-logs", runId] });
+    queryClient.invalidateQueries({
+      queryKey: ["training-run-orchestration-status", runId],
+    });
     queryClient.invalidateQueries({ queryKey: ["experiments", projectId] });
   }
 
@@ -552,7 +564,12 @@ export function TrainingRunsPage() {
               tone="danger"
             />
           ) : (
-            <RunDetail run={selectedRunDetail} />
+            <RunDetail
+              run={selectedRunDetail}
+              orchestrationStatus={orchestrationStatus}
+              orchestrationStatusLoading={orchestrationStatusQuery.isFetching}
+              orchestrationStatusFailed={Boolean(orchestrationStatusQuery.error)}
+            />
           )}
         </DataPanel>
       </div>
@@ -993,7 +1010,17 @@ function TrainingRunRow({
   );
 }
 
-function RunDetail({ run }: { run: TrainingRun }) {
+function RunDetail({
+  run,
+  orchestrationStatus,
+  orchestrationStatusLoading,
+  orchestrationStatusFailed,
+}: {
+  run: TrainingRun;
+  orchestrationStatus: TrainingOrchestrationStatus | undefined;
+  orchestrationStatusLoading: boolean;
+  orchestrationStatusFailed: boolean;
+}) {
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1055,6 +1082,51 @@ function RunDetail({ run }: { run: TrainingRun }) {
           value={formatTimestamp(run.next_retry_at)}
           detail={lifecycleDetail(run)}
         />
+      </div>
+      <div className="rounded border border-slate-200 p-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="font-medium">Orchestration Status</div>
+            <div className="mt-1 text-xs text-steel">
+              {orchestrationStatusLoading
+                ? "Polling orchestrator state"
+                : `observed ${formatTimestamp(
+                    orchestrationStatus?.observed_at ?? null,
+                  )}`}
+            </div>
+          </div>
+          <span
+            className={statusClassName(
+              orchestrationStatus?.mapped_training_status ??
+                orchestrationStatus?.external_status ??
+                run.status,
+            )}
+          >
+            {orchestrationStatusFailed
+              ? "unavailable"
+              : (orchestrationStatus?.external_status ?? run.status)}
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 text-xs text-steel sm:grid-cols-2">
+          <div>adapter: {orchestrationStatus?.orchestrator ?? "local"}</div>
+          <div>
+            mapped status:{" "}
+            {orchestrationStatus?.mapped_training_status ?? run.status}
+          </div>
+          <div>
+            terminal:{" "}
+            {orchestrationStatus
+              ? orchestrationStatus.is_terminal
+                ? "yes"
+                : "no"
+              : isTerminalStatus(run.status)
+                ? "yes"
+                : "no"}
+          </div>
+          <div className="truncate">
+            external link: {orchestrationStatus?.external_url ?? "none"}
+          </div>
+        </div>
       </div>
       {run.error_message ? (
         <div className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-risk">

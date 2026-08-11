@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from forgeml.main import create_app
 from forgeml.modules.training.api.routes import get_training_run_service
 from forgeml.modules.training.domain.entities import (
+    TrainingOrchestrationStatus,
     TrainingRun,
     TrainingRunEvent,
     TrainingRunLog,
@@ -72,6 +73,20 @@ class FakeTrainingRunService:
                 metadata={"orchestrator_run_id": "workflow-1"},
             )
         ]
+
+    def get_orchestration_status(self, training_run_id, principal):
+        assert training_run_id == self.training_run_id
+        return TrainingOrchestrationStatus(
+            training_run_id=self.training_run_id,
+            orchestrator_run_id="workflow-1",
+            orchestrator="airflow",
+            external_status="queued",
+            mapped_training_status=TrainingRunStatus.QUEUED,
+            is_terminal=False,
+            external_url="http://airflow.local/dags/forgeml_training_pipeline/grid",
+            metadata={"dag_id": "forgeml_training_pipeline"},
+            observed_at=None,
+        )
 
     def _training_run(
         self,
@@ -147,6 +162,9 @@ def test_training_routes_expose_training_lifecycle() -> None:
     )
     events = client.get(f"/api/v1/training-runs/{service.training_run_id}/events")
     logs = client.get(f"/api/v1/training-runs/{service.training_run_id}/logs")
+    orchestration = client.get(
+        f"/api/v1/training-runs/{service.training_run_id}/orchestration-status"
+    )
     canceled = client.post(f"/api/v1/training-runs/{service.training_run_id}/cancel")
 
     assert started.status_code == 202
@@ -159,5 +177,8 @@ def test_training_routes_expose_training_lifecycle() -> None:
     assert events.json()["items"][0]["event_type"] == "queued"
     assert logs.status_code == 200
     assert logs.json()["items"][0]["message"] == "Training run was queued for execution."
+    assert orchestration.status_code == 200
+    assert orchestration.json()["orchestrator"] == "airflow"
+    assert orchestration.json()["mapped_training_status"] == "queued"
     assert canceled.status_code == 200
     assert canceled.json()["status"] == "canceled"

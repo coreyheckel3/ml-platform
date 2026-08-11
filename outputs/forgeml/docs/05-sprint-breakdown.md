@@ -1700,6 +1700,40 @@ Implemented scope:
 - `forgeml_mlflow_tracking_sync_total` exposes sync outcomes to Prometheus.
 - `contracts/mlflow/mlflow-tracking.v1.json` and `scripts/ci/check_mlflow_tracking_contract.py` lock the adapter boundary and CI wiring.
 
+## Sprint 54: Airflow Orchestration Adapter
+
+Goal: Route training workflow orchestration through a production-shaped Airflow
+adapter while preserving the local developer fallback.
+
+Scope:
+
+- Airflow workflow gateway protocol
+- Stdlib HTTP adapter for Airflow stable REST DAG-run operations
+- In-memory gateway for deterministic tests
+- Training-specific Airflow DAG run configuration contract
+- Configurable training DAG id, Airflow enablement, credentials, and timeout
+- Orchestrator run id format for DAG references
+- External status polling endpoint
+- Airflow-to-ForgeML state mapping
+- Release and production-readiness contract wiring
+
+Acceptance criteria:
+
+- Local training launch remains the default developer path.
+- Setting `FORGEML_AIRFLOW_ORCHESTRATION_ENABLED=true` routes training launch, cancellation, and polling through Airflow.
+- Training DAG runs receive a versioned conf payload with organization, project, experiment, experiment run, training run, data, feature, algorithm, and artifact lineage.
+- The public API can poll orchestration status without exposing raw Airflow as a product dependency.
+- CI and production-readiness gates validate the Airflow orchestration contract.
+
+Implemented scope:
+
+- `forgeml.platform.airflow` provides `AirflowWorkflowGateway`, `AirflowHttpWorkflowGateway`, `InMemoryAirflowWorkflowGateway`, and REST transport primitives.
+- `AirflowTrainingWorkflowOrchestrator` builds deterministic DAG run ids, triggers the configured training DAG, cancels DAG runs, and maps Airflow states to ForgeML statuses.
+- `TrainingRunService.get_orchestration_status` enforces `training_runs:read` before polling orchestration state.
+- `GET /api/v1/training-runs/{training_run_id}/orchestration-status` returns external status, mapped status, terminal flag, URL, metadata, and observation time.
+- `.env.example`, API routes, retraining launch, and the training worker use the same orchestrator factory.
+- `contracts/orchestration/airflow-training.v1.json` and `scripts/ci/check_airflow_orchestration_contract.py` lock the adapter boundary and CI wiring.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1717,7 +1751,7 @@ sequence.
 | 51 | Background Worker / Job Queue Hardening | Completed | Real queued job lifecycle, retry policy, dead-letter handling, worker heartbeat, job lease timeout, and worker observability. |
 | 52 | Artifact Storage Abstraction | Completed | S3-compatible manifest storage boundary, dataset and model artifact manifests, checksum validation, lineage, contracts, and CI wiring. |
 | 53 | MLflow Integration Layer | Completed | MLflow adapter behind ForgeML interfaces, parameter/metric/artifact logging, training-run synchronization, experiment mapping, failure-safe sync reports, and adapter contract tests. |
-| 54 | Airflow Orchestration Adapter | Planned | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, retry mapping, and orchestration contract tests. |
+| 54 | Airflow Orchestration Adapter | Completed | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, state mapping, and orchestration contract tests. |
 | 55 | Deployment Runtime Hardening | Planned | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
 | 56 | Monitoring Dashboards v2 | Planned | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
 | 57 | Security and Multi-Tenant Hardening | Planned | Organization isolation tests, RBAC matrix tests, rate-limit tests, audit-log coverage expansion, secrets policy, and configuration documentation. |

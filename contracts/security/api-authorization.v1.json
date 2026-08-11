@@ -913,6 +913,16 @@
     },
     {
       "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_training_run_orchestration_status_api_v1_training_runs__training_run_id__orchestration_status_get",
+      "path": "/api/v1/training-runs/{training_run_id}/orchestration-status",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
       "method": "POST",
       "operation_id": "record_training_result_api_v1_training_runs__training_run_id__result_post",
       "path": "/api/v1/training-runs/{training_run_id}/result",
@@ -1021,8 +1031,8 @@
   ],
   "schema_version": "forgeml.api_authorization.v1",
   "summary": {
-    "protected_route_count": 92,
+    "protected_route_count": 93,
     "public_route_count": 6,
-    "total_route_count": 98
+    "total_route_count": 99
   }
 }

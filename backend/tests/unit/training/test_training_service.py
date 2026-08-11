@@ -18,6 +18,7 @@ from forgeml.modules.training.application.services import (
 from forgeml.modules.training.domain.entities import (
     TrainingArtifact,
     TrainingExecutionResult,
+    TrainingOrchestrationStatus,
     TrainingRun,
     TrainingRunEvent,
     TrainingRunLog,
@@ -223,6 +224,25 @@ class FakeOrchestrator:
 
     def cancel_training(self, training_run: TrainingRun) -> str:
         return f"cancel:{training_run.id}"
+
+    def get_training_status(self, training_run: TrainingRun) -> TrainingOrchestrationStatus:
+        return TrainingOrchestrationStatus(
+            training_run_id=training_run.id,
+            orchestrator_run_id=training_run.orchestrator_run_id,
+            orchestrator="fake",
+            external_status=training_run.status.value,
+            mapped_training_status=training_run.status,
+            is_terminal=training_run.status
+            in {
+                TrainingRunStatus.SUCCEEDED,
+                TrainingRunStatus.FAILED,
+                TrainingRunStatus.CANCELED,
+                TrainingRunStatus.DEAD_LETTERED,
+            },
+            external_url="http://orchestrator.local/runs/workflow-1",
+            metadata={"source": "fake-orchestrator"},
+            observed_at=datetime.now(tz=UTC),
+        )
 
 
 class FakeRunner:
@@ -617,6 +637,19 @@ def test_training_service_records_mlflow_failure_without_failing_training_run() 
     assert "mlflow_sync_failed" in [event.event_type for event in context.repository.events]
     assert context.repository.logs[-2].logger == "training.mlflow"
     assert context.repository.logs[-2].level == "error"
+
+
+def test_training_service_polls_orchestration_status() -> None:
+    context = started_training_run_context(runner=FakeRunner())
+
+    status = context.service.get_orchestration_status(context.training_run.id, context.actor)
+
+    assert status.training_run_id == context.training_run.id
+    assert status.orchestrator == "fake"
+    assert status.external_status == "queued"
+    assert status.mapped_training_status == TrainingRunStatus.QUEUED
+    assert status.is_terminal is False
+    assert status.external_url == "http://orchestrator.local/runs/workflow-1"
 
 
 def test_training_service_rejects_execution_without_matching_runner() -> None:

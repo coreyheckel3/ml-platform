@@ -33,7 +33,9 @@ from forgeml.modules.retraining.infrastructure.sqlalchemy_repositories import (
 )
 from forgeml.modules.retraining.infrastructure.training_launcher import TrainingRunServiceLauncher
 from forgeml.modules.training.application.services import TrainingRunService
-from forgeml.modules.training.infrastructure.orchestrator import LocalTrainingWorkflowOrchestrator
+from forgeml.modules.training.infrastructure.orchestrator import (
+    build_training_workflow_orchestrator,
+)
 from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyExperimentRunRecorder,
     SqlAlchemyTrainingRunRepository,
@@ -54,7 +56,7 @@ def get_retraining_service(
     training_service = TrainingRunService(
         training_runs=SqlAlchemyTrainingRunRepository(session),
         experiment_runs=SqlAlchemyExperimentRunRecorder(session),
-        orchestrator=LocalTrainingWorkflowOrchestrator(),
+        orchestrator=build_training_workflow_orchestrator(settings),
         artifact_bucket=settings.object_storage_bucket,
         audit_log=audit_log,
         mlflow_tracking=build_mlflow_tracking_gateway(

@@ -7,6 +7,7 @@ from forgeml.modules.administration.repositories.interfaces import AuditEventRec
 from forgeml.modules.experiments.domain.entities import ExperimentRun, ExperimentRunStatus
 from forgeml.modules.training.domain.entities import (
     TrainingExecutionResult,
+    TrainingOrchestrationStatus,
     TrainingRun,
     TrainingRunEvent,
     TrainingRunLog,
@@ -404,6 +405,15 @@ class TrainingRunService:
         if heartbeat is None:
             raise DomainValidationError("Training run heartbeat was rejected.")
         return heartbeat
+
+    def get_orchestration_status(
+        self,
+        training_run_id: UUID,
+        principal: Principal,
+    ) -> TrainingOrchestrationStatus:
+        self._require(principal, "training_runs:read")
+        training_run = self._get_scoped_training_run(training_run_id, principal)
+        return self._orchestrator.get_training_status(training_run)
 
     def _execute_claimed_training_run(
         self,

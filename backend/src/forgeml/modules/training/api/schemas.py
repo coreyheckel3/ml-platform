@@ -80,3 +80,15 @@ class TrainingRunLogResponse(BaseModel):
 class TrainingRunLogListResponse(BaseModel):
     items: list[TrainingRunLogResponse]
     next_cursor: str | None = None
+
+
+class TrainingOrchestrationStatusResponse(BaseModel):
+    training_run_id: str
+    orchestrator_run_id: str
+    orchestrator: str
+    external_status: str
+    mapped_training_status: str | None
+    is_terminal: bool
+    external_url: str | None
+    metadata: dict[str, object]
+    observed_at: str | None

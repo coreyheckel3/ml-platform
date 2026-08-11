@@ -35,6 +35,8 @@ describe("TrainingRunsPage", () => {
     expect(
       await screen.findByText("Training run was queued for execution."),
     ).toBeInTheDocument();
+    expect(await screen.findByText("Orchestration Status")).toBeInTheDocument();
+    expect(await screen.findByText("adapter: airflow")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
     await waitFor(() =>
       expect(
@@ -171,6 +173,12 @@ function mockTrainingWorkflow() {
             items: logMap[runId] ?? [],
             next_cursor: null,
           });
+        }
+        if (nested === "orchestration-status") {
+          const run = runs.find((item) => item.id === runId);
+          return run
+            ? jsonResponse(trainingOrchestrationStatus(run))
+            : jsonResponse({ detail: "not found" }, false);
         }
         const run = runs.find((item) => item.id === runId);
         return run
@@ -431,6 +439,28 @@ function trainingLog(
         trainingRunId === startedRunId ? "workflow-2" : "workflow-1",
     },
     created_at: null,
+  };
+}
+
+function trainingOrchestrationStatus(
+  run: Record<string, unknown>,
+): Record<string, unknown> {
+  const status = String(run.status);
+  return {
+    training_run_id: run.id,
+    orchestrator_run_id: run.orchestrator_run_id,
+    orchestrator: "airflow",
+    external_status: status,
+    mapped_training_status: status,
+    is_terminal: ["succeeded", "failed", "canceled", "dead_lettered"].includes(
+      status,
+    ),
+    external_url: `http://airflow.local/dags/forgeml_training_pipeline/grid?dag_run_id=${run.orchestrator_run_id}`,
+    metadata: {
+      dag_id: "forgeml_training_pipeline",
+      attempt_count: run.attempt_count,
+    },
+    observed_at: "2026-08-05T20:00:00Z",
   };
 }
 

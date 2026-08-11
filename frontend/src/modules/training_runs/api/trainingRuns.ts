@@ -48,6 +48,18 @@ export type TrainingRunLog = {
   created_at: string | null;
 };
 
+export type TrainingOrchestrationStatus = {
+  training_run_id: string;
+  orchestrator_run_id: string;
+  orchestrator: string;
+  external_status: string;
+  mapped_training_status: string | null;
+  is_terminal: boolean;
+  external_url: string | null;
+  metadata: Record<string, unknown>;
+  observed_at: string | null;
+};
+
 export type TrainingRunListResponse = {
   items: TrainingRun[];
   next_cursor: string | null;
@@ -153,6 +165,16 @@ export function listTrainingRunLogs(
 ): Promise<TrainingRunLogListResponse> {
   return apiGet<TrainingRunLogListResponse>(
     `/api/v1/training-runs/${trainingRunId}/logs`,
+    { token },
+  );
+}
+
+export function getTrainingRunOrchestrationStatus(
+  trainingRunId: string,
+  token: string,
+): Promise<TrainingOrchestrationStatus> {
+  return apiGet<TrainingOrchestrationStatus>(
+    `/api/v1/training-runs/${trainingRunId}/orchestration-status`,
     { token },
   );
 }

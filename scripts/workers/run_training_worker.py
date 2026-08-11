@@ -14,7 +14,9 @@ from forgeml.modules.training.application.services import (
     TrainingWorkerRunSummary,
 )
 from forgeml.modules.training.infrastructure.execution import LocalExampleTrainingRunner
-from forgeml.modules.training.infrastructure.orchestrator import LocalTrainingWorkflowOrchestrator
+from forgeml.modules.training.infrastructure.orchestrator import (
+    build_training_workflow_orchestrator,
+)
 from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyExperimentRunRecorder,
     SqlAlchemyTrainingRunRepository,
@@ -45,7 +47,7 @@ def run_once(
         service = TrainingRunService(
             training_runs=SqlAlchemyTrainingRunRepository(session),
             experiment_runs=SqlAlchemyExperimentRunRecorder(session),
-            orchestrator=LocalTrainingWorkflowOrchestrator(),
+            orchestrator=build_training_workflow_orchestrator(settings),
             artifact_bucket=settings.object_storage_bucket,
             runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
             retry_policy=resolved_retry_policy,

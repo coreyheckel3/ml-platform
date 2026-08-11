@@ -66,6 +66,19 @@ class TrainingRunLog:
 
 
 @dataclass(frozen=True)
+class TrainingOrchestrationStatus:
+    training_run_id: UUID
+    orchestrator_run_id: str
+    orchestrator: str
+    external_status: str
+    mapped_training_status: TrainingRunStatus | None
+    is_terminal: bool
+    external_url: str | None
+    metadata: dict[str, object]
+    observed_at: datetime
+
+
+@dataclass(frozen=True)
 class TrainingArtifact:
     name: str
     artifact_type: str
