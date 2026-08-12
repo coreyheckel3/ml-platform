@@ -1810,6 +1810,38 @@ Implemented scope:
 - Frontend tests cover the v2 dashboard sections while preserving alert evaluation against the selected endpoint.
 - `contracts/observability/monitoring-dashboard.v1.json` and `scripts/ci/check_monitoring_dashboard_contract.py` lock the API surface, signal families, frontend sections, tests, CI wiring, and release evidence.
 
+## Sprint 57: Security and Multi-Tenant Hardening
+
+Goal: Make ForgeML's security posture reviewable through behavioral tests,
+least-privilege role coverage, tenant-isolation evidence, and release-gated
+security contracts.
+
+Scope:
+
+- Organization isolation integration tests
+- RBAC role matrix tests
+- Rate-limit partitioning tests
+- Audit metadata redaction
+- Secrets and runtime guardrail documentation
+- Security hardening contract and CI wiring
+- Production-readiness and release manifest evidence
+
+Acceptance criteria:
+
+- Repository tests prove project, dataset, training-run, and audit-log reads do not cross organization boundaries.
+- Role preset tests assert allowed and denied high-risk permissions for platform admin, ML engineer, ML operator, ML viewer, and security auditor.
+- Rate-limit tests prove limits are partitioned by client and route.
+- Audit writers sanitize sensitive metadata keys recursively before persistence.
+- CI and production-readiness gates validate the security hardening contract.
+
+Implemented scope:
+
+- `record_user_audit_event` now sanitizes sensitive metadata keys such as password, token, authorization, secret, JWT, refresh token, API key, and credential markers before writing audit events.
+- `backend/tests/integration/security/test_tenant_isolation.py` seeds two organizations in one database and verifies repository reads only return tenant-local projects, datasets, training runs, and audit log entries.
+- `backend/tests/unit/security/test_rbac_matrix.py` locks role preset behavior across high-risk permissions.
+- `backend/tests/api/test_security_hardening_api.py` verifies fixed-window rate limits are partitioned by client and path.
+- `contracts/security/security-hardening.v1.json` and `scripts/ci/check_security_hardening_contract.py` lock control families, security tests, docs, CI wiring, production-readiness, and release evidence.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1830,7 +1862,7 @@ sequence.
 | 54 | Airflow Orchestration Adapter | Completed | DAG trigger adapter, training pipeline DAG contracts, status polling, local fallback adapter, state mapping, and orchestration contract tests. |
 | 55 | Deployment Runtime Hardening | Completed | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
 | 56 | Monitoring Dashboards v2 | Completed | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
-| 57 | Security and Multi-Tenant Hardening | Planned | Organization isolation tests, RBAC matrix tests, rate-limit tests, audit-log coverage expansion, secrets policy, and configuration documentation. |
+| 57 | Security and Multi-Tenant Hardening | Completed | Organization isolation tests, RBAC matrix tests, rate-limit partitioning, audit metadata redaction, secrets/runtime docs, and security hardening contract gates. |
 | 58 | Developer Experience / Demo Readiness | Planned | One-command local bootstrap, guided demo script, seeded data refresh, screenshots, architecture walkthrough, and reviewer-facing setup path. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the

@@ -29,6 +29,8 @@ Scope:
 - Policies
 - Application services with mocked repositories
 - Authorization decisions
+- RBAC role matrix behavior
+- Audit metadata redaction
 - Schema compatibility checks
 - Drift threshold logic
 
@@ -43,6 +45,7 @@ Rules:
 Scope:
 
 - SQLAlchemy repositories
+- Multi-tenant repository isolation
 - Alembic migrations
 - Postgres constraints
 - Redis rate limiting
@@ -63,6 +66,7 @@ Scope:
 - FastAPI routes
 - Request and response validation
 - Auth enforcement
+- Rate-limit partitioning
 - Error shapes
 - Idempotency behavior
 - Pagination
@@ -130,6 +134,7 @@ Contract tests should protect boundaries:
 - Alembic migration topology contract for base revision, head revision, parent links, and reversible migration hooks.
 - SQLAlchemy schema metadata contract for registered tables, column shape, keys, constraints, and foreign-key index coverage.
 - Runtime configuration policy contract enforced before production-like API startup.
+- Security hardening contract for organization isolation, RBAC matrix, rate-limit partitioning, audit metadata redaction, and secrets/runtime guardrail evidence.
 - Structured request logging contract with sensitive query-parameter redaction.
 - Monitoring dashboard contract for project operations overview, inference errors, latency percentiles, drift trends, training failures, retraining activity, and frontend section coverage.
 - Release smoke operations contract for the live API surfaces required during release-candidate validation.

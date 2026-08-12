@@ -53,3 +53,21 @@ Verify the checked-in policy:
 ```bash
 PYTHONPATH=backend/src:. python scripts/ci/check_runtime_config_policy.py
 ```
+
+## Security Hardening
+
+`security-hardening.v1.json` captures the Sprint 57 security hardening contract:
+organization isolation coverage, RBAC role matrix coverage, rate-limit partitioning,
+audit metadata redaction, and secrets/runtime guardrail evidence.
+
+Regenerate after an intentional security-hardening control change:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_security_hardening_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ci/check_security_hardening_contract.py
+```

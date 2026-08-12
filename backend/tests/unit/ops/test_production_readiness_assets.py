@@ -251,6 +251,26 @@ def test_permission_catalog_gate_is_enforced() -> None:
     assert {"platform_admin", "ml_engineer", "ml_operator", "ml_viewer"}.issubset(roles)
 
 
+def test_security_hardening_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/security/security-hardening.v1.json").read_text(encoding="utf-8")
+    )
+    audit_source = Path(
+        "backend/src/forgeml/modules/administration/application/audit.py"
+    ).read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_security_hardening_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.security_hardening_contract.v1"
+    assert "organization_isolation" in contract["control_families"]
+    assert "rbac_role_matrix" in contract["control_families"]
+    assert "rate_limit_partitioning" in contract["control_families"]
+    assert "audit_log" in contract["tenant_isolation_sources"]
+    assert "security_auditor" in contract["rbac_role_presets"]
+    assert "password" in contract["sensitive_audit_metadata_keys"]
+    assert "SENSITIVE_AUDIT_METADATA_KEYS" in audit_source
+
+
 def test_runtime_config_policy_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(
@@ -345,6 +365,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
     assert "contracts/orchestration/airflow-training.v1.json" in artifact_paths
     assert "contracts/observability/monitoring-dashboard.v1.json" in artifact_paths
+    assert "contracts/security/security-hardening.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths

@@ -439,3 +439,27 @@ Justification: ML operators need a fast triage page that connects platform
 metadata with runtime signals. Aggregating those signals behind
 `monitoring:read` gives the dashboard a stable contract, makes tests more
 deterministic, and preserves extraction paths for a future monitoring service.
+
+## ADR-025: Security Hardening Contract
+
+Status: Accepted
+
+Decision: Maintain a versioned security hardening contract that ties
+organization isolation tests, RBAC matrix tests, rate-limit behavior, audit
+metadata redaction, and secrets/runtime guardrail evidence to CI and release
+manifests.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Security hardening contract | Makes high-risk controls reviewable and release-gated across tests, docs, and manifests | Requires updates when intentional control scope changes |
+| Scattered security tests only | Simple to add incrementally | Hard for reviewers to know which controls are covered and easy to miss in release evidence |
+| Documentation-only security checklist | Easy to read | Does not prove behavior or prevent drift |
+
+Recommendation: Use a checked contract plus behavioral tests for tenant
+isolation, RBAC, rate limiting, and audit redaction.
+
+Justification: ForgeML is a multi-tenant ML platform prototype. Security claims
+need evidence that can be reviewed in code and attached to release provenance,
+especially for organization isolation and least-privilege role behavior.

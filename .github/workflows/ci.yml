@@ -63,6 +63,8 @@ jobs:
         run: python scripts/ci/check_api_authorization_contract.py
       - name: Check permission catalog
         run: python scripts/ci/check_permission_catalog.py
+      - name: Check security hardening contract
+        run: python scripts/ci/check_security_hardening_contract.py
       - name: Check runtime config policy
         run: python scripts/ci/check_runtime_config_policy.py
       - name: Check request logging contract

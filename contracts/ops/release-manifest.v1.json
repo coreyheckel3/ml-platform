@@ -26,6 +26,12 @@
     },
     {
       "kind": "security_contract",
+      "name": "security_hardening_contract",
+      "path": "contracts/security/security-hardening.v1.json",
+      "required": true
+    },
+    {
+      "kind": "security_contract",
       "name": "runtime_config_policy",
       "path": "contracts/security/runtime-config-policy.v1.json",
       "required": true
@@ -186,6 +192,7 @@
     "airflow_orchestration_contract",
     "deployment_runtime_contract",
     "monitoring_dashboard_contract",
+    "security_hardening_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",
@@ -220,7 +227,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 18,
-    "required_artifact_count": 22
+    "quality_gate_count": 19,
+    "required_artifact_count": 23
   }
 }

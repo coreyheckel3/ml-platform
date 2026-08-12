@@ -43,6 +43,9 @@ try:
     from scripts.ci.check_release_smoke_contract import (
         check_release_smoke_contract as verify_release_smoke_contract,
     )
+    from scripts.ci.check_security_hardening_contract import (
+        check_security_hardening_contract as verify_security_hardening_contract,
+    )
     from scripts.ci.check_sqlalchemy_schema_contract import (
         check_schema_contract as verify_sqlalchemy_schema_contract,
     )
@@ -76,6 +79,9 @@ except ModuleNotFoundError:
     )
     from check_release_smoke_contract import (  # type: ignore[no-redef]
         check_release_smoke_contract as verify_release_smoke_contract,
+    )
+    from check_security_hardening_contract import (  # type: ignore[no-redef]
+        check_security_hardening_contract as verify_security_hardening_contract,
     )
     from check_sqlalchemy_schema_contract import (  # type: ignore[no-redef]
         check_schema_contract as verify_sqlalchemy_schema_contract,
@@ -182,6 +188,12 @@ REQUIRED_FILES = (
     "contracts/security/api-authorization.v1.json",
     "scripts/ci/check_permission_catalog.py",
     "contracts/security/permission-catalog.v1.json",
+    "scripts/ci/check_security_hardening_contract.py",
+    "contracts/security/security-hardening.v1.json",
+    "backend/tests/integration/security/test_tenant_isolation.py",
+    "backend/tests/unit/security/test_rbac_matrix.py",
+    "backend/tests/unit/security/test_audit_sanitization.py",
+    "backend/tests/api/test_security_hardening_api.py",
     "backend/src/forgeml/platform/config_policy.py",
     "scripts/ci/check_runtime_config_policy.py",
     "contracts/security/runtime-config-policy.v1.json",
@@ -248,6 +260,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_problem_details_contract(repo_root),
         check_api_authorization_contract(repo_root),
         check_permission_catalog_contract(repo_root),
+        check_security_hardening_contract(repo_root),
         check_runtime_config_policy_contract(repo_root),
         check_request_logging_contract(repo_root),
         check_release_smoke_contract(repo_root),
@@ -1236,6 +1249,73 @@ def check_permission_catalog_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_ci_gate={has_ci_gate}, "
                 f"missing_permissions={missing_permissions}, "
                 f"missing_roles={missing_roles}"
+            )
+        ),
+    )
+
+
+def check_security_hardening_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/security/security-hardening.v1.json"
+    has_ci_gate = "python scripts/ci/check_security_hardening_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="security hardening contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    control_families = set(contract.get("control_families", []))
+    tenant_sources = set(contract.get("tenant_isolation_sources", []))
+    rbac_roles = set(contract.get("rbac_role_presets", []))
+    sensitive_keys = set(contract.get("sensitive_audit_metadata_keys", []))
+    contract_current, contract_detail = verify_security_hardening_contract(contract_path)
+    has_controls = {
+        "organization_isolation",
+        "rbac_role_matrix",
+        "rate_limit_partitioning",
+        "audit_metadata_redaction",
+        "secrets_and_runtime_guardrails",
+    }.issubset(control_families)
+    has_tenant_sources = {"projects", "datasets", "training_runs", "audit_log"}.issubset(
+        tenant_sources
+    )
+    has_role_matrix = {
+        "platform_admin",
+        "ml_engineer",
+        "ml_operator",
+        "ml_viewer",
+        "security_auditor",
+    }.issubset(rbac_roles)
+    has_redaction_policy = {"password", "token", "api_key", "secret"}.issubset(
+        sensitive_keys
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_controls
+        and has_tenant_sources
+        and has_role_matrix
+        and has_redaction_policy
+    )
+    return ReadinessCheck(
+        name="security hardening contract",
+        passed=passed,
+        detail=(
+            (
+                "Organization isolation, RBAC matrix, rate limits, audit redaction, "
+                "and secrets guardrails are configured"
+            )
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_controls={has_controls}, "
+                f"has_tenant_sources={has_tenant_sources}, "
+                f"has_role_matrix={has_role_matrix}, "
+                f"has_redaction_policy={has_redaction_policy}"
             )
         ),
     )

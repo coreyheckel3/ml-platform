@@ -32,6 +32,7 @@ Required checks:
 | Problem Details contract | API error envelope fields, handlers, and sanitized validation details |
 | Runtime config policy | Production-like settings guardrails and contract freshness |
 | Request logging contract | Structured HTTP log event fields and redaction policy |
+| Security hardening contract | Organization isolation, RBAC matrix, rate-limit partitioning, audit redaction, and secrets/runtime evidence |
 | Release smoke contract | Required live API smoke stages, read-only posture, and operator command |
 | Release manifest contract | Required artifact hashes, image targets, evidence types, and quality gates |
 | Artifact manifest contract | Dataset/model artifact manifest shape, storage boundary, checksums, and lineage producers |
@@ -50,7 +51,7 @@ After merge:
 1. Build versioned Docker images.
 2. Push images to ECR.
 3. Generate OpenAPI contract artifact.
-4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, and monitoring dashboard contracts.
+4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, and security hardening contracts.
 5. Run database migration dry-run against staging clone where available.
 6. Deploy to staging.
 7. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
@@ -95,7 +96,7 @@ Each release should publish:
 - Image digests
 - OpenAPI schema
 - Problem Details API error contract
-- Security contracts for API authorization, permissions, and runtime config policy
+- Security contracts for API authorization, permissions, security hardening, and runtime config policy
 - Observability contracts for structured request logging
 - Monitoring dashboard contract for project operations overview and frontend signal coverage
 - Operations contracts for release smoke validation, release manifest provenance, CI evidence publication, and manifest verification

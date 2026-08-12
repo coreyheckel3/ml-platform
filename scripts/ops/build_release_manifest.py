@@ -71,6 +71,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="security_hardening_contract",
+        kind="security_contract",
+        path="contracts/security/security-hardening.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="runtime_config_policy",
         kind="security_contract",
         path="contracts/security/runtime-config-policy.v1.json",
@@ -222,6 +228,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "airflow_orchestration_contract",
     "deployment_runtime_contract",
     "monitoring_dashboard_contract",
+    "security_hardening_contract",
     "frontend_lint",
     "frontend_tests",
     "frontend_e2e",

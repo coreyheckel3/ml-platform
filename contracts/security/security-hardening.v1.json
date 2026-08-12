@@ -1,0 +1,48 @@
+{
+  "control_families": [
+    "organization_isolation",
+    "rbac_role_matrix",
+    "rate_limit_partitioning",
+    "audit_metadata_redaction",
+    "secrets_and_runtime_guardrails"
+  ],
+  "generated_from": [
+    "forgeml.platform.security.permissions",
+    "forgeml.platform.api.middleware",
+    "forgeml.platform.config_policy",
+    "forgeml.modules.administration.application.audit",
+    "backend.tests.integration.security.test_tenant_isolation"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_security_hardening_contract.py",
+    "backend/tests/integration/security/test_tenant_isolation.py",
+    "backend/tests/unit/security/test_rbac_matrix.py",
+    "backend/tests/unit/security/test_audit_sanitization.py",
+    "backend/tests/api/test_security_hardening_api.py"
+  ],
+  "rbac_role_presets": [
+    "platform_admin",
+    "ml_engineer",
+    "ml_operator",
+    "ml_viewer",
+    "security_auditor"
+  ],
+  "schema_version": "forgeml.security_hardening_contract.v1",
+  "sensitive_audit_metadata_keys": [
+    "api_key",
+    "authorization",
+    "credential",
+    "credentials",
+    "jwt",
+    "password",
+    "refresh_token",
+    "secret",
+    "token"
+  ],
+  "tenant_isolation_sources": [
+    "projects",
+    "datasets",
+    "training_runs",
+    "audit_log"
+  ]
+}

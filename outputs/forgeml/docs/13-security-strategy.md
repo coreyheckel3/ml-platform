@@ -56,6 +56,11 @@ Permission checks should be named explicitly, such as:
 - `deployments:rollback`
 - `admin:audit_log:read`
 
+Sprint 57 adds a checked RBAC matrix for the role presets in
+`forgeml.platform.security.permissions`. The matrix verifies platform admin,
+ML engineer, ML operator, ML viewer, and security auditor behavior against
+high-risk permissions so role changes are reviewed as code.
+
 ## Input Validation
 
 Validation layers:
@@ -97,6 +102,10 @@ Rate limits should protect:
 - Admin APIs
 
 Rate-limit decisions should emit metrics and structured security logs.
+
+Sprint 57 adds route and client partitioning coverage for the fixed-window
+rate limiter. This proves one client exhausting a specific endpoint does not
+block other endpoints or another caller under the same local API process.
 
 ## Secure Response Headers
 
@@ -142,6 +151,23 @@ Audit events should be written for:
 Audit logs should include actor, action, resource, timestamp, trace ID, and safe metadata.
 
 Implemented audit writers currently cover successful login, refresh-token rotation, logout, project creation, training queue and cancellation, model approval workflows, deployment rollout and rollback workflows, alert lifecycle transitions, and retraining decisions. Event metadata intentionally excludes credentials, access tokens, refresh tokens, bearer token claims that are not needed for operator review, free-form approval comments, and raw operator notes.
+
+Common audit writers sanitize metadata before persistence. Keys containing
+credential, token, password, authorization, secret, JWT, refresh-token, or API-key
+markers are replaced with a redacted value recursively, while operational IDs
+and lineage metadata are preserved for investigation.
+
+## Multi-Tenant Isolation
+
+Repository and service boundaries must scope reads and writes by organization.
+Cross-tenant IDs should produce not-found or permission-denied outcomes rather
+than leaking resource existence across organizations.
+
+Sprint 57 adds integration coverage for project, dataset, training-run, and
+audit-log repository isolation using two organizations in one database. The
+security hardening contract keeps these isolation tests, RBAC matrix tests,
+rate-limit tests, audit redaction tests, and secrets/runtime guardrail docs
+release-gated under `contracts/security/security-hardening.v1.json`.
 
 ## Threat Model Focus Areas
 
