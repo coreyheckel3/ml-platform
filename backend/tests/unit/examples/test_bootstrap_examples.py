@@ -2,6 +2,8 @@ from pathlib import Path
 
 from scripts.examples.bootstrap_examples import (
     EXAMPLE_PROJECT_SLUG_PARAMETER,
+    BootstrapSummary,
+    build_bootstrap_summary_payload,
     build_retraining_policy_payload,
     build_training_execution_report,
     dataset_file_metadata,
@@ -10,6 +12,7 @@ from scripts.examples.bootstrap_examples import (
     example_training_hyperparameters,
     load_catalog_entries,
     row_count,
+    write_bootstrap_summary,
 )
 from scripts.examples.run_local_training import TRAINERS
 
@@ -124,6 +127,37 @@ def test_model_version_approval_returns_refreshed_model_version() -> None:
     assert model_version["status"] == "approved"
     assert client.requested_version_id == "model-version-1"
     assert client.reviewed_version_id == "model-version-1"
+
+
+def test_bootstrap_summary_payload_is_versioned_and_writable(tmp_path: Path) -> None:
+    payload = build_bootstrap_summary_payload(
+        [
+            BootstrapSummary(
+                slug="movie-recommendation",
+                project_id="project-1",
+                dataset_version_id="dataset-version-1",
+                feature_set_id="feature-set-1",
+                experiment_id="experiment-1",
+                training_run_id="training-run-1",
+                model_version_id="model-version-1",
+                deployment_id="deployment-1",
+                endpoint_id="endpoint-1",
+                drift_report_id="drift-report-1",
+                retraining_policy_id="retraining-policy-1",
+            )
+        ],
+        base_url="http://127.0.0.1:8001",
+        catalog_path=Path("examples/catalog.json"),
+        selected_projects=["movie-recommendation"],
+        artifact_root=tmp_path / "artifacts",
+    )
+    output_path = tmp_path / "bootstrap-summary.json"
+
+    write_bootstrap_summary(payload, output_path)
+
+    assert payload["schema_version"] == "forgeml.example_bootstrap_summary.v1"
+    assert payload["project_count"] == 1
+    assert output_path.read_text(encoding="utf-8").endswith("\n")
 
 
 class FakeModelRegistryClient:

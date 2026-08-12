@@ -109,9 +109,27 @@
       "required": true
     },
     {
+      "kind": "operations_contract",
+      "name": "demo_readiness_contract",
+      "path": "contracts/ops/demo-readiness.v1.json",
+      "required": true
+    },
+    {
       "kind": "runbook",
       "name": "production_readiness_runbook",
       "path": "docs/runbooks/production-readiness.md",
+      "required": true
+    },
+    {
+      "kind": "runbook",
+      "name": "demo_readiness_runbook",
+      "path": "docs/runbooks/demo-readiness.md",
+      "required": true
+    },
+    {
+      "kind": "architecture_doc",
+      "name": "architecture_walkthrough",
+      "path": "docs/architecture-walkthrough.md",
       "required": true
     },
     {
@@ -202,7 +220,8 @@
     "release_smoke_contract",
     "release_manifest_contract",
     "release_evidence_workflow_contract",
-    "release_manifest_verifier_contract"
+    "release_manifest_verifier_contract",
+    "demo_readiness_contract"
   ],
   "required_release_fields": [
     "version",
@@ -227,7 +246,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 19,
-    "required_artifact_count": 23
+    "quality_gate_count": 20,
+    "required_artifact_count": 26
   }
 }

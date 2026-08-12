@@ -22,6 +22,9 @@ try:
     from scripts.ci.check_artifact_manifest_contract import (
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
     )
+    from scripts.ci.check_demo_readiness_contract import (
+        check_demo_readiness_contract as verify_demo_readiness_contract,
+    )
     from scripts.ci.check_deployment_runtime_contract import (
         check_deployment_runtime_contract as verify_deployment_runtime_contract,
     )
@@ -58,6 +61,9 @@ except ModuleNotFoundError:
     )
     from check_artifact_manifest_contract import (  # type: ignore[no-redef]
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
+    )
+    from check_demo_readiness_contract import (  # type: ignore[no-redef]
+        check_demo_readiness_contract as verify_demo_readiness_contract,
     )
     from check_deployment_runtime_contract import (  # type: ignore[no-redef]
         check_deployment_runtime_contract as verify_deployment_runtime_contract,
@@ -208,15 +214,20 @@ REQUIRED_FILES = (
     "contracts/ops/release-manifest.v1.json",
     "contracts/ops/release-evidence-workflow.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
+    "contracts/ops/demo-readiness.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
+    "frontend/tests/e2e/demo-screenshots.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
     "scripts/ops/release_smoke.py",
     "scripts/ops/build_release_manifest.py",
     "scripts/ops/verify_release_manifest.py",
+    "scripts/dev/demo_stack.py",
+    "scripts/dev/refresh_demo_data.py",
     "scripts/ci/check_release_smoke_contract.py",
     "scripts/ci/check_release_manifest_contract.py",
     "scripts/ci/check_release_evidence_workflow.py",
     "scripts/ci/check_release_manifest_verifier_contract.py",
+    "scripts/ci/check_demo_readiness_contract.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
     "backend/tests/unit/ops/test_release_manifest.py",
@@ -224,6 +235,11 @@ REQUIRED_FILES = (
     "backend/tests/unit/ops/test_release_evidence_workflow_contract.py",
     "backend/tests/unit/ops/test_release_manifest_verification.py",
     "backend/tests/unit/ops/test_release_manifest_verifier_contract.py",
+    "backend/tests/unit/ops/test_demo_readiness_contract.py",
+    "backend/tests/unit/dev/test_demo_stack.py",
+    "backend/tests/unit/dev/test_refresh_demo_data.py",
+    "docs/runbooks/demo-readiness.md",
+    "docs/architecture-walkthrough.md",
 )
 
 
@@ -267,6 +283,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_manifest_contract(repo_root),
         check_release_evidence_workflow_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
+        check_demo_readiness_contract(repo_root),
     ]
 
 
@@ -1549,6 +1566,9 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/release-manifest.v1.json",
         "contracts/ops/release-evidence-workflow.v1.json",
         "contracts/ops/release-manifest-verification.v1.json",
+        "contracts/ops/demo-readiness.v1.json",
+        "docs/runbooks/demo-readiness.md",
+        "docs/architecture-walkthrough.md",
     }
     required_images = {"backend", "frontend", "training", "inference", "airflow"}
     required_gates = {
@@ -1560,6 +1580,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_manifest_contract",
         "release_evidence_workflow_contract",
         "release_manifest_verifier_contract",
+        "demo_readiness_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
         "deployment_runtime_contract",
@@ -1733,6 +1754,106 @@ def check_release_manifest_verifier_contract(repo_root: Path) -> ReadinessCheck:
                 f"includes_file_hashing={includes_file_hashing}, "
                 f"has_contract_docs={has_contract_docs}, "
                 f"missing_checks={missing_checks}"
+            )
+        ),
+    )
+
+
+def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/demo-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    walkthrough_source = (repo_root / "docs/architecture-walkthrough.md").read_text(
+        encoding="utf-8"
+    )
+    demo_stack_source = (repo_root / "scripts/dev/demo_stack.py").read_text(
+        encoding="utf-8"
+    )
+    refresh_source = (repo_root / "scripts/dev/refresh_demo_data.py").read_text(
+        encoding="utf-8"
+    )
+    screenshots_source = (
+        repo_root / "frontend/tests/e2e/demo-screenshots.spec.ts"
+    ).read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/ops/demo-readiness.v1.json").read_text(encoding="utf-8")
+    )
+    capabilities = set(contract.get("demo_capabilities", []))
+    seeded_surfaces = set(contract.get("seeded_surfaces", []))
+    quality_gates = set(contract.get("quality_gates", []))
+    has_ci_gate = "python scripts/ci/check_demo_readiness_contract.py" in ci_source
+    contract_current, contract_detail = verify_demo_readiness_contract(
+        repo_root / "contracts/ops/demo-readiness.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_capabilities = {
+        "one_command_local_stack",
+        "seeded_data_refresh",
+        "frontend_screenshot_capture",
+        "manual_review_runbook",
+        "architecture_walkthrough",
+    }.issubset(capabilities)
+    has_seeded_surfaces = {
+        "projects",
+        "datasets",
+        "training_runs",
+        "model_registry",
+        "deployments",
+        "inference",
+        "monitoring",
+        "alerts",
+        "drift_detection",
+        "retraining",
+    }.issubset(seeded_surfaces)
+    has_quality_gates = {
+        "backend/tests/unit/dev/test_demo_stack.py",
+        "backend/tests/unit/dev/test_refresh_demo_data.py",
+        "frontend/tests/e2e/demo-screenshots.spec.ts",
+    }.issubset(quality_gates)
+    has_live_command = "make demo-stack" in runbook_source
+    has_walkthrough = "modular monolith" in walkthrough_source.lower()
+    has_stack_runner = (
+        "build_demo_plan" in demo_stack_source
+        and "wait_for_http" in demo_stack_source
+        and "VITE_FORGEML_API_PROXY_TARGET" in demo_stack_source
+    )
+    has_refresh_runner = (
+        "DEMO_DATA_REFRESH_SCHEMA_VERSION" in refresh_source
+        and "refresh_demo_data" in refresh_source
+    )
+    has_screenshot_capture = "page.screenshot" in screenshots_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_capabilities
+        and has_seeded_surfaces
+        and has_quality_gates
+        and has_live_command
+        and has_walkthrough
+        and has_stack_runner
+        and has_refresh_runner
+        and has_screenshot_capture
+    )
+    return ReadinessCheck(
+        name="demo readiness contract",
+        passed=passed,
+        detail=(
+            "demo stack, seeded refresh, screenshots, runbook, and walkthrough are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_capabilities={has_capabilities}, "
+                f"has_seeded_surfaces={has_seeded_surfaces}, "
+                f"has_quality_gates={has_quality_gates}, "
+                f"has_live_command={has_live_command}, "
+                f"has_walkthrough={has_walkthrough}, "
+                f"has_stack_runner={has_stack_runner}, "
+                f"has_refresh_runner={has_refresh_runner}, "
+                f"has_screenshot_capture={has_screenshot_capture}"
             )
         ),
     )

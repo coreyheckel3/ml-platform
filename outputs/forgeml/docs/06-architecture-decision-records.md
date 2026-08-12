@@ -463,3 +463,30 @@ isolation, RBAC, rate limiting, and audit redaction.
 Justification: ForgeML is a multi-tenant ML platform prototype. Security claims
 need evidence that can be reviewed in code and attached to release provenance,
 especially for organization isolation and least-privilege role behavior.
+
+## ADR-026: Demo Readiness Contract
+
+Status: Accepted
+
+Decision: Maintain a versioned demo readiness contract that ties one-command
+local startup, seeded data refresh, deterministic screenshot capture, demo
+runbook coverage, and architecture walkthrough coverage to CI and release
+manifests.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Demo readiness contract | Keeps reviewer-facing commands, docs, and screenshots testable as the platform changes | Adds another operations contract to maintain |
+| README-only setup notes | Easy to write and familiar to contributors | Prone to drift and weak evidence for portfolio review |
+| Ad hoc manual demo script | Fast to iterate locally | Harder to validate in CI and harder for reviewers to trust |
+
+Recommendation: Treat the demo path as an operations surface with checked
+contracts, unit tests, Playwright screenshot coverage, and release manifest
+evidence.
+
+Justification: ForgeML is meant to demonstrate platform engineering quality.
+The fastest way to lose reviewer confidence is a stale local setup path. Keeping
+demo startup and demo evidence under contract makes the project easier to run
+and gives interviewers a concrete signal that operational usability is part of
+the architecture.

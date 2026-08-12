@@ -369,8 +369,32 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
+    assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
+    assert "docs/runbooks/demo-readiness.md" in artifact_paths
+    assert "docs/architecture-walkthrough.md" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
     assert "_sha256_file" in manifest_source
+
+
+def test_demo_readiness_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/demo-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(Path("contracts/ops/demo-readiness.v1.json").read_text(encoding="utf-8"))
+    demo_stack_source = Path("scripts/dev/demo_stack.py").read_text(encoding="utf-8")
+    screenshot_source = Path("frontend/tests/e2e/demo-screenshots.spec.ts").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_demo_readiness_contract.py" in workflow
+    assert "make demo-stack" in runbook
+    assert contract["schema_version"] == "forgeml.demo_readiness_contract.v1"
+    assert "one_command_local_stack" in contract["demo_capabilities"]
+    assert "seeded_data_refresh" in contract["demo_capabilities"]
+    assert "frontend_screenshot_capture" in contract["demo_capabilities"]
+    assert "architecture_walkthrough" in contract["demo_capabilities"]
+    assert "training_runs" in contract["seeded_surfaces"]
+    assert "build_demo_plan" in demo_stack_source
+    assert "page.screenshot" in screenshot_source
 
 
 def test_release_evidence_workflow_contract_gate_is_enforced() -> None:

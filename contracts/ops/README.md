@@ -92,3 +92,27 @@ Verify a release manifest:
 ```bash
 PYTHONPATH=. python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json --require-ci-evidence
 ```
+
+## Demo Readiness
+
+`demo-readiness.v1.json` records the local demo contract: one-command stack
+startup, seeded data refresh, deterministic screenshot capture, manual review
+runbook coverage, and architecture walkthrough coverage.
+
+Regenerate after an intentional demo-surface change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_demo_readiness_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_demo_readiness_contract.py
+```
+
+Run the local demo stack:
+
+```bash
+PYTHONPATH=. python scripts/dev/demo_stack.py
+```

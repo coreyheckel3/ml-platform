@@ -26,6 +26,7 @@ Implemented foundation:
 - Example project manifests for Movie Recommendation, Semantic Search, and Fraud Detection, including fixture datasets, evaluation reports, SDK validation, and idempotent bootstrap automation through public APIs.
 - Deterministic local example training jobs that generate versioned model and evaluation artifacts for the three reference workloads.
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
+- Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
 - Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
@@ -37,6 +38,18 @@ Implemented foundation:
 - Architecture documentation in `outputs/forgeml/docs`.
 
 ## Local Development
+
+Run the full local demo stack:
+
+```bash
+make demo-stack
+```
+
+The demo command runs `scripts/dev/demo_stack.py`, starts local services, applies
+migrations, seeds `admin@forgeml.dev`, refreshes the three example ML projects,
+and starts the web console. See [the demo readiness runbook](docs/runbooks/demo-readiness.md)
+and [the architecture walkthrough](docs/architecture-walkthrough.md) for the
+reviewer path.
 
 Install backend dependencies:
 
@@ -137,6 +150,18 @@ Run one local worker polling cycle for an organization:
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/workers/run_training_worker.py --organization-id <organization-id>
+```
+
+Refresh demo seed data against a running API:
+
+```bash
+make demo-refresh
+```
+
+Capture deterministic demo screenshots:
+
+```bash
+make demo-screenshots
 ```
 
 ## Architecture

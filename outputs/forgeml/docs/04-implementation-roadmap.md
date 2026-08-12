@@ -209,4 +209,5 @@ the remaining product/runtime platform roadmap.
 | 55 | Deployment Runtime Hardening | Completed: serving adapter boundary, revision resolution, canary simulation, rollback draining, runtime health probes, and CI contract gates. |
 | 56 | Monitoring Dashboards v2 | Completed: operations overview API, latency percentiles, inference errors, drift trends, training failures, retraining activity, and dashboard contract gates. |
 | 57 | Security and Multi-Tenant Hardening | Completed: organization isolation tests, RBAC matrix tests, rate-limit partitioning tests, audit metadata redaction, secrets/config docs, and security hardening contract gates. |
-| 58 | Developer Experience / Demo Readiness | Next: package a one-command demo path with seeded data, walkthrough docs, and reviewer-ready assets. |
+| 58 | Developer Experience / Demo Readiness | Completed: one-command demo stack, seeded data refresh, screenshot capture, architecture walkthrough, runbook, and demo readiness contract gates. |
+| 59 | CI Runtime Maintenance | Next: refresh GitHub Actions runtime dependencies, remove deprecation warnings, and keep CI evidence clean. |

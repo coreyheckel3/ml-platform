@@ -119,6 +119,7 @@ def validate_release_manifest_definition(repo_root: Path = REPO_ROOT) -> tuple[s
         "deployment_config",
         "infrastructure_plan",
         "runbook",
+        "architecture_doc",
         "ci_workflow",
     }
     missing_kinds = sorted(required_kinds - artifact_kind_set)
@@ -134,6 +135,7 @@ def validate_release_manifest_definition(repo_root: Path = REPO_ROOT) -> tuple[s
         "release_smoke_contract",
         "release_evidence_workflow_contract",
         "release_manifest_verifier_contract",
+        "demo_readiness_contract",
         "artifact_manifest_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",

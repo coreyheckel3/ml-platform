@@ -20,6 +20,7 @@ python scripts/ci/check_release_smoke_contract.py
 python scripts/ci/check_release_manifest_contract.py
 python scripts/ci/check_release_evidence_workflow.py
 python scripts/ci/check_release_manifest_verifier_contract.py
+python scripts/ci/check_demo_readiness_contract.py
 python -m pytest backend/tests
 npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
@@ -70,6 +71,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Release manifest JSON result containing Git source provenance, SHA-256 file hashes, Docker image targets, required contracts, CI evidence, and smoke evidence
 - Release manifest verification result proving artifact hashes, Dockerfile hashes, quality gates, and CI evidence linkage are valid
 - CI release manifest artifact named `forgeml-release-manifest` attached to the successful main-branch workflow run
+- Demo readiness contract result proving local stack startup, seeded data refresh, screenshot capture, and architecture walkthrough assets are checked
 - `/health/ready` result from the target environment showing database and Redis probes passing
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend Playwright E2E result proving login, project context, dataset validation, training, model approval, deployment, inference, monitoring, and alert evaluation workflows

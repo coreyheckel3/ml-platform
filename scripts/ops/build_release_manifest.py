@@ -155,9 +155,27 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="demo_readiness_contract",
+        kind="operations_contract",
+        path="contracts/ops/demo-readiness.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="production_readiness_runbook",
         kind="runbook",
         path="docs/runbooks/production-readiness.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="demo_readiness_runbook",
+        kind="runbook",
+        path="docs/runbooks/demo-readiness.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="architecture_walkthrough",
+        kind="architecture_doc",
+        path="docs/architecture-walkthrough.md",
         required=True,
     ),
     ReleaseArtifactDefinition(
@@ -239,6 +257,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "release_manifest_contract",
     "release_evidence_workflow_contract",
     "release_manifest_verifier_contract",
+    "demo_readiness_contract",
 )
 
 RELEASE_EVIDENCE_TYPES: tuple[str, ...] = (

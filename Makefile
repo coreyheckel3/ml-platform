@@ -3,7 +3,7 @@ RUFF ?= .venv/bin/ruff
 UVICORN ?= .venv/bin/uvicorn
 NPM ?= npm
 
-.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness docker-up docker-down docker-full
+.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness docker-up docker-down docker-full demo-stack demo-stack-plan demo-refresh demo-screenshots
 
 backend-dev:
 	$(UVICORN) forgeml.main:create_app --factory --host 0.0.0.0 --port 8000 --reload --app-dir backend/src
@@ -42,3 +42,15 @@ docker-full:
 
 docker-down:
 	docker compose -f infra/compose/docker-compose.yml --profile core down
+
+demo-stack:
+	PYTHONPATH=. $(PYTHON) scripts/dev/demo_stack.py
+
+demo-stack-plan:
+	PYTHONPATH=. $(PYTHON) scripts/dev/demo_stack.py --dry-run
+
+demo-refresh:
+	PYTHONPATH=. $(PYTHON) scripts/dev/refresh_demo_data.py
+
+demo-screenshots:
+	$(NPM) --prefix frontend exec playwright test demo-screenshots.spec.ts --project chromium

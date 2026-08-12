@@ -204,6 +204,16 @@ after it is created:
 - Fail when an artifact hash is tampered with.
 - Fail when required quality gates are missing from the manifest.
 
+## Demo Readiness Tests
+
+Demo readiness tests should keep the reviewer path executable:
+
+- Unit test the demo stack command plan without starting Docker or servers.
+- Unit test seeded data refresh report generation with the API bootstrap boundary faked.
+- Verify the checked demo readiness contract matches the command, runbook, screenshot, and architecture assets.
+- Capture deterministic Playwright screenshots against stateful API mocks for reviewer-facing console surfaces.
+- Include demo readiness in production-readiness and release manifest evidence.
+
 ## Artifact Manifest Tests
 
 Artifact manifest tests protect object-store metadata and lineage:

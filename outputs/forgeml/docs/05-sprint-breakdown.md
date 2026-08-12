@@ -1842,6 +1842,39 @@ Implemented scope:
 - `backend/tests/api/test_security_hardening_api.py` verifies fixed-window rate limits are partitioned by client and path.
 - `contracts/security/security-hardening.v1.json` and `scripts/ci/check_security_hardening_contract.py` lock control families, security tests, docs, CI wiring, production-readiness, and release evidence.
 
+## Sprint 58: Developer Experience / Demo Readiness
+
+Goal: Make ForgeML easy to run, refresh, review, and explain from a clean
+repository checkout.
+
+Scope:
+
+- One-command local demo stack
+- Seeded data refresh command
+- Versioned demo summary reports
+- Deterministic screenshot capture
+- Architecture walkthrough documentation
+- Demo readiness runbook
+- Demo readiness contract and CI wiring
+- Production-readiness and release manifest evidence
+
+Acceptance criteria:
+
+- `make demo-stack` starts the local dependencies, migrates the database, seeds the admin account, launches the API, refreshes example projects, and launches the frontend.
+- `make demo-refresh` idempotently refreshes Movie Recommendation, Semantic Search, and Fraud Detection through public APIs.
+- `make demo-screenshots` captures reviewer-facing screenshots with Playwright.
+- Demo runbook and architecture walkthrough documents give reviewers a clear manual validation path.
+- CI and production-readiness gates validate the demo readiness contract.
+
+Implemented scope:
+
+- `scripts/dev/demo_stack.py` manages Docker core services, Alembic migrations, admin seeding, API startup, seeded example refresh, frontend startup, health waits, and summary output.
+- `scripts/dev/refresh_demo_data.py` wraps the public API bootstrap flow and writes `.forgeml/demo/demo-data-refresh.json`.
+- `scripts/examples/bootstrap_examples.py` now supports reusable bootstrap execution, custom artifact roots, and checked summary output.
+- `frontend/tests/e2e/demo-screenshots.spec.ts` captures deterministic reviewer screenshots against the stateful Playwright API mock.
+- `docs/runbooks/demo-readiness.md` and `docs/architecture-walkthrough.md` define the reviewer path and architecture story.
+- `contracts/ops/demo-readiness.v1.json` and `scripts/ci/check_demo_readiness_contract.py` lock demo capabilities, seeded surfaces, commands, docs, tests, CI wiring, production-readiness, and release evidence.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1863,7 +1896,8 @@ sequence.
 | 55 | Deployment Runtime Hardening | Completed | Model serving adapter boundary, endpoint revision resolution, canary traffic simulation, rollback validation, inference health probes, and runtime contract tests. |
 | 56 | Monitoring Dashboards v2 | Completed | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
 | 57 | Security and Multi-Tenant Hardening | Completed | Organization isolation tests, RBAC matrix tests, rate-limit partitioning, audit metadata redaction, secrets/runtime docs, and security hardening contract gates. |
-| 58 | Developer Experience / Demo Readiness | Planned | One-command local bootstrap, guided demo script, seeded data refresh, screenshots, architecture walkthrough, and reviewer-facing setup path. |
+| 58 | Developer Experience / Demo Readiness | Completed | One-command local demo stack, seeded data refresh, screenshots, architecture walkthrough, demo runbook, and demo readiness contract gates. |
+| 59 | CI Runtime Maintenance | Planned | Refresh GitHub Actions runtime dependencies, remove deprecation warnings, and keep CI evidence clean. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

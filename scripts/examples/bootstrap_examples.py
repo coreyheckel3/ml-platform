@@ -37,20 +37,87 @@ def main() -> None:
     parser.add_argument("--password", default="forgeml-local-admin")
     parser.add_argument("--catalog", default="examples/catalog.json")
     parser.add_argument("--project", action="append", default=[])
+    parser.add_argument(
+        "--artifact-root",
+        type=Path,
+        default=Path("artifacts/examples"),
+        help="Directory where generated local training artifacts are written.",
+    )
+    parser.add_argument(
+        "--summary-output",
+        type=Path,
+        help="Optional path for a versioned bootstrap summary JSON file.",
+    )
     args = parser.parse_args()
 
-    client = ForgeMLClient(base_url=args.base_url)
-    tokens = client.login(args.email, args.password)
+    summaries = run_bootstrap(
+        base_url=args.base_url,
+        email=args.email,
+        password=args.password,
+        catalog_path=Path(args.catalog),
+        selected_projects=args.project,
+        artifact_root=args.artifact_root,
+    )
+    summary_payload = build_bootstrap_summary_payload(
+        summaries,
+        base_url=args.base_url,
+        catalog_path=Path(args.catalog),
+        selected_projects=args.project,
+        artifact_root=args.artifact_root,
+    )
+    if args.summary_output:
+        write_bootstrap_summary(summary_payload, args.summary_output)
+    print(serialize_bootstrap_summary(summary_payload), end="")
+
+
+def run_bootstrap(
+    *,
+    base_url: str,
+    email: str,
+    password: str,
+    catalog_path: Path,
+    selected_projects: list[str] | None = None,
+    artifact_root: Path = Path("artifacts/examples"),
+) -> list[BootstrapSummary]:
+    client = ForgeMLClient(base_url=base_url)
+    tokens = client.login(email, password)
     authenticated = client.with_access_token(str(tokens["access_token"]))
-    catalog_path = Path(args.catalog)
     catalog_entries = load_catalog_entries(catalog_path)
-    selected = set(args.project)
-    summaries = [
-        bootstrap_project(authenticated, manifest, project_root)
+    selected = set(selected_projects or [])
+    return [
+        bootstrap_project(authenticated, manifest, project_root, artifact_root=artifact_root)
         for manifest, project_root in catalog_entries
         if not selected or manifest.slug in selected
     ]
-    print(json.dumps([summary.__dict__ for summary in summaries], indent=2, sort_keys=True))
+
+
+def build_bootstrap_summary_payload(
+    summaries: list[BootstrapSummary],
+    *,
+    base_url: str,
+    catalog_path: Path,
+    selected_projects: list[str] | None = None,
+    artifact_root: Path = Path("artifacts/examples"),
+) -> dict[str, object]:
+    selected = sorted(selected_projects or [])
+    return {
+        "schema_version": "forgeml.example_bootstrap_summary.v1",
+        "base_url": base_url,
+        "catalog_path": catalog_path.as_posix(),
+        "artifact_root": artifact_root.as_posix(),
+        "selected_projects": selected,
+        "project_count": len(summaries),
+        "projects": [summary.__dict__ for summary in summaries],
+    }
+
+
+def serialize_bootstrap_summary(payload: dict[str, object]) -> str:
+    return json.dumps(payload, indent=2, sort_keys=True) + "\n"
+
+
+def write_bootstrap_summary(payload: dict[str, object], output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(serialize_bootstrap_summary(payload), encoding="utf-8")
 
 
 def load_catalog_entries(catalog_path: Path) -> list[tuple[ExampleProjectManifest, Path]]:
@@ -68,6 +135,8 @@ def bootstrap_project(
     client: ForgeMLClient,
     manifest: ExampleProjectManifest,
     project_root: Path,
+    *,
+    artifact_root: Path = Path("artifacts/examples"),
 ) -> BootstrapSummary:
     project = ensure_named(
         client.list_projects,
@@ -131,6 +200,7 @@ def bootstrap_project(
         str(feature_set["id"]),
         manifest,
         project_root,
+        artifact_root=artifact_root,
     )
     registered_model = ensure_named(
         lambda: client.list_registered_models(str(project["id"])),
