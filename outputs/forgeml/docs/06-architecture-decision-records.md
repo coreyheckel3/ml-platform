@@ -490,3 +490,27 @@ The fastest way to lose reviewer confidence is a stale local setup path. Keeping
 demo startup and demo evidence under contract makes the project easier to run
 and gives interviewers a concrete signal that operational usability is part of
 the architecture.
+
+## ADR-027: CI Runtime Contract
+
+Status: Accepted
+
+Decision: Maintain a CI runtime contract that records required GitHub Actions
+major pins for the main CI workflow and Terraform plan workflow, and rejects
+retired action major versions.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| CI runtime contract | Makes action runtime maintenance explicit and release-gated | Requires updates when upstream action majors intentionally change |
+| Manual warning cleanup | Low ceremony | Easy for deprecated action refs to return unnoticed |
+| Dependabot-only action updates | Automates version discovery | Does not prove workflow policy or retired ref absence in production-readiness |
+
+Recommendation: Use a checked CI runtime contract with focused unit tests and
+production-readiness validation.
+
+Justification: ForgeML release evidence is only as credible as the CI pipeline
+that produces it. GitHub Actions runtime deprecations create noise and can become
+hard failures later, so action major pins should be governed like other
+operations contracts.

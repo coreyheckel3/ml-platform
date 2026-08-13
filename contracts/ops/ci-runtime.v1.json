@@ -1,0 +1,62 @@
+{
+  "action_pins": [
+    {
+      "action": "actions/checkout",
+      "release_checked_at": "2026-08-12",
+      "required_ref": "v7",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    {
+      "action": "actions/setup-python",
+      "release_checked_at": "2026-08-12",
+      "required_ref": "v7",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    {
+      "action": "actions/setup-node",
+      "release_checked_at": "2026-08-12",
+      "required_ref": "v7",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    {
+      "action": "actions/upload-artifact",
+      "release_checked_at": "2026-08-12",
+      "required_ref": "v7",
+      "workflow": ".github/workflows/ci.yml"
+    },
+    {
+      "action": "actions/checkout",
+      "release_checked_at": "2026-08-12",
+      "required_ref": "v7",
+      "workflow": ".github/workflows/terraform-plan.yml"
+    },
+    {
+      "action": "hashicorp/setup-terraform",
+      "release_checked_at": "2026-08-12",
+      "required_ref": "v4",
+      "workflow": ".github/workflows/terraform-plan.yml"
+    }
+  ],
+  "generated_from": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/terraform-plan.yml",
+    "scripts.ci.check_ci_runtime_contract"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_ci_runtime_contract.py",
+    "backend/tests/unit/ops/test_ci_runtime_contract.py"
+  ],
+  "retired_action_refs": [
+    "actions/checkout@v4",
+    "actions/setup-node@v4",
+    "actions/setup-python@v5",
+    "actions/upload-artifact@v4",
+    "hashicorp/setup-terraform@v3"
+  ],
+  "schema_version": "forgeml.ci_runtime_contract.v1",
+  "summary": {
+    "required_action_pin_count": 6,
+    "retired_action_ref_count": 5,
+    "workflow_count": 2
+  }
+}

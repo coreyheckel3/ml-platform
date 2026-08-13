@@ -214,6 +214,16 @@ Demo readiness tests should keep the reviewer path executable:
 - Capture deterministic Playwright screenshots against stateful API mocks for reviewer-facing console surfaces.
 - Include demo readiness in production-readiness and release manifest evidence.
 
+## CI Runtime Tests
+
+CI runtime tests should keep release evidence free of deprecated GitHub Actions
+runtime pins:
+
+- Verify required action major pins for the main CI workflow and Terraform plan workflow.
+- Reject retired action refs such as old checkout, setup-python, setup-node, upload-artifact, and setup-terraform majors.
+- Keep the CI runtime contract checked in backend CI, production-readiness, and release manifests.
+- Update the release evidence workflow contract when artifact upload action majors intentionally change.
+
 ## Artifact Manifest Tests
 
 Artifact manifest tests protect object-store metadata and lineage:

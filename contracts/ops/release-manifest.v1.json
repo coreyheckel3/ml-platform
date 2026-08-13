@@ -115,6 +115,12 @@
       "required": true
     },
     {
+      "kind": "operations_contract",
+      "name": "ci_runtime_contract",
+      "path": "contracts/ops/ci-runtime.v1.json",
+      "required": true
+    },
+    {
       "kind": "runbook",
       "name": "production_readiness_runbook",
       "path": "docs/runbooks/production-readiness.md",
@@ -221,7 +227,8 @@
     "release_manifest_contract",
     "release_evidence_workflow_contract",
     "release_manifest_verifier_contract",
-    "demo_readiness_contract"
+    "demo_readiness_contract",
+    "ci_runtime_contract"
   ],
   "required_release_fields": [
     "version",
@@ -246,7 +253,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 20,
-    "required_artifact_count": 26
+    "quality_gate_count": 21,
+    "required_artifact_count": 27
   }
 }

@@ -15,8 +15,8 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
       - name: Terraform fmt
         run: terraform -chdir=infra/terraform/environments/${{ matrix.environment }} fmt -check -recursive
       - name: Terraform init

@@ -16,7 +16,7 @@
     "--git-sha \"$GITHUB_SHA\"",
     "--git-branch \"$GITHUB_REF_NAME\"",
     "--ci-run-url \"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v7",
     "name: forgeml-release-manifest",
     "path: dist/release/forgeml-release-manifest.json",
     "if-no-files-found: error"

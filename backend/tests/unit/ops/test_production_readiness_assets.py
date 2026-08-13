@@ -370,6 +370,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
+    assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
     assert "docs/runbooks/demo-readiness.md" in artifact_paths
     assert "docs/architecture-walkthrough.md" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
@@ -408,7 +409,7 @@ def test_release_evidence_workflow_contract_gate_is_enforced() -> None:
     assert "python scripts/ci/check_release_evidence_workflow.py" in workflow
     assert "release-evidence:" in workflow
     assert "needs: [backend, frontend, docker, production-readiness]" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v7" in workflow
     assert "if-no-files-found: error" in workflow
     assert contract["schema_version"] == "forgeml.release_evidence_workflow.v1"
     assert contract["artifact_name"] == "forgeml-release-manifest"
@@ -436,3 +437,29 @@ def test_release_manifest_verifier_contract_gate_is_enforced() -> None:
     assert "artifact_hash_integrity" in contract["required_checks"]
     assert "dockerfile_hash_integrity" in contract["required_checks"]
     assert "_sha256_file" in verifier_source
+
+
+def test_ci_runtime_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    terraform_workflow = Path(".github/workflows/terraform-plan.yml").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(Path("contracts/ops/ci-runtime.v1.json").read_text(encoding="utf-8"))
+    action_pins = {
+        (pin["workflow"], pin["action"]): pin["required_ref"]
+        for pin in contract["action_pins"]
+    }
+
+    assert "python scripts/ci/check_ci_runtime_contract.py" in workflow
+    assert "actions/checkout@v7" in workflow
+    assert "actions/setup-python@v7" in workflow
+    assert "actions/setup-node@v7" in workflow
+    assert "actions/upload-artifact@v7" in workflow
+    assert "actions/checkout@v7" in terraform_workflow
+    assert "hashicorp/setup-terraform@v4" in terraform_workflow
+    assert "actions/checkout@v4" not in workflow + terraform_workflow
+    assert contract["schema_version"] == "forgeml.ci_runtime_contract.v1"
+    assert action_pins[(".github/workflows/ci.yml", "actions/upload-artifact")] == "v7"
+    assert action_pins[(".github/workflows/terraform-plan.yml", "hashicorp/setup-terraform")] == (
+        "v4"
+    )

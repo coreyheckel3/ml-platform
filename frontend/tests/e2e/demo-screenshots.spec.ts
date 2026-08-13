@@ -3,14 +3,14 @@ import { expect, type Page, test } from "@playwright/test";
 import { installForgeMLApiMock } from "./fixtures/forgemlApiMock";
 
 const demoScreens = [
-  { label: "Dashboard", heading: "Dashboard", fileName: "01-dashboard.png" },
-  { label: "Projects", heading: "Projects", fileName: "02-projects.png" },
-  { label: "Examples", heading: "Example Projects", fileName: "03-examples.png" },
-  { label: "Training Runs", heading: "Training Runs", fileName: "04-training-runs.png" },
-  { label: "Models", heading: "Models", fileName: "05-models.png" },
-  { label: "Deployments", heading: "Deployments", fileName: "06-deployments.png" },
-  { label: "Inference", heading: "Inference", fileName: "07-inference.png" },
-  { label: "Monitoring", heading: "Monitoring", fileName: "08-monitoring.png" }
+  { path: "/", heading: "Dashboard", fileName: "01-dashboard.png" },
+  { path: "/projects", heading: "Projects", fileName: "02-projects.png" },
+  { path: "/examples", heading: "Example Projects", fileName: "03-examples.png" },
+  { path: "/training-runs", heading: "Training Runs", fileName: "04-training-runs.png" },
+  { path: "/models", heading: "Models", fileName: "05-models.png" },
+  { path: "/deployments", heading: "Deployments", fileName: "06-deployments.png" },
+  { path: "/inference", heading: "Inference", fileName: "07-inference.png" },
+  { path: "/monitoring", heading: "Monitoring", fileName: "08-monitoring.png" }
 ] as const;
 
 test("captures reviewer-ready demo screenshots", async ({ page }, testInfo) => {
@@ -28,7 +28,8 @@ test("captures reviewer-ready demo screenshots", async ({ page }, testInfo) => {
   await prepareDemoState(page);
 
   for (const screen of demoScreens) {
-    await page.getByRole("link", { name: screen.label }).click();
+    await page.goto(screen.path);
+    await expect(page).toHaveURL(new RegExp(`${escapeRegExp(screen.path)}$`));
     await expect(
       page.getByRole("heading", { name: screen.heading, exact: true })
     ).toBeVisible();
@@ -86,4 +87,8 @@ async function prepareDemoState(page: Page): Promise<void> {
 
   await page.getByRole("link", { name: "Monitoring" }).click();
   await expect(page.getByText("Fraud Risk Demo Endpoint").first()).toBeVisible();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -27,7 +27,7 @@ REQUIRED_WORKFLOW_FRAGMENTS = (
     '--git-sha "$GITHUB_SHA"',
     '--git-branch "$GITHUB_REF_NAME"',
     '--ci-run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"',
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v7",
     "name: forgeml-release-manifest",
     "path: dist/release/forgeml-release-manifest.json",
     "if-no-files-found: error",
@@ -100,7 +100,7 @@ def validate_release_evidence_workflow(ci_source: str) -> tuple[str, ...]:
     if missing_fragments:
         findings.append(f"Release evidence workflow missing fragments: {missing_fragments}")
 
-    if "actions/upload-artifact@v4" in ci_source and "if-no-files-found: error" not in ci_source:
+    if "actions/upload-artifact@v7" in ci_source and "if-no-files-found: error" not in ci_source:
         findings.append("Release manifest artifact upload must fail when the file is absent.")
 
     return tuple(findings)

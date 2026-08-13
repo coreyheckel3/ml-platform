@@ -116,3 +116,21 @@ Run the local demo stack:
 ```bash
 PYTHONPATH=. python scripts/dev/demo_stack.py
 ```
+
+## CI Runtime
+
+`ci-runtime.v1.json` records the required GitHub Actions runtime pins for the
+main CI workflow and Terraform plan workflow. It prevents deprecated action
+majors from quietly reappearing in release evidence.
+
+Regenerate after an intentional workflow runtime change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_ci_runtime_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_ci_runtime_contract.py
+```

@@ -1875,6 +1875,36 @@ Implemented scope:
 - `docs/runbooks/demo-readiness.md` and `docs/architecture-walkthrough.md` define the reviewer path and architecture story.
 - `contracts/ops/demo-readiness.v1.json` and `scripts/ci/check_demo_readiness_contract.py` lock demo capabilities, seeded surfaces, commands, docs, tests, CI wiring, production-readiness, and release evidence.
 
+## Sprint 59: CI Runtime Maintenance
+
+Goal: Keep GitHub Actions release evidence clean by removing deprecated action
+runtime pins and preventing retired action majors from returning.
+
+Scope:
+
+- Refresh main CI workflow action pins
+- Refresh Terraform plan workflow action pins
+- CI runtime contract and CI wiring
+- Release evidence workflow contract update
+- Production-readiness and release manifest evidence
+- Runtime maintenance tests
+
+Acceptance criteria:
+
+- Main CI uses current major pins for checkout, setup-python, setup-node, and upload-artifact.
+- Terraform plan workflow uses current major pins for checkout and setup-terraform.
+- CI rejects retired action refs such as `actions/checkout@v4`, `actions/setup-python@v5`, `actions/setup-node@v4`, `actions/upload-artifact@v4`, and `hashicorp/setup-terraform@v3`.
+- Release evidence workflow contract expects the current upload-artifact major.
+- Production-readiness and release manifests include the CI runtime contract.
+
+Implemented scope:
+
+- `.github/workflows/ci.yml` now uses `actions/checkout@v7`, `actions/setup-python@v7`, `actions/setup-node@v7`, and `actions/upload-artifact@v7`.
+- `.github/workflows/terraform-plan.yml` now uses `actions/checkout@v7` and `hashicorp/setup-terraform@v4`.
+- `contracts/ops/ci-runtime.v1.json` and `scripts/ci/check_ci_runtime_contract.py` lock required action pins, retired refs, CI wiring, docs, production-readiness, and release evidence.
+- `contracts/ops/release-evidence-workflow.v1.json` now expects the current artifact upload action.
+- Release manifest provenance includes the CI runtime contract as a required operations contract.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1897,7 +1927,8 @@ sequence.
 | 56 | Monitoring Dashboards v2 | Completed | Richer frontend monitoring for inference errors, latency percentiles, drift trends, training failures, retraining activity, and operational drilldowns. |
 | 57 | Security and Multi-Tenant Hardening | Completed | Organization isolation tests, RBAC matrix tests, rate-limit partitioning, audit metadata redaction, secrets/runtime docs, and security hardening contract gates. |
 | 58 | Developer Experience / Demo Readiness | Completed | One-command local demo stack, seeded data refresh, screenshots, architecture walkthrough, demo runbook, and demo readiness contract gates. |
-| 59 | CI Runtime Maintenance | Planned | Refresh GitHub Actions runtime dependencies, remove deprecation warnings, and keep CI evidence clean. |
+| 59 | CI Runtime Maintenance | Completed | Refreshed GitHub Actions runtime pins, added CI runtime contract gates, updated release evidence workflow, and removed retired action refs. |
+| 60 | Portfolio Polish / Reviewer Assets | Planned | Package visual evidence, resume bullets, architecture diagrams, and guided walkthrough assets for interview review. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

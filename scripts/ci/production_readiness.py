@@ -22,6 +22,9 @@ try:
     from scripts.ci.check_artifact_manifest_contract import (
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
     )
+    from scripts.ci.check_ci_runtime_contract import (
+        check_ci_runtime_contract as verify_ci_runtime_contract,
+    )
     from scripts.ci.check_demo_readiness_contract import (
         check_demo_readiness_contract as verify_demo_readiness_contract,
     )
@@ -61,6 +64,9 @@ except ModuleNotFoundError:
     )
     from check_artifact_manifest_contract import (  # type: ignore[no-redef]
         check_artifact_manifest_contract as verify_artifact_manifest_contract,
+    )
+    from check_ci_runtime_contract import (  # type: ignore[no-redef]
+        check_ci_runtime_contract as verify_ci_runtime_contract,
     )
     from check_demo_readiness_contract import (  # type: ignore[no-redef]
         check_demo_readiness_contract as verify_demo_readiness_contract,
@@ -111,6 +117,7 @@ SCAN_ROOTS = (
 REQUIRED_FILES = (
     ".github/workflows/ci.yml",
     ".github/workflows/terraform-plan.yml",
+    "contracts/ops/ci-runtime.v1.json",
     "docs/runbooks/backup-restore.md",
     "docs/runbooks/incident-response.md",
     "docs/runbooks/production-readiness.md",
@@ -228,6 +235,7 @@ REQUIRED_FILES = (
     "scripts/ci/check_release_evidence_workflow.py",
     "scripts/ci/check_release_manifest_verifier_contract.py",
     "scripts/ci/check_demo_readiness_contract.py",
+    "scripts/ci/check_ci_runtime_contract.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
     "backend/tests/unit/ops/test_release_manifest.py",
@@ -236,6 +244,7 @@ REQUIRED_FILES = (
     "backend/tests/unit/ops/test_release_manifest_verification.py",
     "backend/tests/unit/ops/test_release_manifest_verifier_contract.py",
     "backend/tests/unit/ops/test_demo_readiness_contract.py",
+    "backend/tests/unit/ops/test_ci_runtime_contract.py",
     "backend/tests/unit/dev/test_demo_stack.py",
     "backend/tests/unit/dev/test_refresh_demo_data.py",
     "docs/runbooks/demo-readiness.md",
@@ -284,6 +293,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_evidence_workflow_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
+        check_ci_runtime_contract(repo_root),
     ]
 
 
@@ -1567,6 +1577,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/release-evidence-workflow.v1.json",
         "contracts/ops/release-manifest-verification.v1.json",
         "contracts/ops/demo-readiness.v1.json",
+        "contracts/ops/ci-runtime.v1.json",
         "docs/runbooks/demo-readiness.md",
         "docs/architecture-walkthrough.md",
     }
@@ -1581,6 +1592,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_evidence_workflow_contract",
         "release_manifest_verifier_contract",
         "demo_readiness_contract",
+        "ci_runtime_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
         "deployment_runtime_contract",
@@ -1854,6 +1866,66 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_stack_runner={has_stack_runner}, "
                 f"has_refresh_runner={has_refresh_runner}, "
                 f"has_screenshot_capture={has_screenshot_capture}"
+            )
+        ),
+    )
+
+
+def check_ci_runtime_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    terraform_source = (repo_root / ".github/workflows/terraform-plan.yml").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/ci-runtime.v1.json").read_text(encoding="utf-8")
+    )
+    action_pins = {
+        (pin.get("workflow"), pin.get("action")): pin.get("required_ref")
+        for pin in contract.get("action_pins", [])
+    }
+    retired_refs = set(contract.get("retired_action_refs", []))
+    combined_source = ci_source + "\n" + terraform_source
+    expected_pins = {
+        (".github/workflows/ci.yml", "actions/checkout"): "v7",
+        (".github/workflows/ci.yml", "actions/setup-python"): "v7",
+        (".github/workflows/ci.yml", "actions/setup-node"): "v7",
+        (".github/workflows/ci.yml", "actions/upload-artifact"): "v7",
+        (".github/workflows/terraform-plan.yml", "actions/checkout"): "v7",
+        (".github/workflows/terraform-plan.yml", "hashicorp/setup-terraform"): "v4",
+    }
+    has_expected_pins = expected_pins.items() <= action_pins.items()
+    has_ci_gate = "python scripts/ci/check_ci_runtime_contract.py" in ci_source
+    has_current_workflow_refs = all(
+        f"{action}@{required_ref}" in (
+            ci_source if workflow.endswith("ci.yml") else terraform_source
+        )
+        for (workflow, action), required_ref in expected_pins.items()
+    )
+    retired_refs_present = sorted(ref for ref in retired_refs if ref in combined_source)
+    contract_current, contract_detail = verify_ci_runtime_contract(
+        repo_root / "contracts/ops/ci-runtime.v1.json",
+        repo_root=repo_root,
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_expected_pins
+        and has_current_workflow_refs
+        and not retired_refs_present
+    )
+    return ReadinessCheck(
+        name="ci runtime contract",
+        passed=passed,
+        detail=(
+            "GitHub Actions runtime pins are current and deprecated refs are absent"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_expected_pins={has_expected_pins}, "
+                f"has_current_workflow_refs={has_current_workflow_refs}, "
+                f"retired_refs_present={retired_refs_present}"
             )
         ),
     )

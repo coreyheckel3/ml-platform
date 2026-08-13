@@ -24,7 +24,7 @@ jobs:
           --git-branch "$GITHUB_REF_NAME"
           --ci-run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
       - name: Upload release manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: forgeml-release-manifest
           path: dist/release/forgeml-release-manifest.json

@@ -43,6 +43,7 @@ Required checks:
 | Release evidence workflow | Manifest generation and artifact upload after required release gates |
 | Release manifest verifier | Artifact integrity, Dockerfile integrity, quality gates, and CI evidence linkage |
 | Demo readiness contract | One-command demo stack, seeded refresh, screenshot capture, runbook, and architecture walkthrough |
+| CI runtime contract | Current GitHub Actions runtime pins and retired action major detection |
 | Production readiness | Runbook, observability, load-test, Compose, and staging Terraform checks |
 
 ## Main Branch Workflow
@@ -52,7 +53,7 @@ After merge:
 1. Build versioned Docker images.
 2. Push images to ECR.
 3. Generate OpenAPI contract artifact.
-4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, security hardening, and demo readiness contracts.
+4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, security hardening, demo readiness, and CI runtime contracts.
 5. Run database migration dry-run against staging clone where available.
 6. Deploy to staging.
 7. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
@@ -100,7 +101,7 @@ Each release should publish:
 - Security contracts for API authorization, permissions, security hardening, and runtime config policy
 - Observability contracts for structured request logging
 - Monitoring dashboard contract for project operations overview and frontend signal coverage
-- Operations contracts for release smoke validation, release manifest provenance, CI evidence publication, manifest verification, and demo readiness
+- Operations contracts for release smoke validation, release manifest provenance, CI evidence publication, manifest verification, demo readiness, and CI runtime pins
 - Runtime contracts for deployment serving, traffic allocation, rollback, revision routing, and health probes
 - CI release manifest artifact from the successful main-branch workflow run
 - Release manifest verification report showing artifact hashes and CI evidence linkage are valid

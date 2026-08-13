@@ -27,8 +27,8 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install backend
@@ -79,17 +79,19 @@ jobs:
         run: python scripts/ci/check_release_manifest_verifier_contract.py
       - name: Check demo readiness contract
         run: python scripts/ci/check_demo_readiness_contract.py
+      - name: Check CI runtime contract
+        run: python scripts/ci/check_ci_runtime_contract.py
 
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install frontend
@@ -112,7 +114,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build backend image
         run: docker build -f infra/docker/backend.Dockerfile .
       - name: Build frontend image
@@ -121,8 +123,8 @@ jobs:
   production-readiness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install backend
@@ -137,8 +139,8 @@ jobs:
     needs: [backend, frontend, docker, production-readiness]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Build release manifest
@@ -154,7 +156,7 @@ jobs:
           --manifest dist/release/forgeml-release-manifest.json
           --require-ci-evidence
       - name: Upload release manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: forgeml-release-manifest
           path: dist/release/forgeml-release-manifest.json
