@@ -224,6 +224,17 @@ runtime pins:
 - Keep the CI runtime contract checked in backend CI, production-readiness, and release manifests.
 - Update the release evidence workflow contract when artifact upload action majors intentionally change.
 
+## Portfolio Readiness Tests
+
+Portfolio readiness tests should keep reviewer-facing claims backed by source
+evidence:
+
+- Verify the portfolio readiness contract matches the checked reviewer assets.
+- Require reviewer guide, resume bullets, evidence map, architecture diagrams, and screenshot catalog files.
+- Validate that role-specific bullets cover ML Engineer, MLOps Engineer, AI Platform Engineer, and Backend / Platform Engineer applications.
+- Verify Mermaid diagrams and screenshot catalog entries stay aligned with the deterministic demo screenshot flow.
+- Include portfolio readiness in backend CI, production-readiness, and release manifest evidence.
+
 ## Artifact Manifest Tests
 
 Artifact manifest tests protect object-store metadata and lineage:

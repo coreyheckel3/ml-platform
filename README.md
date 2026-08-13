@@ -27,6 +27,7 @@ Implemented foundation:
 - Deterministic local example training jobs that generate versioned model and evaluation artifacts for the three reference workloads.
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
 - Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
+- Portfolio review kit with reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, and CI-checked portfolio readiness contract.
 - Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
@@ -163,6 +164,14 @@ Capture deterministic demo screenshots:
 ```bash
 make demo-screenshots
 ```
+
+Validate portfolio review assets:
+
+```bash
+make portfolio-readiness
+```
+
+The reviewer kit lives under [docs/portfolio](docs/portfolio).
 
 ## Architecture
 

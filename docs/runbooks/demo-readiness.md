@@ -70,6 +70,9 @@ Playwright writes the screenshots under `frontend/test-results`. The captured
 screens cover Dashboard, Projects, Example Projects, Training Runs, Models,
 Deployments, Inference, and Monitoring.
 
+For reviewer packaging, use the portfolio screenshot catalog at
+`docs/portfolio/screenshot-catalog.md`.
+
 ## Manual Review Path
 
 After `make demo-stack` finishes the seed refresh, open

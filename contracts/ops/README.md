@@ -134,3 +134,21 @@ Verify the checked-in contract:
 ```bash
 PYTHONPATH=. python scripts/ci/check_ci_runtime_contract.py
 ```
+
+## Portfolio Readiness
+
+`portfolio-readiness.v1.json` records the reviewer-facing portfolio package:
+reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot
+catalog, and its CI quality gate.
+
+Regenerate after an intentional portfolio asset change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_portfolio_readiness_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_portfolio_readiness_contract.py
+```

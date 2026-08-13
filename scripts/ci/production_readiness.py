@@ -37,6 +37,9 @@ try:
     from scripts.ci.check_monitoring_dashboard_contract import (
         check_monitoring_dashboard_contract as verify_monitoring_dashboard_contract,
     )
+    from scripts.ci.check_portfolio_readiness_contract import (
+        check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
+    )
     from scripts.ci.check_release_evidence_workflow import (
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
     )
@@ -80,6 +83,9 @@ except ModuleNotFoundError:
     from check_monitoring_dashboard_contract import (  # type: ignore[no-redef]
         check_monitoring_dashboard_contract as verify_monitoring_dashboard_contract,
     )
+    from check_portfolio_readiness_contract import (  # type: ignore[no-redef]
+        check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
+    )
     from check_release_evidence_workflow import (  # type: ignore[no-redef]
         check_release_evidence_workflow_contract as verify_release_evidence_workflow_contract,
     )
@@ -118,6 +124,13 @@ REQUIRED_FILES = (
     ".github/workflows/ci.yml",
     ".github/workflows/terraform-plan.yml",
     "contracts/ops/ci-runtime.v1.json",
+    "contracts/ops/portfolio-readiness.v1.json",
+    "docs/portfolio/README.md",
+    "docs/portfolio/reviewer-guide.md",
+    "docs/portfolio/resume-bullets.md",
+    "docs/portfolio/evidence-map.md",
+    "docs/portfolio/architecture-diagrams.md",
+    "docs/portfolio/screenshot-catalog.md",
     "docs/runbooks/backup-restore.md",
     "docs/runbooks/incident-response.md",
     "docs/runbooks/production-readiness.md",
@@ -236,6 +249,7 @@ REQUIRED_FILES = (
     "scripts/ci/check_release_manifest_verifier_contract.py",
     "scripts/ci/check_demo_readiness_contract.py",
     "scripts/ci/check_ci_runtime_contract.py",
+    "scripts/ci/check_portfolio_readiness_contract.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
     "backend/tests/unit/ops/test_release_manifest.py",
@@ -245,6 +259,7 @@ REQUIRED_FILES = (
     "backend/tests/unit/ops/test_release_manifest_verifier_contract.py",
     "backend/tests/unit/ops/test_demo_readiness_contract.py",
     "backend/tests/unit/ops/test_ci_runtime_contract.py",
+    "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
     "backend/tests/unit/dev/test_demo_stack.py",
     "backend/tests/unit/dev/test_refresh_demo_data.py",
     "docs/runbooks/demo-readiness.md",
@@ -294,6 +309,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
         check_ci_runtime_contract(repo_root),
+        check_portfolio_readiness_contract(repo_root),
     ]
 
 
@@ -1578,8 +1594,14 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/release-manifest-verification.v1.json",
         "contracts/ops/demo-readiness.v1.json",
         "contracts/ops/ci-runtime.v1.json",
+        "contracts/ops/portfolio-readiness.v1.json",
         "docs/runbooks/demo-readiness.md",
         "docs/architecture-walkthrough.md",
+        "docs/portfolio/reviewer-guide.md",
+        "docs/portfolio/resume-bullets.md",
+        "docs/portfolio/evidence-map.md",
+        "docs/portfolio/architecture-diagrams.md",
+        "docs/portfolio/screenshot-catalog.md",
     }
     required_images = {"backend", "frontend", "training", "inference", "airflow"}
     required_gates = {
@@ -1593,6 +1615,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_manifest_verifier_contract",
         "demo_readiness_contract",
         "ci_runtime_contract",
+        "portfolio_readiness_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
         "deployment_runtime_contract",
@@ -1926,6 +1949,120 @@ def check_ci_runtime_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_expected_pins={has_expected_pins}, "
                 f"has_current_workflow_refs={has_current_workflow_refs}, "
                 f"retired_refs_present={retired_refs_present}"
+            )
+        ),
+    )
+
+
+def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        (repo_root / "contracts/ops/portfolio-readiness.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    asset_paths = {
+        asset.get("path") for asset in contract.get("reviewer_assets", [])
+    }
+    claims = set(contract.get("portfolio_claims", []))
+    quality_gates = set(contract.get("quality_gates", []))
+    reviewer_guide = (repo_root / "docs/portfolio/reviewer-guide.md").read_text(
+        encoding="utf-8"
+    )
+    resume_bullets = (repo_root / "docs/portfolio/resume-bullets.md").read_text(
+        encoding="utf-8"
+    )
+    evidence_map = (repo_root / "docs/portfolio/evidence-map.md").read_text(
+        encoding="utf-8"
+    )
+    diagrams = (repo_root / "docs/portfolio/architecture-diagrams.md").read_text(
+        encoding="utf-8"
+    )
+    screenshots = (repo_root / "docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+    required_assets = {
+        "docs/portfolio/README.md",
+        "docs/portfolio/reviewer-guide.md",
+        "docs/portfolio/resume-bullets.md",
+        "docs/portfolio/evidence-map.md",
+        "docs/portfolio/architecture-diagrams.md",
+        "docs/portfolio/screenshot-catalog.md",
+    }
+    required_claims = {
+        "multi_project_ml_platform",
+        "modular_monolith_architecture",
+        "mlops_release_governance",
+        "adapter_boundaries",
+        "tenant_aware_security",
+        "browser_verified_demo",
+    }
+    missing_assets = sorted(required_assets - asset_paths)
+    missing_claims = sorted(required_claims - claims)
+    has_ci_gate = "python scripts/ci/check_portfolio_readiness_contract.py" in ci_source
+    contract_current, contract_detail = verify_portfolio_readiness_contract(
+        repo_root / "contracts/ops/portfolio-readiness.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_quality_gates = {
+        "python scripts/ci/check_portfolio_readiness_contract.py",
+        "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
+    }.issubset(quality_gates)
+    has_reviewer_path = (
+        "make demo-stack" in reviewer_guide
+        and "make production-readiness" in reviewer_guide
+        and "release-governance loop" in reviewer_guide
+    )
+    has_resume_variants = all(
+        role in resume_bullets
+        for role in (
+            "ML Engineer",
+            "MLOps Engineer",
+            "AI Platform Engineer",
+            "Backend / Platform Engineer",
+        )
+    )
+    has_evidence_traceability = (
+        "Portfolio assets under contract" in evidence_map
+        and "contracts/ops/portfolio-readiness.v1.json" in evidence_map
+    )
+    has_diagrams = diagrams.count("```mermaid") >= 4
+    has_screenshot_catalog = (
+        "01-dashboard.png" in screenshots
+        and "08-monitoring.png" in screenshots
+        and "Navigate to each screenshot route explicitly" in screenshots
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_quality_gates
+        and has_reviewer_path
+        and has_resume_variants
+        and has_evidence_traceability
+        and has_diagrams
+        and has_screenshot_catalog
+        and not missing_assets
+        and not missing_claims
+    )
+    return ReadinessCheck(
+        name="portfolio readiness contract",
+        passed=passed,
+        detail=(
+            "reviewer guide, resume bullets, evidence map, diagrams, and screenshots are packaged"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_quality_gates={has_quality_gates}, "
+                f"has_reviewer_path={has_reviewer_path}, "
+                f"has_resume_variants={has_resume_variants}, "
+                f"has_evidence_traceability={has_evidence_traceability}, "
+                f"has_diagrams={has_diagrams}, "
+                f"has_screenshot_catalog={has_screenshot_catalog}, "
+                f"missing_assets={missing_assets}, "
+                f"missing_claims={missing_claims}"
             )
         ),
     )

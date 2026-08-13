@@ -22,6 +22,7 @@ python scripts/ci/check_release_evidence_workflow.py
 python scripts/ci/check_release_manifest_verifier_contract.py
 python scripts/ci/check_demo_readiness_contract.py
 python scripts/ci/check_ci_runtime_contract.py
+python scripts/ci/check_portfolio_readiness_contract.py
 python -m pytest backend/tests
 npm --prefix frontend run lint
 npm --prefix frontend audit --omit=dev
@@ -74,6 +75,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - CI release manifest artifact named `forgeml-release-manifest` attached to the successful main-branch workflow run
 - Demo readiness contract result proving local stack startup, seeded data refresh, screenshot capture, and architecture walkthrough assets are checked
 - CI runtime contract result proving GitHub Actions runtime pins avoid retired action majors
+- Portfolio readiness contract result proving reviewer guide, resume bullets, evidence map, architecture diagrams, and screenshot catalog assets are checked
 - `/health/ready` result from the target environment showing database and Redis probes passing
 - Frontend production `npm audit --omit=dev` result with zero high or critical findings
 - Frontend Playwright E2E result proving login, project context, dataset validation, training, model approval, deployment, inference, monitoring, and alert evaluation workflows

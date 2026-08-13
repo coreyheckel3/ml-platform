@@ -81,6 +81,8 @@ jobs:
         run: python scripts/ci/check_demo_readiness_contract.py
       - name: Check CI runtime contract
         run: python scripts/ci/check_ci_runtime_contract.py
+      - name: Check portfolio readiness contract
+        run: python scripts/ci/check_portfolio_readiness_contract.py
 
   frontend:
     runs-on: ubuntu-latest

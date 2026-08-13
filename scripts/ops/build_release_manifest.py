@@ -167,6 +167,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="portfolio_readiness_contract",
+        kind="operations_contract",
+        path="contracts/ops/portfolio-readiness.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="production_readiness_runbook",
         kind="runbook",
         path="docs/runbooks/production-readiness.md",
@@ -182,6 +188,36 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         name="architecture_walkthrough",
         kind="architecture_doc",
         path="docs/architecture-walkthrough.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="portfolio_reviewer_guide",
+        kind="portfolio_doc",
+        path="docs/portfolio/reviewer-guide.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="portfolio_resume_bullets",
+        kind="portfolio_doc",
+        path="docs/portfolio/resume-bullets.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="portfolio_evidence_map",
+        kind="portfolio_doc",
+        path="docs/portfolio/evidence-map.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="portfolio_architecture_diagrams",
+        kind="portfolio_doc",
+        path="docs/portfolio/architecture-diagrams.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="portfolio_screenshot_catalog",
+        kind="portfolio_doc",
+        path="docs/portfolio/screenshot-catalog.md",
         required=True,
     ),
     ReleaseArtifactDefinition(
@@ -265,6 +301,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "release_manifest_verifier_contract",
     "demo_readiness_contract",
     "ci_runtime_contract",
+    "portfolio_readiness_contract",
 )
 
 RELEASE_EVIDENCE_TYPES: tuple[str, ...] = (

@@ -3,7 +3,7 @@ RUFF ?= .venv/bin/ruff
 UVICORN ?= .venv/bin/uvicorn
 NPM ?= npm
 
-.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness docker-up docker-down docker-full demo-stack demo-stack-plan demo-refresh demo-screenshots
+.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness portfolio-readiness docker-up docker-down docker-full demo-stack demo-stack-plan demo-refresh demo-screenshots
 
 backend-dev:
 	$(UVICORN) forgeml.main:create_app --factory --host 0.0.0.0 --port 8000 --reload --app-dir backend/src
@@ -33,6 +33,9 @@ format:
 production-readiness:
 	$(PYTHON) scripts/ci/production_readiness.py
 	docker compose -f infra/compose/docker-compose.yml --profile full config
+
+portfolio-readiness:
+	PYTHONPATH=. $(PYTHON) scripts/ci/check_portfolio_readiness_contract.py
 
 docker-up:
 	docker compose -f infra/compose/docker-compose.yml --profile core up --build

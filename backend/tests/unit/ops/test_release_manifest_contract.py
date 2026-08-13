@@ -78,13 +78,18 @@ def test_release_manifest_contract_shape() -> None:
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
     assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
+    assert "contracts/ops/portfolio-readiness.v1.json" in artifact_paths
     assert "docs/runbooks/demo-readiness.md" in artifact_paths
     assert "docs/architecture-walkthrough.md" in artifact_paths
+    assert "docs/portfolio/reviewer-guide.md" in artifact_paths
+    assert "docs/portfolio/resume-bullets.md" in artifact_paths
+    assert "docs/portfolio/evidence-map.md" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
     assert "release_evidence_workflow_contract" in parsed["quality_gates"]
     assert "release_manifest_verifier_contract" in parsed["quality_gates"]
     assert "demo_readiness_contract" in parsed["quality_gates"]
     assert "ci_runtime_contract" in parsed["quality_gates"]
+    assert "portfolio_readiness_contract" in parsed["quality_gates"]
     assert "artifact_manifest_contract" in parsed["quality_gates"]
     assert "mlflow_tracking_contract" in parsed["quality_gates"]
     assert "airflow_orchestration_contract" in parsed["quality_gates"]

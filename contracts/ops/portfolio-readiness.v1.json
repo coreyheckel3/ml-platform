@@ -1,0 +1,102 @@
+{
+  "generated_from": [
+    "docs.portfolio.README",
+    "docs.portfolio.reviewer-guide",
+    "docs.portfolio.resume-bullets",
+    "docs.portfolio.evidence-map",
+    "docs.portfolio.architecture-diagrams",
+    "docs.portfolio.screenshot-catalog"
+  ],
+  "operator_commands": [
+    "PYTHONPATH=. python scripts/ci/check_portfolio_readiness_contract.py",
+    "make demo-stack",
+    "make demo-screenshots",
+    "make production-readiness"
+  ],
+  "portfolio_claims": [
+    "multi_project_ml_platform",
+    "modular_monolith_architecture",
+    "mlops_release_governance",
+    "adapter_boundaries",
+    "tenant_aware_security",
+    "browser_verified_demo"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_portfolio_readiness_contract.py",
+    "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
+    "backend/tests/unit/ops/test_production_readiness_assets.py"
+  ],
+  "reviewer_assets": [
+    {
+      "name": "portfolio_index",
+      "path": "docs/portfolio/README.md",
+      "required_fragments": [
+        "ForgeML Portfolio Review Kit",
+        "reviewer-guide.md",
+        "resume-bullets.md",
+        "evidence-map.md",
+        "architecture-diagrams.md",
+        "screenshot-catalog.md"
+      ]
+    },
+    {
+      "name": "reviewer_guide",
+      "path": "docs/portfolio/reviewer-guide.md",
+      "required_fragments": [
+        "ForgeML is an end-to-end ML platform control plane",
+        "make demo-stack",
+        "make production-readiness",
+        "release-governance loop"
+      ]
+    },
+    {
+      "name": "resume_bullets",
+      "path": "docs/portfolio/resume-bullets.md",
+      "required_fragments": [
+        "ML Engineer",
+        "MLOps Engineer",
+        "AI Platform Engineer",
+        "Backend / Platform Engineer",
+        "Short Project Summary"
+      ]
+    },
+    {
+      "name": "evidence_map",
+      "path": "docs/portfolio/evidence-map.md",
+      "required_fragments": [
+        "Modular monolith with clean boundaries",
+        "Artifact storage abstraction",
+        "MLflow integration boundary",
+        "Airflow orchestration boundary",
+        "Portfolio assets under contract"
+      ]
+    },
+    {
+      "name": "architecture_diagrams",
+      "path": "docs/portfolio/architecture-diagrams.md",
+      "required_fragments": [
+        "```mermaid",
+        "Modular Monolith",
+        "ML Lifecycle",
+        "Monitoring To Retraining",
+        "Release Governance"
+      ]
+    },
+    {
+      "name": "screenshot_catalog",
+      "path": "docs/portfolio/screenshot-catalog.md",
+      "required_fragments": [
+        "make demo-screenshots",
+        "01-dashboard.png",
+        "04-training-runs.png",
+        "08-monitoring.png",
+        "Navigate to each screenshot route explicitly"
+      ]
+    }
+  ],
+  "schema_version": "forgeml.portfolio_readiness_contract.v1",
+  "summary": {
+    "portfolio_claim_count": 6,
+    "reviewer_asset_count": 6
+  }
+}

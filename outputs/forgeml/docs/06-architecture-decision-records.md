@@ -514,3 +514,28 @@ Justification: ForgeML release evidence is only as credible as the CI pipeline
 that produces it. GitHub Actions runtime deprecations create noise and can become
 hard failures later, so action major pins should be governed like other
 operations contracts.
+
+## ADR-028: Portfolio Readiness Contract
+
+Status: Accepted
+
+Decision: Maintain a versioned portfolio readiness contract that ties reviewer
+guides, resume bullets, evidence maps, architecture diagrams, screenshot
+catalogs, and portfolio claims to CI, production-readiness, and release manifest
+evidence.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Portfolio readiness contract | Keeps external-facing claims traceable and prevents docs from drifting away from implementation evidence | Adds another operations contract to maintain |
+| README-only portfolio summary | Simple and familiar | Easy for claims to become stale or unsupported |
+| Screenshots-only review package | Visually useful | Does not explain architecture, tradeoffs, or verification depth |
+
+Recommendation: Treat portfolio assets as release evidence and validate them
+with the same contract pattern used for operational readiness.
+
+Justification: ForgeML is built to demonstrate senior platform engineering.
+Reviewer-facing claims should be specific, evidence-backed, and testable.
+Contract-checking portfolio assets helps interviewers connect architecture,
+code, tests, CI, and product behavior without relying on narrative alone.

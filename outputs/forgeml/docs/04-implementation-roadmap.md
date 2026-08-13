@@ -211,4 +211,5 @@ the remaining product/runtime platform roadmap.
 | 57 | Security and Multi-Tenant Hardening | Completed: organization isolation tests, RBAC matrix tests, rate-limit partitioning tests, audit metadata redaction, secrets/config docs, and security hardening contract gates. |
 | 58 | Developer Experience / Demo Readiness | Completed: one-command demo stack, seeded data refresh, screenshot capture, architecture walkthrough, runbook, and demo readiness contract gates. |
 | 59 | CI Runtime Maintenance | Completed: refreshed GitHub Actions runtime pins, added CI runtime contracts, and removed retired action major refs from release evidence. |
-| 60 | Portfolio Polish / Reviewer Assets | Next: package visual evidence, resume bullets, architecture diagrams, and guided walkthrough assets for interview review. |
+| 60 | Portfolio Polish / Reviewer Assets | Completed: reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, portfolio readiness contract, CI wiring, and release evidence. |
+| 61 | Release Artifact Download / Evidence UX | Next: surface CI release manifest artifacts, verification summaries, and demo screenshots in the frontend/reviewer workflow. |

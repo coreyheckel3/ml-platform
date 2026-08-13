@@ -371,8 +371,14 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
     assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
+    assert "contracts/ops/portfolio-readiness.v1.json" in artifact_paths
     assert "docs/runbooks/demo-readiness.md" in artifact_paths
     assert "docs/architecture-walkthrough.md" in artifact_paths
+    assert "docs/portfolio/reviewer-guide.md" in artifact_paths
+    assert "docs/portfolio/resume-bullets.md" in artifact_paths
+    assert "docs/portfolio/evidence-map.md" in artifact_paths
+    assert "docs/portfolio/architecture-diagrams.md" in artifact_paths
+    assert "docs/portfolio/screenshot-catalog.md" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
     assert "_sha256_file" in manifest_source
 
@@ -463,3 +469,25 @@ def test_ci_runtime_contract_gate_is_enforced() -> None:
     assert action_pins[(".github/workflows/terraform-plan.yml", "hashicorp/setup-terraform")] == (
         "v4"
     )
+
+
+def test_portfolio_readiness_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/portfolio-readiness.v1.json").read_text(encoding="utf-8")
+    )
+    reviewer_guide = Path("docs/portfolio/reviewer-guide.md").read_text(encoding="utf-8")
+    resume_bullets = Path("docs/portfolio/resume-bullets.md").read_text(encoding="utf-8")
+    evidence_map = Path("docs/portfolio/evidence-map.md").read_text(encoding="utf-8")
+    diagrams = Path("docs/portfolio/architecture-diagrams.md").read_text(encoding="utf-8")
+    screenshots = Path("docs/portfolio/screenshot-catalog.md").read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_portfolio_readiness_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.portfolio_readiness_contract.v1"
+    assert "mlops_release_governance" in contract["portfolio_claims"]
+    assert "browser_verified_demo" in contract["portfolio_claims"]
+    assert "make demo-stack" in reviewer_guide
+    assert "MLOps Engineer" in resume_bullets
+    assert "Portfolio assets under contract" in evidence_map
+    assert diagrams.count("```mermaid") >= 4
+    assert "08-monitoring.png" in screenshots

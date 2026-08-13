@@ -1905,6 +1905,41 @@ Implemented scope:
 - `contracts/ops/release-evidence-workflow.v1.json` now expects the current artifact upload action.
 - Release manifest provenance includes the CI runtime contract as a required operations contract.
 
+## Sprint 60: Portfolio Polish / Reviewer Assets
+
+Goal: Package ForgeML so a technical reviewer can quickly understand the
+architecture, verify claims, inspect visual evidence, and adapt the project for
+ML Engineer, MLOps, AI platform, and backend/platform applications.
+
+Scope:
+
+- Portfolio reviewer guide
+- Role-specific resume bullets
+- Claim-to-evidence traceability map
+- Architecture diagrams
+- Screenshot catalog
+- Portfolio readiness contract and CI wiring
+- Production-readiness and release manifest evidence
+
+Acceptance criteria:
+
+- `docs/portfolio` includes a reviewer guide, resume bullets, evidence map, architecture diagrams, and screenshot catalog.
+- Portfolio claims map to concrete code, tests, contracts, workflows, or runbooks.
+- Architecture diagrams are renderable Mermaid diagrams.
+- Screenshot catalog aligns with deterministic Playwright screenshot capture.
+- CI and production-readiness gates validate the portfolio readiness contract.
+- Release manifest provenance includes the portfolio readiness contract and portfolio docs.
+
+Implemented scope:
+
+- `docs/portfolio/README.md` defines the reviewer asset package and recommended review path.
+- `docs/portfolio/reviewer-guide.md` gives reviewers a concise platform framing, command path, and walkthrough narrative.
+- `docs/portfolio/resume-bullets.md` packages role-specific bullets for ML Engineer, MLOps Engineer, AI Platform Engineer, and Backend / Platform Engineer applications.
+- `docs/portfolio/evidence-map.md` traces portfolio claims back to implementation files, tests, contracts, and CI gates.
+- `docs/portfolio/architecture-diagrams.md` provides Mermaid diagrams for the modular monolith, ML lifecycle, monitoring-to-retraining loop, and release governance.
+- `docs/portfolio/screenshot-catalog.md` maps deterministic screenshots to reviewer signals.
+- `contracts/ops/portfolio-readiness.v1.json` and `scripts/ci/check_portfolio_readiness_contract.py` lock asset content, claims, commands, quality gates, CI wiring, production-readiness, and release evidence.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1928,7 +1963,8 @@ sequence.
 | 57 | Security and Multi-Tenant Hardening | Completed | Organization isolation tests, RBAC matrix tests, rate-limit partitioning, audit metadata redaction, secrets/runtime docs, and security hardening contract gates. |
 | 58 | Developer Experience / Demo Readiness | Completed | One-command local demo stack, seeded data refresh, screenshots, architecture walkthrough, demo runbook, and demo readiness contract gates. |
 | 59 | CI Runtime Maintenance | Completed | Refreshed GitHub Actions runtime pins, added CI runtime contract gates, updated release evidence workflow, and removed retired action refs. |
-| 60 | Portfolio Polish / Reviewer Assets | Planned | Package visual evidence, resume bullets, architecture diagrams, and guided walkthrough assets for interview review. |
+| 60 | Portfolio Polish / Reviewer Assets | Completed | Reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, portfolio readiness contract, CI wiring, and release evidence. |
+| 61 | Release Artifact Download / Evidence UX | Planned | Surface CI release manifest artifacts, verification summaries, and demo screenshots in the frontend/reviewer workflow. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.
