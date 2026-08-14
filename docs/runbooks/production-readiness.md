@@ -20,6 +20,7 @@ python scripts/ci/check_release_smoke_contract.py
 python scripts/ci/check_release_manifest_contract.py
 python scripts/ci/check_release_evidence_workflow.py
 python scripts/ci/check_release_evidence_ux_contract.py
+python scripts/ci/check_release_evidence_retrieval_contract.py
 python scripts/ci/check_operational_audit_ux_contract.py
 python scripts/ci/check_release_manifest_verifier_contract.py
 python scripts/ci/check_demo_readiness_contract.py
@@ -53,6 +54,12 @@ Verify the manifest before promotion:
 PYTHONPATH=. python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json --require-ci-evidence
 ```
 
+Retrieve the latest successful main-branch release manifest artifact from GitHub Actions and compare it with the release contract:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
+```
+
 For staging, also run the k6 smoke load profile:
 
 ```bash
@@ -76,6 +83,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Release manifest verification result proving artifact hashes, Dockerfile hashes, quality gates, and CI evidence linkage are valid
 - CI release manifest artifact named `forgeml-release-manifest` attached to the successful main-branch workflow run
 - Release evidence UX contract result proving `/release-evidence` exposes manifest artifacts, reviewer commands, quality gates, and screenshot evidence
+- Release evidence retrieval contract result proving GitHub Actions artifact lookup, manifest archive extraction, main-branch comparison, and CI URL validation are checked
 - Operational audit UX contract result proving `/operational-audit` links live audit events, release evidence annotations, screenshots, and route-level follow-up
 - Demo readiness contract result proving local stack startup, seeded data refresh, screenshot capture, and architecture walkthrough assets are checked
 - CI runtime contract result proving GitHub Actions runtime pins avoid retired action majors

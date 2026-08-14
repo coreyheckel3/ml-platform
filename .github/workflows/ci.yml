@@ -77,6 +77,8 @@ jobs:
         run: python scripts/ci/check_release_evidence_workflow.py
       - name: Check release evidence UX contract
         run: python scripts/ci/check_release_evidence_ux_contract.py
+      - name: Check release evidence retrieval contract
+        run: python scripts/ci/check_release_evidence_retrieval_contract.py
       - name: Check operational audit UX contract
         run: python scripts/ci/check_operational_audit_ux_contract.py
       - name: Check release manifest verifier contract

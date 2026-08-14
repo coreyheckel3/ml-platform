@@ -1982,6 +1982,53 @@ Implemented scope:
 - Release manifest provenance includes the release evidence UX contract as a
   required operations artifact and quality gate.
 
+## Sprint 63: Live Release Evidence Retrieval
+
+Goal: Make CI-published release evidence retrievable and comparable through a
+contracted platform boundary instead of relying on manual artifact inspection.
+
+Scope:
+
+- Release evidence gateway protocol
+- GitHub Actions workflow-run and artifact adapter
+- Local manifest fallback for deterministic tests and offline demos
+- Release evidence retrieval CLI
+- Manifest summary and comparison report
+- Release Evidence page retrieval status panel
+- Retrieval contract, CI gate, production-readiness, and release manifest evidence
+
+Acceptance criteria:
+
+- The retriever can locate the latest successful main-branch `ci.yml` run.
+- The retriever can find and download the `forgeml-release-manifest` artifact.
+- The manifest archive is extracted and parsed as versioned JSON evidence.
+- Comparison checks cover manifest schema, branch, required artifacts, required
+  quality gates, and CI run URL presence.
+- Unit tests use injected transports and local manifests instead of live
+  network calls.
+- The Release Evidence page surfaces provider, branch, workflow, artifact,
+  adapter, comparison signals, and operator command.
+- CI and production-readiness validate the release evidence retrieval contract.
+- Release manifest provenance includes the retrieval contract as a required
+  operations artifact and quality gate.
+
+Implemented scope:
+
+- `backend/src/forgeml/platform/release_evidence` defines
+  `ReleaseEvidenceGateway`, `GitHubActionsReleaseEvidenceGateway`,
+  `LocalReleaseEvidenceGateway`, manifest summarization, and contract comparison.
+- `scripts/ops/retrieve_release_evidence.py` emits
+  `forgeml.release_evidence_retrieval.v1` reports for live GitHub Actions and
+  local manifest modes.
+- `frontend/src/modules/release_evidence` now renders Live Evidence Retrieval
+  status, comparison signals, and the operator command.
+- `contracts/ops/release-evidence-retrieval.v1.json` and
+  `scripts/ci/check_release_evidence_retrieval_contract.py` lock source assets,
+  adapter fragments, CLI behavior, UI signals, docs, CI wiring,
+  production-readiness, and release manifest evidence.
+- Unit tests cover GitHub transport behavior, artifact archive parsing, local
+  manifest fallback, CLI report serialization, and contract freshness.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2008,7 +2055,8 @@ sequence.
 | 60 | Portfolio Polish / Reviewer Assets | Completed | Reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, portfolio readiness contract, CI wiring, and release evidence. |
 | 61 | Release Artifact Download / Evidence UX | Completed | Release Evidence app page, manifest artifact inventory, reviewer commands, quality gates, screenshot capture, UX contract, CI wiring, production-readiness, and release evidence. |
 | 62 | Operational Audit UX v2 | Completed | Dedicated Operational Audit app surface, audit timeline adapter, release evidence annotations, admin audit API integration, filters, event detail drilldowns, deterministic screenshots, UX contract, CI wiring, production-readiness, and release manifest evidence. |
-| 63 | Live Release Evidence Retrieval | Planned | GitHub Actions artifact adapter for retrieving successful main-branch release manifests, comparing live artifacts with checked-in evidence, and surfacing retrieval status in the Release Evidence workspace. |
+| 63 | Live Release Evidence Retrieval | Completed | GitHub Actions artifact adapter, local manifest fallback, release evidence retrieval report CLI, manifest comparison checks, Release Evidence retrieval panel, CI contract, production-readiness, and release manifest evidence. |
+| 64 | Release Evidence Drilldown API | Planned | Authenticated admin API for release evidence retrieval reports, persisted comparison history, audit events, and frontend drilldowns. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

@@ -73,6 +73,8 @@ The project favors verifiable engineering behavior over static claims:
 - Production-readiness validates security, observability, deployment runtime,
   monitoring, demo readiness, CI runtime, and portfolio readiness.
 - GitHub Actions publishes release evidence on main-branch pushes.
+- Live release evidence retrieval can fetch the latest main-branch manifest
+  artifact from GitHub Actions and compare it with checked-in contracts.
 
 ## Suggested Walkthrough Narrative
 
@@ -92,8 +94,10 @@ The project favors verifiable engineering behavior over static claims:
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/ci/check_portfolio_readiness_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_ux_contract.py
+PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_retrieval_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_operational_audit_ux_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/production_readiness.py
 PYTHONPATH=. .venv/bin/python scripts/ops/build_release_manifest.py --output /tmp/forgeml-release-manifest.json
 PYTHONPATH=. .venv/bin/python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json
+PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
 ```

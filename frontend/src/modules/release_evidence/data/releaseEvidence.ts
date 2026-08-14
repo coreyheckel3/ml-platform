@@ -23,9 +23,20 @@ export type ReviewerCommand = {
   signal: string;
 };
 
+export type LiveReleaseEvidenceRetrieval = {
+  provider: string;
+  branch: string;
+  workflow: string;
+  artifactName: string;
+  adapter: string;
+  status: string;
+  comparisonSignals: string[];
+  operatorCommand: string;
+};
+
 export const releaseEvidenceSummary = {
-  artifactCount: 35,
-  qualityGateCount: 24,
+  artifactCount: 36,
+  qualityGateCount: 25,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -68,6 +79,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     kind: "Operations contract",
     path: "contracts/ops/operational-audit-ux.v1.json",
     signal: "Verifies the operator audit timeline, route linkage, screenshots, and CI gate.",
+  },
+  {
+    name: "Release Evidence Retrieval Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/release-evidence-retrieval.v1.json",
+    signal:
+      "Verifies live GitHub Actions artifact retrieval, manifest extraction, and comparison checks.",
   },
   {
     name: "Portfolio Readiness Contract",
@@ -123,6 +141,12 @@ export const qualityGates: EvidenceGate[] = [
     owner: "Operations",
     signal: "Operational audit route and timeline coverage stay enforced in CI.",
   },
+  {
+    name: "release_evidence_retrieval_contract",
+    owner: "Operations",
+    signal:
+      "GitHub Actions artifact retrieval and manifest comparison stay enforced in CI.",
+  },
 ];
 
 export const screenshotEvidence: ScreenshotEvidence[] = [
@@ -149,7 +173,8 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
   {
     fileName: "09-release-evidence.png",
     route: "/release-evidence",
-    signal: "Release artifacts, quality gates, reviewer commands, and CI provenance.",
+    signal:
+      "Release artifacts, quality gates, live evidence retrieval, reviewer commands, and CI provenance.",
   },
   {
     fileName: "10-operational-audit.png",
@@ -157,6 +182,24 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
     signal: "Operational timeline for release evidence, deployments, retraining, and security events.",
   },
 ];
+
+export const liveReleaseEvidenceRetrieval: LiveReleaseEvidenceRetrieval = {
+  provider: "GitHub Actions",
+  branch: "main",
+  workflow: "ci.yml",
+  artifactName: "forgeml-release-manifest",
+  adapter: "GitHubActionsReleaseEvidenceGateway",
+  status: "contract checked",
+  comparisonSignals: [
+    "manifest_schema_version",
+    "main_branch_source",
+    "required_artifact_coverage",
+    "required_quality_gate_coverage",
+    "ci_run_url_present",
+  ],
+  operatorCommand:
+    "PYTHONPATH=backend/src:. python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest",
+};
 
 export const reviewerCommands: ReviewerCommand[] = [
   {
@@ -175,6 +218,12 @@ export const reviewerCommands: ReviewerCommand[] = [
     command:
       "PYTHONPATH=. python scripts/ops/verify_release_manifest.py --manifest dist/release/forgeml-release-manifest.json --require-ci-evidence",
     signal: "Validates checksums, required gates, image targets, and CI metadata.",
+  },
+  {
+    label: "Retrieve live release evidence",
+    command: liveReleaseEvidenceRetrieval.operatorCommand,
+    signal:
+      "Fetches the latest successful main-branch release manifest artifact and compares it with the release contract.",
   },
   {
     label: "Capture demo screenshots",

@@ -369,6 +369,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-ux.v1.json" in artifact_paths
+    assert "contracts/ops/release-evidence-retrieval.v1.json" in artifact_paths
     assert "contracts/ops/operational-audit-ux.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
@@ -444,12 +445,54 @@ def test_release_evidence_ux_contract_gate_is_enforced() -> None:
     assert contract["route"]["path"] == "/release-evidence"
     assert contract["route"]["label"] == "Release Evidence"
     assert "Release Manifest" in release_page
+    assert "Live Evidence Retrieval" in release_page
+    assert "Comparison Signals" in release_page
     assert "Quality Gate Coverage" in release_page
     assert "Demo Screenshot Evidence" in release_page
     assert "forgeml-release-manifest" in release_data
     assert "release_manifest_verifier_contract" in release_data
+    assert "release_evidence_retrieval_contract" in release_data
     assert "operational_audit_ux_contract" in release_data
     assert "09-release-evidence.png" in screenshot_catalog
+
+
+def test_release_evidence_retrieval_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-evidence-retrieval.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    retrieval_source = Path(
+        "backend/src/forgeml/platform/release_evidence/retrieval.py"
+    ).read_text(encoding="utf-8")
+    cli_source = Path("scripts/ops/retrieve_release_evidence.py").read_text(
+        encoding="utf-8"
+    )
+    release_page = Path(
+        "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    release_data = Path(
+        "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_release_evidence_retrieval_contract.py" in workflow
+    assert "scripts/ops/retrieve_release_evidence.py --repo" in runbook
+    assert contract["schema_version"] == "forgeml.release_evidence_retrieval_contract.v1"
+    assert contract["retrieval_schema_version"] == "forgeml.release_evidence_retrieval.v1"
+    assert contract["retrieval_boundary"]["gateway_protocol"] == "ReleaseEvidenceGateway"
+    assert contract["retrieval_boundary"]["github_gateway"] == (
+        "GitHubActionsReleaseEvidenceGateway"
+    )
+    assert "main_branch_source" in contract["required_comparison_checks"]
+    assert "required_artifact_coverage" in contract["required_comparison_checks"]
+    assert "archive_download_url" in retrieval_source
+    assert "zipfile" in retrieval_source
+    assert "forgeml.release_evidence_retrieval.v1" in cli_source
+    assert "Live Evidence Retrieval" in release_page
+    assert "GitHubActionsReleaseEvidenceGateway" in release_data
+    assert "release_evidence_retrieval_contract" in release_data
 
 
 def test_operational_audit_ux_contract_gate_is_enforced() -> None:

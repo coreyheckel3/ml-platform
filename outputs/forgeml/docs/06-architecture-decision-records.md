@@ -592,3 +592,29 @@ Justification: Operators and reviewers need a first-class timeline that connects
 deployments, retraining, registry decisions, security events, and release
 evidence. Reusing existing audit records keeps the architecture modular while
 making the product surface useful immediately and enforceable in CI.
+
+## ADR-031: Live Release Evidence Retrieval Boundary
+
+Status: Accepted
+
+Decision: Retrieve release manifests through a platform-owned
+`ReleaseEvidenceGateway` boundary with a GitHub Actions adapter, a local
+manifest fallback, a versioned retrieval report, and CI-checked UI/docs
+evidence.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Gateway plus GitHub Actions adapter | Keeps external API calls behind a testable port, supports authenticated live retrieval, and lets tests use deterministic transports | Adds adapter and contract maintenance |
+| Frontend-only artifact link | Fast and visible | Does not prove artifact contents or comparison behavior |
+| `gh` CLI shell wrapper only | Familiar for operators | Harder to unit test, weaker dependency inversion, and less portable in CI |
+
+Recommendation: Use a backend platform gateway with injected transports for
+tests, a local manifest adapter for offline verification, and a thin operator
+CLI that emits a versioned retrieval report.
+
+Justification: Release evidence should be machine-checkable and portable across
+local demos, CI, and future admin APIs. A gateway boundary keeps GitHub-specific
+concerns isolated while giving reviewers a concrete command and UI surface for
+validating the latest successful main-branch release artifact.

@@ -240,13 +240,28 @@ evidence:
 Release evidence UX tests should keep release artifacts visible and reviewable
 from the web console:
 
-- Verify the Release Evidence page renders manifest artifact, reviewer command,
-  quality gate, and screenshot evidence sections.
+- Verify the Release Evidence page renders manifest artifact, live retrieval,
+  reviewer command, quality gate, and screenshot evidence sections.
 - Require `/release-evidence` route and navigation coverage.
 - Capture `09-release-evidence.png` in the deterministic Playwright screenshot
   flow.
 - Verify the release evidence UX contract matches source files, portfolio docs,
   CI wiring, production-readiness, and release manifest evidence.
+
+## Live Release Evidence Retrieval Tests
+
+Live release evidence retrieval tests should keep GitHub Actions artifact
+evidence machine-checkable without making CI depend on network access:
+
+- Unit test the `ReleaseEvidenceGateway` protocol, GitHub Actions adapter, local
+  manifest adapter, artifact archive extraction, and manifest comparison logic.
+- Use injected transports in tests so GitHub API shape is covered
+  deterministically.
+- Verify the retrieval CLI emits a versioned report for local manifest and live
+  GitHub Actions modes.
+- Verify the release evidence retrieval contract matches source files, docs,
+  Release Evidence UI, CI wiring, production-readiness, and release manifest
+  evidence.
 
 ## Operational Audit UX Tests
 

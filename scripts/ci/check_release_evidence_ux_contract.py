@@ -42,6 +42,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         "required_source_assets": list(REQUIRED_SOURCE_ASSETS),
         "required_ui_sections": [
             "Release Manifest",
+            "Live Evidence Retrieval",
             "Reviewer Commands",
             "Quality Gate Coverage",
             "Demo Screenshot Evidence",
@@ -50,8 +51,11 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "forgeml-release-manifest",
             "dist/release/forgeml-release-manifest.json",
             "contracts/ops/release-manifest.v1.json",
+            "contracts/ops/release-evidence-retrieval.v1.json",
             "contracts/ops/portfolio-readiness.v1.json",
             "release_manifest_verifier_contract",
+            "release_evidence_retrieval_contract",
+            "GitHubActionsReleaseEvidenceGateway",
             "make production-readiness",
             "make demo-screenshots",
             "09-release-evidence.png",
@@ -70,8 +74,8 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         ],
         "summary": {
             "source_asset_count": len(REQUIRED_SOURCE_ASSETS),
-            "ui_section_count": 4,
-            "release_signal_count": 8,
+            "ui_section_count": 5,
+            "release_signal_count": 11,
         },
     }
 
@@ -193,6 +197,8 @@ def validate_release_evidence_ux_definition(
         findings.append("Evidence map does not mention the Release evidence UX.")
     if "release_manifest_verifier_contract" not in page_test_source:
         findings.append("Release evidence page unit test does not cover quality gates.")
+    if "release_evidence_retrieval_contract" not in page_test_source:
+        findings.append("Release evidence page unit test does not cover retrieval gates.")
 
     if contract["schema_version"] != RELEASE_EVIDENCE_UX_CONTRACT_SCHEMA_VERSION:
         findings.append("Release evidence UX contract schema version is inconsistent.")

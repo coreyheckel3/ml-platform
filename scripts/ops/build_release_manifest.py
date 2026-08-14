@@ -155,6 +155,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="release_evidence_retrieval_contract",
+        kind="operations_contract",
+        path="contracts/ops/release-evidence-retrieval.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="operational_audit_ux_contract",
         kind="operations_contract",
         path="contracts/ops/operational-audit-ux.v1.json",
@@ -311,6 +317,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "release_manifest_contract",
     "release_evidence_workflow_contract",
     "release_evidence_ux_contract",
+    "release_evidence_retrieval_contract",
     "operational_audit_ux_contract",
     "release_manifest_verifier_contract",
     "demo_readiness_contract",

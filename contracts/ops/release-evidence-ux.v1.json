@@ -22,8 +22,11 @@
     "forgeml-release-manifest",
     "dist/release/forgeml-release-manifest.json",
     "contracts/ops/release-manifest.v1.json",
+    "contracts/ops/release-evidence-retrieval.v1.json",
     "contracts/ops/portfolio-readiness.v1.json",
     "release_manifest_verifier_contract",
+    "release_evidence_retrieval_contract",
+    "GitHubActionsReleaseEvidenceGateway",
     "make production-readiness",
     "make demo-screenshots",
     "09-release-evidence.png"
@@ -41,6 +44,7 @@
   ],
   "required_ui_sections": [
     "Release Manifest",
+    "Live Evidence Retrieval",
     "Reviewer Commands",
     "Quality Gate Coverage",
     "Demo Screenshot Evidence"
@@ -52,8 +56,8 @@
   },
   "schema_version": "forgeml.release_evidence_ux_contract.v1",
   "summary": {
-    "release_signal_count": 8,
+    "release_signal_count": 11,
     "source_asset_count": 9,
-    "ui_section_count": 4
+    "ui_section_count": 5
   }
 }

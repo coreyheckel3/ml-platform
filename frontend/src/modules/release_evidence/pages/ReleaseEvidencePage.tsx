@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 
 import {
   qualityGates,
+  liveReleaseEvidenceRetrieval,
   releaseArtifacts,
   releaseEvidenceSummary,
   reviewerCommands,
@@ -114,8 +115,75 @@ export function ReleaseEvidencePage() {
           </div>
         </DataPanel>
 
+        <DataPanel
+          title="Live Evidence Retrieval"
+          action={
+            <span className="inline-flex h-8 items-center gap-2 rounded border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-signal">
+              <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+              {liveReleaseEvidenceRetrieval.status}
+            </span>
+          }
+        >
+          <div className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <RetrievalFact
+                label="Provider"
+                value={liveReleaseEvidenceRetrieval.provider}
+              />
+              <RetrievalFact label="Branch" value={liveReleaseEvidenceRetrieval.branch} />
+              <RetrievalFact
+                label="Workflow"
+                value={liveReleaseEvidenceRetrieval.workflow}
+              />
+              <RetrievalFact
+                label="Artifact"
+                value={liveReleaseEvidenceRetrieval.artifactName}
+              />
+            </div>
+            <div className="rounded border border-slate-200 bg-cloud p-3">
+              <div className="text-sm font-semibold text-ink">
+                {liveReleaseEvidenceRetrieval.adapter}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-steel">
+                The adapter locates the latest successful main-branch workflow run,
+                downloads the release manifest artifact, extracts the manifest from the
+                archive, and compares it against the checked-in release contract.
+              </p>
+            </div>
+            <div className="rounded border border-slate-200 p-3">
+              <div className="text-sm font-semibold text-ink">Comparison Signals</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {liveReleaseEvidenceRetrieval.comparisonSignals.map((signal) => (
+                  <code
+                    key={signal}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-steel"
+                  >
+                    {signal}
+                  </code>
+                ))}
+              </div>
+            </div>
+            <div className="rounded border border-slate-200 p-3">
+              <div className="flex items-start gap-3">
+                <SquareTerminal className="mt-0.5 h-4 w-4 shrink-0 text-signal" />
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-ink">Operator Command</div>
+                  <p className="mt-1 text-sm leading-6 text-steel">
+                    Uses GitHub Actions as the release evidence source of truth.
+                  </p>
+                </div>
+              </div>
+              <code className="mt-3 block overflow-x-auto rounded bg-ink px-3 py-2 text-xs text-white">
+                {liveReleaseEvidenceRetrieval.operatorCommand}
+              </code>
+            </div>
+          </div>
+        </DataPanel>
+      </div>
+
+      <div className="mt-6">
         <DataPanel title="Reviewer Commands">
-          <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {reviewerCommands.map((command) => (
               <div key={command.label} className="rounded border border-slate-200 p-3">
                 <div className="flex items-start gap-3">
@@ -213,6 +281,20 @@ type EvidenceChecklistItemProps = {
   title: string;
   detail: string;
 };
+
+type RetrievalFactProps = {
+  label: string;
+  value: string;
+};
+
+function RetrievalFact({ label, value }: RetrievalFactProps) {
+  return (
+    <div className="rounded border border-slate-200 bg-white p-3">
+      <div className="text-xs font-semibold uppercase text-steel">{label}</div>
+      <div className="mt-2 break-all text-sm font-semibold text-ink">{value}</div>
+    </div>
+  );
+}
 
 function EvidenceChecklistItem({ icon, title, detail }: EvidenceChecklistItemProps) {
   return (

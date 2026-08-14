@@ -87,6 +87,32 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_release_evidence_ux_contract.py
 ```
 
+## Release Evidence Retrieval
+
+`release-evidence-retrieval.v1.json` records the live artifact retrieval
+contract: GitHub Actions workflow lookup, `forgeml-release-manifest` artifact
+download, manifest archive extraction, required artifact comparison, required
+quality gate comparison, main-branch source validation, and Release Evidence UI
+surfacing.
+
+Regenerate after an intentional live retrieval change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_retrieval_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_retrieval_contract.py
+```
+
+Retrieve live release evidence from GitHub Actions:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
+```
+
 ## Operational Audit UX
 
 `operational-audit-ux.v1.json` records the frontend operator audit workspace

@@ -43,6 +43,9 @@ try:
     from scripts.ci.check_portfolio_readiness_contract import (
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
     )
+    from scripts.ci.check_release_evidence_retrieval_contract import (
+        check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
+    )
     from scripts.ci.check_release_evidence_ux_contract import (
         check_release_evidence_ux_contract as verify_release_evidence_ux_contract,
     )
@@ -94,6 +97,9 @@ except ModuleNotFoundError:
     )
     from check_portfolio_readiness_contract import (  # type: ignore[no-redef]
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
+    )
+    from check_release_evidence_retrieval_contract import (  # type: ignore[no-redef]
+        check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
     )
     from check_release_evidence_ux_contract import (  # type: ignore[no-redef]
         check_release_evidence_ux_contract as verify_release_evidence_ux_contract,
@@ -246,6 +252,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-manifest.v1.json",
     "contracts/ops/release-evidence-workflow.v1.json",
     "contracts/ops/release-evidence-ux.v1.json",
+    "contracts/ops/release-evidence-retrieval.v1.json",
     "contracts/ops/operational-audit-ux.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
@@ -255,6 +262,13 @@ REQUIRED_FILES = (
     "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
+    "backend/src/forgeml/platform/release_evidence/__init__.py",
+    "backend/src/forgeml/platform/release_evidence/retrieval.py",
+    "scripts/ops/retrieve_release_evidence.py",
+    "scripts/ci/check_release_evidence_retrieval_contract.py",
+    "backend/tests/unit/platform/test_release_evidence_retrieval.py",
+    "backend/tests/unit/ops/test_release_evidence_retrieval_cli.py",
+    "backend/tests/unit/ops/test_release_evidence_retrieval_contract.py",
     "frontend/src/modules/operational_audit/data/releaseEvidenceAuditEvents.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.test.ts",
@@ -332,6 +346,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_manifest_contract(repo_root),
         check_release_evidence_workflow_contract(repo_root),
         check_release_evidence_ux_contract(repo_root),
+        check_release_evidence_retrieval_contract(repo_root),
         check_operational_audit_ux_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
@@ -1619,6 +1634,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/release-manifest.v1.json",
         "contracts/ops/release-evidence-workflow.v1.json",
         "contracts/ops/release-evidence-ux.v1.json",
+        "contracts/ops/release-evidence-retrieval.v1.json",
         "contracts/ops/release-manifest-verification.v1.json",
         "contracts/ops/demo-readiness.v1.json",
         "contracts/ops/ci-runtime.v1.json",
@@ -1641,6 +1657,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "release_manifest_contract",
         "release_evidence_workflow_contract",
         "release_evidence_ux_contract",
+        "release_evidence_retrieval_contract",
         "release_manifest_verifier_contract",
         "demo_readiness_contract",
         "ci_runtime_contract",
@@ -1845,6 +1862,106 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_release_signals={has_release_signals}, "
                 f"has_screenshot_catalog={has_screenshot_catalog}, "
                 f"has_evidence_map={has_evidence_map}, "
+                f"has_release_manifest_artifact={has_release_manifest_artifact}, "
+                f"has_contract_docs={has_contract_docs}"
+            )
+        ),
+    )
+
+
+def check_release_evidence_retrieval_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/production-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/release-evidence-retrieval.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    retrieval_source = (
+        repo_root / "backend/src/forgeml/platform/release_evidence/retrieval.py"
+    ).read_text(encoding="utf-8")
+    cli_source = (repo_root / "scripts/ops/retrieve_release_evidence.py").read_text(
+        encoding="utf-8"
+    )
+    page_source = (
+        repo_root / "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    data_source = (
+        repo_root / "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    boundary = contract.get("retrieval_boundary", {})
+    comparison_checks = set(contract.get("required_comparison_checks", []))
+    has_ci_gate = "python scripts/ci/check_release_evidence_retrieval_contract.py" in ci_source
+    contract_current, contract_detail = verify_release_evidence_retrieval_contract(
+        repo_root / "contracts/ops/release-evidence-retrieval.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_gateway_boundary = (
+        boundary.get("gateway_protocol") == "ReleaseEvidenceGateway"
+        and boundary.get("github_gateway") == "GitHubActionsReleaseEvidenceGateway"
+        and boundary.get("local_gateway") == "LocalReleaseEvidenceGateway"
+    )
+    has_comparison_checks = {
+        "manifest_schema_version",
+        "main_branch_source",
+        "required_artifact_coverage",
+        "required_quality_gate_coverage",
+        "ci_run_url_present",
+    }.issubset(comparison_checks)
+    has_artifact_download = (
+        "archive_download_url" in retrieval_source
+        and "zipfile" in retrieval_source
+        and "Authorization" in retrieval_source
+    )
+    has_live_command = "scripts/ops/retrieve_release_evidence.py --repo" in runbook_source
+    emits_versioned_report = "forgeml.release_evidence_retrieval.v1" in cli_source
+    has_ui_surface = (
+        "Live Evidence Retrieval" in page_source
+        and "Comparison Signals" in page_source
+        and "GitHubActionsReleaseEvidenceGateway" in data_source
+        and "release_evidence_retrieval_contract" in data_source
+    )
+    has_release_manifest_artifact = (
+        "release_evidence_retrieval_contract" in manifest_source
+        and "contracts/ops/release-evidence-retrieval.v1.json" in manifest_source
+    )
+    has_contract_docs = "release-evidence-retrieval.v1.json" in contracts_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_gateway_boundary
+        and has_comparison_checks
+        and has_artifact_download
+        and has_live_command
+        and emits_versioned_report
+        and has_ui_surface
+        and has_release_manifest_artifact
+        and has_contract_docs
+    )
+    return ReadinessCheck(
+        name="release evidence retrieval contract",
+        passed=passed,
+        detail=(
+            "GitHub Actions release artifact retrieval, manifest comparison, UI, docs, "
+            "release manifest evidence, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_gateway_boundary={has_gateway_boundary}, "
+                f"has_comparison_checks={has_comparison_checks}, "
+                f"has_artifact_download={has_artifact_download}, "
+                f"has_live_command={has_live_command}, "
+                f"emits_versioned_report={emits_versioned_report}, "
+                f"has_ui_surface={has_ui_surface}, "
                 f"has_release_manifest_artifact={has_release_manifest_artifact}, "
                 f"has_contract_docs={has_contract_docs}"
             )
