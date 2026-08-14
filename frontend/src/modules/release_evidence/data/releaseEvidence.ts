@@ -24,8 +24,8 @@ export type ReviewerCommand = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 34,
-  qualityGateCount: 23,
+  artifactCount: 35,
+  qualityGateCount: 24,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -62,6 +62,12 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     kind: "Operations contract",
     path: "contracts/ops/release-manifest.v1.json",
     signal: "Defines release artifacts, image targets, and provenance metadata.",
+  },
+  {
+    name: "Operational Audit UX Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/operational-audit-ux.v1.json",
+    signal: "Verifies the operator audit timeline, route linkage, screenshots, and CI gate.",
   },
   {
     name: "Portfolio Readiness Contract",
@@ -112,6 +118,11 @@ export const qualityGates: EvidenceGate[] = [
     owner: "Operations",
     signal: "Manifest verification can enforce checksums and CI evidence.",
   },
+  {
+    name: "operational_audit_ux_contract",
+    owner: "Operations",
+    signal: "Operational audit route and timeline coverage stay enforced in CI.",
+  },
 ];
 
 export const screenshotEvidence: ScreenshotEvidence[] = [
@@ -139,6 +150,11 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
     fileName: "09-release-evidence.png",
     route: "/release-evidence",
     signal: "Release artifacts, quality gates, reviewer commands, and CI provenance.",
+  },
+  {
+    fileName: "10-operational-audit.png",
+    route: "/operational-audit",
+    signal: "Operational timeline for release evidence, deployments, retraining, and security events.",
   },
 ];
 

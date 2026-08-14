@@ -3,6 +3,7 @@ import {
   BookOpen,
   Boxes,
   BrainCircuit,
+  ClipboardList,
   Database,
   FileCheck2,
   GitBranch,
@@ -33,5 +34,6 @@ export const navigationItems = [
   { label: "Retraining", path: "/retraining", icon: RefreshCw },
   { label: "Alerts", path: "/alerts", icon: AlertTriangle },
   { label: "Release Evidence", path: "/release-evidence", icon: FileCheck2 },
+  { label: "Operational Audit", path: "/operational-audit", icon: ClipboardList },
   { label: "Settings", path: "/settings", icon: Settings }
 ] as const;

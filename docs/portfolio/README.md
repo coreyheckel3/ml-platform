@@ -22,7 +22,7 @@ verifiable code, contracts, tests, and release evidence.
    modular monolith, adapter boundaries, and release governance loop.
 3. Use [evidence-map.md](evidence-map.md) to jump from a claim to the code and
    tests that support it.
-4. Run `make demo-stack`, open `/release-evidence`, or run
-   `make demo-screenshots` for deterministic browser evidence.
+4. Run `make demo-stack`, open `/release-evidence` and `/operational-audit`,
+   or run `make demo-screenshots` for deterministic browser evidence.
 5. Use [resume-bullets.md](resume-bullets.md) to adapt the project for ML,
    MLOps, AI platform, or backend/platform engineering applications.

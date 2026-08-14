@@ -213,4 +213,5 @@ the remaining product/runtime platform roadmap.
 | 59 | CI Runtime Maintenance | Completed: refreshed GitHub Actions runtime pins, added CI runtime contracts, and removed retired action major refs from release evidence. |
 | 60 | Portfolio Polish / Reviewer Assets | Completed: reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, portfolio readiness contract, CI wiring, and release evidence. |
 | 61 | Release Artifact Download / Evidence UX | Completed: Release Evidence frontend module, route, navigation, reviewer commands, screenshot coverage, release evidence UX contract, CI wiring, production-readiness, and release manifest evidence. |
-| 62 | Operational Audit UX v2 | Next: connect release evidence, deployments, retraining, and security events into a richer operator audit timeline. |
+| 62 | Operational Audit UX v2 | Completed: Operational Audit frontend module, `/operational-audit` route, audit timeline adapter, release evidence annotations, admin audit API integration, screenshots, UX contract, CI wiring, production-readiness, and release manifest evidence. |
+| 63 | Live Release Evidence Retrieval | Next: add a GitHub Actions artifact adapter that can retrieve release manifests from successful main-branch runs and compare them with checked-in release evidence. |

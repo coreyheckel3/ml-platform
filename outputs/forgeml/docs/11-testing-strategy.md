@@ -248,6 +248,22 @@ from the web console:
 - Verify the release evidence UX contract matches source files, portfolio docs,
   CI wiring, production-readiness, and release manifest evidence.
 
+## Operational Audit UX Tests
+
+Operational audit UX tests should keep operator-facing timeline evidence
+traceable across live audit rows and release annotations:
+
+- Verify the Operational Audit page renders live admin audit events, release
+  evidence annotations, family filters, and selected-event detail drilldowns.
+- Unit test the audit timeline adapter for release evidence, deployment,
+  retraining, security, registry, dataset, training, and monitoring
+  classification.
+- Require `/operational-audit` route and navigation coverage.
+- Capture `10-operational-audit.png` in the deterministic Playwright screenshot
+  flow.
+- Verify the operational audit UX contract matches source files, portfolio
+  docs, CI wiring, production-readiness, and release manifest evidence.
+
 ## Artifact Manifest Tests
 
 Artifact manifest tests protect object-store metadata and lineage:

@@ -59,4 +59,7 @@ test("opens dashboard and navigates to projects", async ({ page }) => {
 
   await page.getByRole("link", { name: "Release Evidence" }).click();
   await expect(page.getByRole("heading", { name: "Release Evidence" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Operational Audit" }).click();
+  await expect(page.getByRole("heading", { name: "Operational Audit" })).toBeVisible();
 });

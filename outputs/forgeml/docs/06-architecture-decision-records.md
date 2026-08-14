@@ -565,3 +565,30 @@ Justification: ForgeML already publishes release manifests and reviewer
 screenshots. Surfacing that evidence inside the console makes the portfolio
 walkthrough more credible while keeping the initial implementation local-demo
 friendly and release-gated.
+
+## ADR-030: Operational Audit UX Contract
+
+Status: Accepted
+
+Decision: Treat the Operational Audit frontend workflow as an operations
+contract covering route registration, navigation, admin audit API usage, release
+evidence annotations, timeline signal-family classification, screenshot capture,
+portfolio evidence, CI wiring, production-readiness, and release manifest
+inclusion.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Derived audit timeline UX | Reuses the existing organization-scoped audit API and release evidence metadata without adding a new backend store | Timeline richness depends on current event writers and static release annotations |
+| New audit aggregation backend first | Creates a stronger long-term query boundary | Adds persistence and migration work before the product surface proves reviewer value |
+| Settings-only audit console | Keeps implementation smaller | Hides operational stories inside account settings and weakens the release-governance walkthrough |
+
+Recommendation: Build a contract-checked Operational Audit page that composes
+live audit API rows with release evidence annotations, then add live release
+artifact retrieval and richer event adapters in later sprints.
+
+Justification: Operators and reviewers need a first-class timeline that connects
+deployments, retraining, registry decisions, security events, and release
+evidence. Reusing existing audit records keeps the architecture modular while
+making the product surface useful immediately and enforceable in CI.

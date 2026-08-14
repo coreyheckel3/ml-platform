@@ -10,8 +10,8 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByRole("heading", { name: "Release Evidence" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("34")).toBeInTheDocument();
-    expect(screen.getByText("23")).toBeInTheDocument();
+    expect(screen.getByText("35")).toBeInTheDocument();
+    expect(screen.getByText("24")).toBeInTheDocument();
     expect(screen.getByText("forgeml-release-manifest")).toBeInTheDocument();
     expect(screen.getByText("Release Manifest")).toBeInTheDocument();
     expect(screen.getByText("OpenAPI Contract")).toBeInTheDocument();
@@ -27,8 +27,10 @@ describe("ReleaseEvidencePage", () => {
     expect(screen.getByText("backend_tests")).toBeInTheDocument();
     expect(screen.getByText("frontend_e2e")).toBeInTheDocument();
     expect(screen.getByText("release_manifest_verifier_contract")).toBeInTheDocument();
+    expect(screen.getByText("operational_audit_ux_contract")).toBeInTheDocument();
     expect(screen.getByText("Demo Screenshot Evidence")).toBeInTheDocument();
     expect(screen.getByText("09-release-evidence.png")).toBeInTheDocument();
+    expect(screen.getByText("10-operational-audit.png")).toBeInTheDocument();
     expect(screen.getByText("/release-evidence")).toBeInTheDocument();
   });
 });

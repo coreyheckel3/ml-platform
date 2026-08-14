@@ -369,6 +369,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-ux.v1.json" in artifact_paths
+    assert "contracts/ops/operational-audit-ux.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
     assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
@@ -447,7 +448,38 @@ def test_release_evidence_ux_contract_gate_is_enforced() -> None:
     assert "Demo Screenshot Evidence" in release_page
     assert "forgeml-release-manifest" in release_data
     assert "release_manifest_verifier_contract" in release_data
+    assert "operational_audit_ux_contract" in release_data
     assert "09-release-evidence.png" in screenshot_catalog
+
+
+def test_operational_audit_ux_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/operational-audit-ux.v1.json").read_text(encoding="utf-8")
+    )
+    audit_page = Path(
+        "frontend/src/modules/operational_audit/pages/OperationalAuditPage.tsx"
+    ).read_text(encoding="utf-8")
+    audit_lib = Path("frontend/src/modules/operational_audit/lib/auditTimeline.ts").read_text(
+        encoding="utf-8"
+    )
+    screenshot_catalog = Path("docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_operational_audit_ux_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.operational_audit_ux_contract.v1"
+    assert contract["route"]["path"] == "/operational-audit"
+    assert contract["route"]["label"] == "Operational Audit"
+    assert "GET /api/v1/admin/audit-log" in contract["api_surface"]
+    assert "Audit Timeline" in audit_page
+    assert "Event Detail" in audit_page
+    assert "listAuditLog" in audit_page
+    assert "release_evidence" in audit_lib
+    assert "deployment" in audit_lib
+    assert "retraining" in audit_lib
+    assert "security" in audit_lib
+    assert "10-operational-audit.png" in screenshot_catalog
 
 
 def test_release_manifest_verifier_contract_gate_is_enforced() -> None:

@@ -91,6 +91,7 @@ type AlertEvent = Entity & {
 
 type ForgeMLApiMockState = {
   projects: Project[];
+  auditLog: Entity[];
   datasetsByProject: Map<string, Dataset[]>;
   versionsByDataset: Map<string, DatasetVersion[]>;
   schemasByVersion: Map<string, Entity>;
@@ -153,6 +154,7 @@ async function handleApiRoute(
         "model_versions:review",
         "deployments:rollback",
         "inference:predict",
+        "admin:audit_log:read",
       ],
     });
   }
@@ -168,6 +170,20 @@ async function handleApiRoute(
 
   if (method === "POST" && path === "/api/v1/auth/logout") {
     return fulfillJson(route, { revoked: true });
+  }
+
+  if (method === "GET" && path === "/api/v1/admin/audit-log") {
+    const query = new URL(route.request().url()).searchParams;
+    const actorType = query.get("actor_type");
+    const action = query.get("action");
+    const resourceType = query.get("resource_type");
+    const items = state.auditLog.filter(
+      (entry) =>
+        (!actorType || entry.actor_type === actorType) &&
+        (!action || entry.action === action) &&
+        (!resourceType || entry.resource_type === resourceType),
+    );
+    return fulfillJson(route, listResponse(items));
   }
 
   if (method === "GET" && path === "/api/v1/projects") {
@@ -965,6 +981,7 @@ function createMockState(): ForgeMLApiMockState {
         "Payment risk scoring and chargeback prevention.",
       ),
     ],
+    auditLog: seedAuditLogEntries(),
     datasetsByProject: new Map(),
     versionsByDataset: new Map(),
     schemasByVersion: new Map(),
@@ -1093,6 +1110,75 @@ function projectRecord(id: string, name: string, description: string): Project {
     status: "active",
     description,
     owner_user_id: userId,
+  };
+}
+
+function seedAuditLogEntries(): Entity[] {
+  return [
+    auditLogEntry({
+      id: "audit-deployment-rollback",
+      action: "deployments.rollback",
+      resourceType: "deployment",
+      resourceId: `deployment-${baseProjectId}`,
+      metadata: { project_id: baseProjectId, from_revision: 2, to_revision: 1 },
+      createdAt: "2026-08-13T18:30:00Z",
+    }),
+    auditLogEntry({
+      id: "audit-retraining-trigger",
+      action: "retraining_runs.trigger",
+      resourceType: "retraining_run",
+      resourceId: "retraining-run-fraud-daily",
+      metadata: {
+        project_id: baseProjectId,
+        training_run_id: "training-run-fraud-daily",
+        orchestrator_run_id: "workflow:fraud-retrain",
+      },
+      createdAt: "2026-08-13T18:10:00Z",
+    }),
+    auditLogEntry({
+      id: "audit-model-review",
+      action: "model_versions.review",
+      resourceType: "model_version",
+      resourceId: "model-version-fraud-xgb-1",
+      metadata: { project_id: baseProjectId, decision: "approved" },
+      createdAt: "2026-08-13T17:50:00Z",
+    }),
+    auditLogEntry({
+      id: "audit-auth-login",
+      action: "auth.login",
+      resourceType: "user",
+      resourceId: userId,
+      metadata: { email: "admin@forgeml.dev" },
+      createdAt: "2026-08-13T17:30:00Z",
+    }),
+  ];
+}
+
+function auditLogEntry({
+  id,
+  action,
+  resourceType,
+  resourceId,
+  metadata,
+  createdAt,
+}: {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}): Entity {
+  return {
+    id,
+    organization_id: organizationId,
+    actor_type: "user",
+    actor_id: userId,
+    action,
+    resource_type: resourceType,
+    resource_id: resourceId,
+    metadata,
+    created_at: createdAt,
   };
 }
 

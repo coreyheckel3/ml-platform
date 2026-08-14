@@ -37,6 +37,9 @@ try:
     from scripts.ci.check_monitoring_dashboard_contract import (
         check_monitoring_dashboard_contract as verify_monitoring_dashboard_contract,
     )
+    from scripts.ci.check_operational_audit_ux_contract import (
+        check_operational_audit_ux_contract as verify_operational_audit_ux_contract,
+    )
     from scripts.ci.check_portfolio_readiness_contract import (
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
     )
@@ -85,6 +88,9 @@ except ModuleNotFoundError:
     )
     from check_monitoring_dashboard_contract import (  # type: ignore[no-redef]
         check_monitoring_dashboard_contract as verify_monitoring_dashboard_contract,
+    )
+    from check_operational_audit_ux_contract import (  # type: ignore[no-redef]
+        check_operational_audit_ux_contract as verify_operational_audit_ux_contract,
     )
     from check_portfolio_readiness_contract import (  # type: ignore[no-redef]
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
@@ -240,6 +246,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-manifest.v1.json",
     "contracts/ops/release-evidence-workflow.v1.json",
     "contracts/ops/release-evidence-ux.v1.json",
+    "contracts/ops/operational-audit-ux.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
@@ -248,6 +255,11 @@ REQUIRED_FILES = (
     "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
+    "frontend/src/modules/operational_audit/data/releaseEvidenceAuditEvents.ts",
+    "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
+    "frontend/src/modules/operational_audit/lib/auditTimeline.test.ts",
+    "frontend/src/modules/operational_audit/pages/OperationalAuditPage.tsx",
+    "frontend/src/modules/operational_audit/pages/OperationalAuditPage.test.tsx",
     "scripts/ops/release_smoke.py",
     "scripts/ops/build_release_manifest.py",
     "scripts/ops/verify_release_manifest.py",
@@ -257,6 +269,7 @@ REQUIRED_FILES = (
     "scripts/ci/check_release_manifest_contract.py",
     "scripts/ci/check_release_evidence_workflow.py",
     "scripts/ci/check_release_evidence_ux_contract.py",
+    "scripts/ci/check_operational_audit_ux_contract.py",
     "scripts/ci/check_release_manifest_verifier_contract.py",
     "scripts/ci/check_demo_readiness_contract.py",
     "scripts/ci/check_ci_runtime_contract.py",
@@ -319,6 +332,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_manifest_contract(repo_root),
         check_release_evidence_workflow_contract(repo_root),
         check_release_evidence_ux_contract(repo_root),
+        check_operational_audit_ux_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
         check_ci_runtime_contract(repo_root),
@@ -1832,6 +1846,112 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_screenshot_catalog={has_screenshot_catalog}, "
                 f"has_evidence_map={has_evidence_map}, "
                 f"has_release_manifest_artifact={has_release_manifest_artifact}, "
+                f"has_contract_docs={has_contract_docs}"
+            )
+        ),
+    )
+
+
+def check_operational_audit_ux_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/operational-audit-ux.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    route = contract.get("route", {})
+    source_assets = {asset for asset in contract.get("required_source_assets", [])}
+    quality_gates = set(contract.get("quality_gates", []))
+    page_source = (
+        repo_root / "frontend/src/modules/operational_audit/pages/OperationalAuditPage.tsx"
+    ).read_text(encoding="utf-8")
+    lib_source = (
+        repo_root / "frontend/src/modules/operational_audit/lib/auditTimeline.ts"
+    ).read_text(encoding="utf-8")
+    release_evidence_source = (
+        repo_root / "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    screenshot_catalog = (repo_root / "docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+    evidence_map = (repo_root / "docs/portfolio/evidence-map.md").read_text(
+        encoding="utf-8"
+    )
+    has_ci_gate = "python scripts/ci/check_operational_audit_ux_contract.py" in ci_source
+    contract_current, contract_detail = verify_operational_audit_ux_contract(
+        repo_root / "contracts/ops/operational-audit-ux.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_route = (
+        route.get("path") == "/operational-audit"
+        and route.get("label") == "Operational Audit"
+        and "OperationalAuditPage" in page_source
+    )
+    has_source_assets = {
+        "frontend/src/modules/operational_audit/pages/OperationalAuditPage.tsx",
+        "frontend/src/modules/operational_audit/pages/OperationalAuditPage.test.tsx",
+        "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
+        "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
+    }.issubset(source_assets)
+    has_quality_gates = {
+        "python scripts/ci/check_operational_audit_ux_contract.py",
+        "backend/tests/unit/ops/test_operational_audit_ux_contract.py",
+        "frontend/src/modules/operational_audit/pages/OperationalAuditPage.test.tsx",
+    }.issubset(quality_gates)
+    has_timeline_signals = (
+        "Audit Timeline" in page_source
+        and "Event Detail" in page_source
+        and "listAuditLog" in page_source
+        and "release_evidence" in lib_source
+        and "deployment" in lib_source
+        and "retraining" in lib_source
+        and "security" in lib_source
+    )
+    has_screenshot_catalog = "10-operational-audit.png" in screenshot_catalog
+    has_evidence_map = "Operational audit UX" in evidence_map
+    has_release_manifest_artifact = (
+        "operational_audit_ux_contract" in manifest_source
+        and "contracts/ops/operational-audit-ux.v1.json" in manifest_source
+    )
+    has_release_evidence_gate = "operational_audit_ux_contract" in release_evidence_source
+    has_contract_docs = "operational-audit-ux.v1.json" in contracts_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_route
+        and has_source_assets
+        and has_quality_gates
+        and has_timeline_signals
+        and has_screenshot_catalog
+        and has_evidence_map
+        and has_release_manifest_artifact
+        and has_release_evidence_gate
+        and has_contract_docs
+    )
+    return ReadinessCheck(
+        name="operational audit UX contract",
+        passed=passed,
+        detail=(
+            "operational audit route, timeline, screenshots, release evidence, "
+            "manifest, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_route={has_route}, "
+                f"has_source_assets={has_source_assets}, "
+                f"has_quality_gates={has_quality_gates}, "
+                f"has_timeline_signals={has_timeline_signals}, "
+                f"has_screenshot_catalog={has_screenshot_catalog}, "
+                f"has_evidence_map={has_evidence_map}, "
+                f"has_release_manifest_artifact={has_release_manifest_artifact}, "
+                f"has_release_evidence_gate={has_release_evidence_gate}, "
                 f"has_contract_docs={has_contract_docs}"
             )
         ),

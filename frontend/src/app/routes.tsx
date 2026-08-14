@@ -82,6 +82,14 @@ const MonitoringPage = lazy(() =>
   })),
 );
 
+const loadOperationalAuditPage = () =>
+  import("../modules/operational_audit/pages/OperationalAuditPage");
+const OperationalAuditPage = lazy(() =>
+  loadOperationalAuditPage().then(({ OperationalAuditPage }) => ({
+    default: OperationalAuditPage,
+  })),
+);
+
 const loadProjectsPage = () => import("../modules/projects/pages/ProjectsPage");
 const ProjectsPage = lazy(() =>
   loadProjectsPage().then(({ ProjectsPage }) => ({ default: ProjectsPage })),
@@ -178,6 +186,11 @@ export const appRoutes: readonly AppRoute[] = [
     path: "/release-evidence",
     element: <ReleaseEvidencePage />,
     preload: loadReleaseEvidencePage,
+  },
+  {
+    path: "/operational-audit",
+    element: <OperationalAuditPage />,
+    preload: loadOperationalAuditPage,
   },
   { path: "/settings", element: <SettingsPage />, preload: loadSettingsPage },
   { path: "*", element: <Navigate to="/" replace /> },

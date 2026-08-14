@@ -87,6 +87,25 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_release_evidence_ux_contract.py
 ```
 
+## Operational Audit UX
+
+`operational-audit-ux.v1.json` records the frontend operator audit workspace
+requirements: `/operational-audit` routing, navigation, admin audit API usage,
+release evidence annotations, timeline signal families, deterministic
+screenshot capture, screenshot catalog coverage, and portfolio evidence mapping.
+
+Regenerate after an intentional operational audit product-surface change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_operational_audit_ux_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_operational_audit_ux_contract.py
+```
+
 ## Release Manifest Verification
 
 `release-manifest-verification.v1.json` records the required verifier behavior for

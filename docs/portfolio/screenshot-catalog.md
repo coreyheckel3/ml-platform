@@ -21,6 +21,7 @@ capability it demonstrates.
 | `07-inference.png` | `/inference` | Endpoint creation, prediction probes, request logs, and metric snapshots. |
 | `08-monitoring.png` | `/monitoring` | Latency percentiles, error breakdowns, drift trends, training failures, and retraining activity. |
 | `09-release-evidence.png` | `/release-evidence` | Release manifest artifacts, quality gates, reviewer commands, CI provenance, and screenshot evidence. |
+| `10-operational-audit.png` | `/operational-audit` | Unified audit timeline for release evidence, deployment, retraining, security, and registry events. |
 
 ## Capture Contract
 
@@ -34,4 +35,5 @@ The screenshot flow must:
 - Assert the final URL and page heading before each screenshot.
 
 The flow is validated in CI as part of `npm --prefix frontend run e2e` and is
-referenced by the portfolio readiness and release evidence UX contracts.
+referenced by the portfolio readiness, release evidence UX, and operational
+audit UX contracts.
