@@ -1940,6 +1940,48 @@ Implemented scope:
 - `docs/portfolio/screenshot-catalog.md` maps deterministic screenshots to reviewer signals.
 - `contracts/ops/portfolio-readiness.v1.json` and `scripts/ci/check_portfolio_readiness_contract.py` lock asset content, claims, commands, quality gates, CI wiring, production-readiness, and release evidence.
 
+## Sprint 61: Release Artifact Download / Evidence UX
+
+Goal: Make release evidence visible in the product so reviewers and operators can
+inspect CI-published artifacts, verification commands, quality gates, and demo
+screenshot evidence from the web console.
+
+Scope:
+
+- Release Evidence frontend module
+- First-class navigation and `/release-evidence` route
+- Release manifest artifact inventory and reviewer command surface
+- Quality gate and screenshot evidence panels
+- Playwright smoke and screenshot coverage
+- Release evidence UX contract and CI wiring
+- Production-readiness and release manifest evidence
+
+Acceptance criteria:
+
+- The web console exposes a Release Evidence page with release manifest,
+  reviewer command, quality gate, and screenshot evidence sections.
+- Navigation and lazy route contracts include `/release-evidence`.
+- The deterministic screenshot flow captures `09-release-evidence.png`.
+- CI and production-readiness gates validate the release evidence UX contract.
+- Release manifest provenance includes the release evidence UX contract.
+
+Implemented scope:
+
+- `frontend/src/modules/release_evidence` defines the release evidence data model
+  and product surface for manifest artifacts, quality gates, commands, and
+  screenshots.
+- `frontend/src/app/navigation.ts` and `frontend/src/app/routes.tsx` expose
+  Release Evidence as a first-class console page.
+- `frontend/tests/e2e/smoke.spec.ts` and
+  `frontend/tests/e2e/demo-screenshots.spec.ts` cover the new route and
+  screenshot.
+- `contracts/ops/release-evidence-ux.v1.json` and
+  `scripts/ci/check_release_evidence_ux_contract.py` lock the route, UI
+  sections, source assets, docs, CI wiring, production-readiness, and release
+  evidence.
+- Release manifest provenance includes the release evidence UX contract as a
+  required operations artifact and quality gate.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -1964,7 +2006,8 @@ sequence.
 | 58 | Developer Experience / Demo Readiness | Completed | One-command local demo stack, seeded data refresh, screenshots, architecture walkthrough, demo runbook, and demo readiness contract gates. |
 | 59 | CI Runtime Maintenance | Completed | Refreshed GitHub Actions runtime pins, added CI runtime contract gates, updated release evidence workflow, and removed retired action refs. |
 | 60 | Portfolio Polish / Reviewer Assets | Completed | Reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, portfolio readiness contract, CI wiring, and release evidence. |
-| 61 | Release Artifact Download / Evidence UX | Planned | Surface CI release manifest artifacts, verification summaries, and demo screenshots in the frontend/reviewer workflow. |
+| 61 | Release Artifact Download / Evidence UX | Completed | Release Evidence app page, manifest artifact inventory, reviewer commands, quality gates, screenshot capture, UX contract, CI wiring, production-readiness, and release evidence. |
+| 62 | Operational Audit UX v2 | Planned | Connect release evidence, deployments, retraining, and security events into a richer operator audit timeline. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

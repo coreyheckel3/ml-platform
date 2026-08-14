@@ -539,3 +539,29 @@ Justification: ForgeML is built to demonstrate senior platform engineering.
 Reviewer-facing claims should be specific, evidence-backed, and testable.
 Contract-checking portfolio assets helps interviewers connect architecture,
 code, tests, CI, and product behavior without relying on narrative alone.
+
+## ADR-029: Release Evidence UX Contract
+
+Status: Accepted
+
+Decision: Treat the Release Evidence frontend workflow as an operations contract
+covering route registration, navigation, release manifest signals, reviewer
+commands, quality gates, screenshot capture, portfolio evidence, CI wiring,
+production-readiness, and release manifest inclusion.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Release evidence UX contract | Makes reviewer-facing release evidence discoverable and prevents the route, screenshots, or docs from drifting | Adds one more operations contract to maintain |
+| Static portfolio docs only | Easy to update and lightweight | Reviewers must leave the product to inspect release evidence |
+| Backend API-backed evidence browser first | More dynamic long term | Requires GitHub artifact integration before the local demo needs it |
+
+Recommendation: Start with a contract-checked frontend evidence workspace backed
+by checked-in release metadata and reviewer commands, then add live artifact
+retrieval when the platform has an authenticated GitHub integration boundary.
+
+Justification: ForgeML already publishes release manifests and reviewer
+screenshots. Surfacing that evidence inside the console makes the portfolio
+walkthrough more credible while keeping the initial implementation local-demo
+friendly and release-gated.

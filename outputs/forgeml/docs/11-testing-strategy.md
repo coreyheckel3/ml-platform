@@ -235,6 +235,19 @@ evidence:
 - Verify Mermaid diagrams and screenshot catalog entries stay aligned with the deterministic demo screenshot flow.
 - Include portfolio readiness in backend CI, production-readiness, and release manifest evidence.
 
+## Release Evidence UX Tests
+
+Release evidence UX tests should keep release artifacts visible and reviewable
+from the web console:
+
+- Verify the Release Evidence page renders manifest artifact, reviewer command,
+  quality gate, and screenshot evidence sections.
+- Require `/release-evidence` route and navigation coverage.
+- Capture `09-release-evidence.png` in the deterministic Playwright screenshot
+  flow.
+- Verify the release evidence UX contract matches source files, portfolio docs,
+  CI wiring, production-readiness, and release manifest evidence.
+
 ## Artifact Manifest Tests
 
 Artifact manifest tests protect object-store metadata and lineage:

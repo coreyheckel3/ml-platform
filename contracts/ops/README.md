@@ -68,6 +68,25 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_release_evidence_workflow.py
 ```
 
+## Release Evidence UX
+
+`release-evidence-ux.v1.json` records the frontend evidence workspace
+requirements: `/release-evidence` routing, navigation, release manifest
+signals, reviewer commands, deterministic screenshot capture, screenshot
+catalog coverage, and portfolio evidence mapping.
+
+Regenerate after an intentional release evidence product-surface change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_ux_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_ux_contract.py
+```
+
 ## Release Manifest Verification
 
 `release-manifest-verification.v1.json` records the required verifier behavior for

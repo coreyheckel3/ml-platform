@@ -212,4 +212,5 @@ the remaining product/runtime platform roadmap.
 | 58 | Developer Experience / Demo Readiness | Completed: one-command demo stack, seeded data refresh, screenshot capture, architecture walkthrough, runbook, and demo readiness contract gates. |
 | 59 | CI Runtime Maintenance | Completed: refreshed GitHub Actions runtime pins, added CI runtime contracts, and removed retired action major refs from release evidence. |
 | 60 | Portfolio Polish / Reviewer Assets | Completed: reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, portfolio readiness contract, CI wiring, and release evidence. |
-| 61 | Release Artifact Download / Evidence UX | Next: surface CI release manifest artifacts, verification summaries, and demo screenshots in the frontend/reviewer workflow. |
+| 61 | Release Artifact Download / Evidence UX | Completed: Release Evidence frontend module, route, navigation, reviewer commands, screenshot coverage, release evidence UX contract, CI wiring, production-readiness, and release manifest evidence. |
+| 62 | Operational Audit UX v2 | Next: connect release evidence, deployments, retraining, and security events into a richer operator audit timeline. |

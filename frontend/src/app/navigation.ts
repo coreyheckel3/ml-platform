@@ -4,6 +4,7 @@ import {
   Boxes,
   BrainCircuit,
   Database,
+  FileCheck2,
   GitBranch,
   FlaskConical,
   Gauge,
@@ -31,5 +32,6 @@ export const navigationItems = [
   { label: "Drift", path: "/drift", icon: Radar },
   { label: "Retraining", path: "/retraining", icon: RefreshCw },
   { label: "Alerts", path: "/alerts", icon: AlertTriangle },
+  { label: "Release Evidence", path: "/release-evidence", icon: FileCheck2 },
   { label: "Settings", path: "/settings", icon: Settings }
 ] as const;

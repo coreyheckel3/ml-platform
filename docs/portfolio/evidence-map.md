@@ -20,6 +20,7 @@ training script.
 | Drift detection and retraining handoff | `backend/src/forgeml/modules/drift_detection`, `backend/src/forgeml/modules/retraining`, `frontend/src/modules/retraining` |
 | Tenant-aware security and RBAC | `contracts/security`, `backend/tests/integration/security/test_tenant_isolation.py`, `backend/tests/unit/security/test_rbac_matrix.py` |
 | Production readiness and release governance | `scripts/ci/production_readiness.py`, `scripts/ops/build_release_manifest.py`, `scripts/ops/verify_release_manifest.py`, `contracts/ops` |
+| Release evidence UX | `frontend/src/modules/release_evidence`, `contracts/ops/release-evidence-ux.v1.json`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Browser lifecycle coverage | `frontend/tests/e2e/platform-lifecycle.spec.ts`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Reviewer-ready demo path | `docs/runbooks/demo-readiness.md`, `scripts/dev/demo_stack.py`, `scripts/dev/refresh_demo_data.py`, `contracts/ops/demo-readiness.v1.json` |
 | Portfolio assets under contract | `docs/portfolio`, `contracts/ops/portfolio-readiness.v1.json`, `scripts/ci/check_portfolio_readiness_contract.py` |
@@ -34,6 +35,6 @@ The main CI workflow validates:
 - Docker image builds
 - Production readiness
 - API, database, security, observability, artifact, orchestration, deployment,
-  release, demo, CI runtime, and portfolio readiness contracts
+  release, release evidence UX, demo, CI runtime, and portfolio readiness contracts
 - Release manifest generation, verification, and artifact publication on
   main-branch pushes

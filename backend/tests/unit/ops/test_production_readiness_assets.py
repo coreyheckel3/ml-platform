@@ -368,6 +368,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/security/security-hardening.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
+    assert "contracts/ops/release-evidence-ux.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
     assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
@@ -420,6 +421,33 @@ def test_release_evidence_workflow_contract_gate_is_enforced() -> None:
     assert contract["schema_version"] == "forgeml.release_evidence_workflow.v1"
     assert contract["artifact_name"] == "forgeml-release-manifest"
     assert contract["manifest_path"] == "dist/release/forgeml-release-manifest.json"
+
+
+def test_release_evidence_ux_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-evidence-ux.v1.json").read_text(encoding="utf-8")
+    )
+    release_page = Path(
+        "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    release_data = Path(
+        "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    screenshot_catalog = Path("docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "python scripts/ci/check_release_evidence_ux_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.release_evidence_ux_contract.v1"
+    assert contract["route"]["path"] == "/release-evidence"
+    assert contract["route"]["label"] == "Release Evidence"
+    assert "Release Manifest" in release_page
+    assert "Quality Gate Coverage" in release_page
+    assert "Demo Screenshot Evidence" in release_page
+    assert "forgeml-release-manifest" in release_data
+    assert "release_manifest_verifier_contract" in release_data
+    assert "09-release-evidence.png" in screenshot_catalog
 
 
 def test_release_manifest_verifier_contract_gate_is_enforced() -> None:

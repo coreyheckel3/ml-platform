@@ -10,7 +10,12 @@ const demoScreens = [
   { path: "/models", heading: "Models", fileName: "05-models.png" },
   { path: "/deployments", heading: "Deployments", fileName: "06-deployments.png" },
   { path: "/inference", heading: "Inference", fileName: "07-inference.png" },
-  { path: "/monitoring", heading: "Monitoring", fileName: "08-monitoring.png" }
+  { path: "/monitoring", heading: "Monitoring", fileName: "08-monitoring.png" },
+  {
+    path: "/release-evidence",
+    heading: "Release Evidence",
+    fileName: "09-release-evidence.png"
+  }
 ] as const;
 
 test("captures reviewer-ready demo screenshots", async ({ page }, testInfo) => {

@@ -95,6 +95,14 @@ const RetrainingPage = lazy(() =>
   })),
 );
 
+const loadReleaseEvidencePage = () =>
+  import("../modules/release_evidence/pages/ReleaseEvidencePage");
+const ReleaseEvidencePage = lazy(() =>
+  loadReleaseEvidencePage().then(({ ReleaseEvidencePage }) => ({
+    default: ReleaseEvidencePage,
+  })),
+);
+
 const loadSettingsPage = () => import("../modules/settings/pages/SettingsPage");
 const SettingsPage = lazy(() =>
   loadSettingsPage().then(({ SettingsPage }) => ({ default: SettingsPage })),
@@ -166,6 +174,11 @@ export const appRoutes: readonly AppRoute[] = [
     preload: loadRetrainingPage,
   },
   { path: "/alerts", element: <AlertsPage />, preload: loadAlertsPage },
+  {
+    path: "/release-evidence",
+    element: <ReleaseEvidencePage />,
+    preload: loadReleaseEvidencePage,
+  },
   { path: "/settings", element: <SettingsPage />, preload: loadSettingsPage },
   { path: "*", element: <Navigate to="/" replace /> },
 ] as const;

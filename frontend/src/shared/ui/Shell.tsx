@@ -83,7 +83,7 @@ export function Shell({ children }: PropsWithChildren) {
 
   return (
     <div className="min-h-screen bg-cloud text-ink">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 overflow-y-auto border-r border-slate-200 bg-white lg:block">
         <div className="flex h-16 items-center border-b border-slate-200 px-5">
           <div className="flex h-9 w-9 items-center justify-center rounded bg-ink text-sm font-bold text-white">
             FM
@@ -93,7 +93,7 @@ export function Shell({ children }: PropsWithChildren) {
             <div className="text-xs text-steel">ML Platform</div>
           </div>
         </div>
-        <nav className="space-y-1 px-3 py-4">
+        <nav className="space-y-0.5 px-3 py-3">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -104,7 +104,7 @@ export function Shell({ children }: PropsWithChildren) {
                 onMouseEnter={() => preloadRoute(item.path)}
                 className={({ isActive }) =>
                   [
-                    "flex h-10 items-center gap-3 rounded px-3 text-sm font-medium transition",
+                    "flex h-9 items-center gap-3 rounded px-3 text-sm font-medium transition",
                     isActive
                       ? "bg-ink text-white"
                       : "text-steel hover:bg-field hover:text-ink",

@@ -41,6 +41,7 @@ Required checks:
 | Deployment runtime contract | Serving runtime gateway boundary, traffic semantics, rollback draining, revision routing, and health probes |
 | Monitoring dashboard contract | Project operations overview, signal families, frontend dashboard sections, and test coverage |
 | Release evidence workflow | Manifest generation and artifact upload after required release gates |
+| Release evidence UX contract | Frontend evidence route, reviewer commands, screenshot catalog, and product-surface coverage |
 | Release manifest verifier | Artifact integrity, Dockerfile integrity, quality gates, and CI evidence linkage |
 | Demo readiness contract | One-command demo stack, seeded refresh, screenshot capture, runbook, and architecture walkthrough |
 | CI runtime contract | Current GitHub Actions runtime pins and retired action major detection |
@@ -54,7 +55,7 @@ After merge:
 1. Build versioned Docker images.
 2. Push images to ECR.
 3. Generate OpenAPI contract artifact.
-4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, security hardening, demo readiness, CI runtime, and portfolio readiness contracts.
+4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, security hardening, release evidence UX, demo readiness, CI runtime, and portfolio readiness contracts.
 5. Run database migration dry-run against staging clone where available.
 6. Deploy to staging.
 7. Run release smoke, API smoke tests, and k6 smoke load tests against staging.
@@ -102,7 +103,7 @@ Each release should publish:
 - Security contracts for API authorization, permissions, security hardening, and runtime config policy
 - Observability contracts for structured request logging
 - Monitoring dashboard contract for project operations overview and frontend signal coverage
-- Operations contracts for release smoke validation, release manifest provenance, CI evidence publication, manifest verification, demo readiness, CI runtime pins, and portfolio readiness
+- Operations contracts for release smoke validation, release manifest provenance, CI evidence publication, release evidence UX, manifest verification, demo readiness, CI runtime pins, and portfolio readiness
 - Portfolio review assets covering reviewer guide, resume bullets, evidence map, architecture diagrams, and screenshot catalog
 - Runtime contracts for deployment serving, traffic allocation, rollback, revision routing, and health probes
 - CI release manifest artifact from the successful main-branch workflow run

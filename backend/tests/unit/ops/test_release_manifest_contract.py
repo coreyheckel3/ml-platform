@@ -75,6 +75,7 @@ def test_release_manifest_contract_shape() -> None:
     assert "contracts/security/security-hardening.v1.json" in artifact_paths
     assert "contracts/ops/release-smoke.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
+    assert "contracts/ops/release-evidence-ux.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
     assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
@@ -86,6 +87,7 @@ def test_release_manifest_contract_shape() -> None:
     assert "docs/portfolio/evidence-map.md" in artifact_paths
     assert {"backend", "frontend", "training", "inference", "airflow"}.issubset(image_names)
     assert "release_evidence_workflow_contract" in parsed["quality_gates"]
+    assert "release_evidence_ux_contract" in parsed["quality_gates"]
     assert "release_manifest_verifier_contract" in parsed["quality_gates"]
     assert "demo_readiness_contract" in parsed["quality_gates"]
     assert "ci_runtime_contract" in parsed["quality_gates"]

@@ -104,6 +104,12 @@
     },
     {
       "kind": "operations_contract",
+      "name": "release_evidence_ux_contract",
+      "path": "contracts/ops/release-evidence-ux.v1.json",
+      "required": true
+    },
+    {
+      "kind": "operations_contract",
       "name": "release_manifest_verification_contract",
       "path": "contracts/ops/release-manifest-verification.v1.json",
       "required": true
@@ -262,6 +268,7 @@
     "release_smoke_contract",
     "release_manifest_contract",
     "release_evidence_workflow_contract",
+    "release_evidence_ux_contract",
     "release_manifest_verifier_contract",
     "demo_readiness_contract",
     "ci_runtime_contract",
@@ -290,7 +297,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 22,
-    "required_artifact_count": 33
+    "quality_gate_count": 23,
+    "required_artifact_count": 34
   }
 }

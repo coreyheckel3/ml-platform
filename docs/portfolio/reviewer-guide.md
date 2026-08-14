@@ -84,12 +84,13 @@ The project favors verifiable engineering behavior over static claims:
 5. Approve, deploy, probe inference, and show monitoring snapshots.
 6. Explain how drift and alerts can hand off to retraining policies.
 7. Close with the release-governance loop: contracts, release manifest,
-   verification, Docker, and CI evidence.
+   verification, Docker, CI evidence, and the Release Evidence page.
 
 ## Reviewer Commands
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/ci/check_portfolio_readiness_contract.py
+PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_ux_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/production_readiness.py
 PYTHONPATH=. .venv/bin/python scripts/ops/build_release_manifest.py --output /tmp/forgeml-release-manifest.json
 PYTHONPATH=. .venv/bin/python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json
