@@ -26,6 +26,7 @@ def test_schema_contract_extracts_checked_in_metadata() -> None:
         "deployment_revisions",
         "inference_request_logs",
         "drift_reports",
+        "release_evidence_reports",
         "retraining_runs",
         "training_run_logs",
     }.issubset(table_names)

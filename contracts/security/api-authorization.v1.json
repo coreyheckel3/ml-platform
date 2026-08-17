@@ -13,6 +13,36 @@
     },
     {
       "authorization": "principal",
+      "method": "GET",
+      "operation_id": "list_release_evidence_reports_api_v1_admin_release_evidence_reports_get",
+      "path": "/api/v1/admin/release-evidence/reports",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "administration"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "POST",
+      "operation_id": "retrieve_release_evidence_report_api_v1_admin_release_evidence_reports_retrieve_post",
+      "path": "/api/v1/admin/release-evidence/reports/retrieve",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "administration"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
+      "operation_id": "get_release_evidence_report_api_v1_admin_release_evidence_reports__report_id__get",
+      "path": "/api/v1/admin/release-evidence/reports/{report_id}",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "administration"
+      ]
+    },
+    {
+      "authorization": "principal",
       "method": "POST",
       "operation_id": "acknowledge_alert_event_api_v1_alert_events__event_id__acknowledge_post",
       "path": "/api/v1/alert-events/{event_id}/acknowledge",
@@ -1071,8 +1101,8 @@
   ],
   "schema_version": "forgeml.api_authorization.v1",
   "summary": {
-    "protected_route_count": 97,
+    "protected_route_count": 100,
     "public_route_count": 6,
-    "total_route_count": 103
+    "total_route_count": 106
   }
 }

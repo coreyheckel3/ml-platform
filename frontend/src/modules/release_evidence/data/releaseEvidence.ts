@@ -35,8 +35,8 @@ export type LiveReleaseEvidenceRetrieval = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 36,
-  qualityGateCount: 25,
+  artifactCount: 37,
+  qualityGateCount: 26,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -86,6 +86,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     path: "contracts/ops/release-evidence-retrieval.v1.json",
     signal:
       "Verifies live GitHub Actions artifact retrieval, manifest extraction, and comparison checks.",
+  },
+  {
+    name: "Release Evidence Drilldown API Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/release-evidence-drilldown-api.v1.json",
+    signal:
+      "Verifies persisted retrieval reports, admin RBAC, audit events, and frontend drilldown behavior.",
   },
   {
     name: "Portfolio Readiness Contract",
@@ -146,6 +153,12 @@ export const qualityGates: EvidenceGate[] = [
     owner: "Operations",
     signal:
       "GitHub Actions artifact retrieval and manifest comparison stay enforced in CI.",
+  },
+  {
+    name: "release_evidence_drilldown_api_contract",
+    owner: "Operations",
+    signal:
+      "Admin API retrieval, report persistence, audit logging, and drilldown UI stay enforced in CI.",
   },
 ];
 

@@ -113,6 +113,25 @@ Retrieve live release evidence from GitHub Actions:
 PYTHONPATH=backend/src:. python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
 ```
 
+## Release Evidence Drilldown API
+
+`release-evidence-drilldown-api.v1.json` records the authenticated admin API
+contract for persisted retrieval reports: route surface, RBAC, audit actions,
+SQLAlchemy persistence, Alembic migration, frontend API client, and Release
+Evidence drilldown UI.
+
+Regenerate after an intentional drilldown API change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_drilldown_api_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_drilldown_api_contract.py
+```
+
 ## Operational Audit UX
 
 `operational-audit-ux.v1.json` records the frontend operator audit workspace

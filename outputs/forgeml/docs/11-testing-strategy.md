@@ -241,7 +241,7 @@ Release evidence UX tests should keep release artifacts visible and reviewable
 from the web console:
 
 - Verify the Release Evidence page renders manifest artifact, live retrieval,
-  reviewer command, quality gate, and screenshot evidence sections.
+  API drilldown, reviewer command, quality gate, and screenshot evidence sections.
 - Require `/release-evidence` route and navigation coverage.
 - Capture `09-release-evidence.png` in the deterministic Playwright screenshot
   flow.
@@ -262,6 +262,23 @@ evidence machine-checkable without making CI depend on network access:
 - Verify the release evidence retrieval contract matches source files, docs,
   Release Evidence UI, CI wiring, production-readiness, and release manifest
   evidence.
+
+## Release Evidence Drilldown API Tests
+
+Release evidence drilldown API tests should keep the in-product retrieval
+workflow tenant-scoped, auditable, and backed by persisted reports:
+
+- Unit test administration service permission checks, report lookup, successful
+  retrieval, failed comparison, retrieval-provider errors, and audit actions.
+- Integration test SQLAlchemy report persistence, JSON payload round-tripping,
+  status filtering, newest-first ordering, and organization scoping.
+- API test list, retrieve, and single-report endpoints through FastAPI dependency
+  overrides.
+- Frontend test authenticated report loading, Authorization headers, retrieve
+  mutation behavior, and the API Evidence Drilldown panel.
+- Verify the drilldown API contract matches backend sources, OpenAPI,
+  permission catalog, Alembic migration, frontend API/UI, docs, CI wiring,
+  production-readiness, and release manifest evidence.
 
 ## Operational Audit UX Tests
 

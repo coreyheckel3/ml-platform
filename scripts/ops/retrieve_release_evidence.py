@@ -14,12 +14,10 @@ for import_path in (REPO_ROOT, BACKEND_SRC):
     if import_path_value not in sys.path:
         sys.path.insert(0, import_path_value)
 
-from scripts.ops.build_release_manifest import (  # noqa: E402
-    REQUIRED_QUALITY_GATES,
-    REQUIRED_RELEASE_ARTIFACTS,
-)
-
 from forgeml.platform.release_evidence import (  # noqa: E402
+    RELEASE_EVIDENCE_REQUIRED_ARTIFACTS,
+    RELEASE_EVIDENCE_REQUIRED_QUALITY_GATES,
+    RELEASE_EVIDENCE_RETRIEVAL_SCHEMA_VERSION,
     GitHubActionsReleaseEvidenceGateway,
     LocalReleaseEvidenceGateway,
     ReleaseEvidenceGateway,
@@ -28,14 +26,12 @@ from forgeml.platform.release_evidence import (  # noqa: E402
     summarize_release_manifest,
 )
 
-RELEASE_EVIDENCE_RETRIEVAL_SCHEMA_VERSION = "forgeml.release_evidence_retrieval.v1"
-
 
 def build_release_evidence_retrieval_report(
     gateway: ReleaseEvidenceGateway,
     *,
-    required_artifacts: tuple[str, ...] = tuple(item.name for item in REQUIRED_RELEASE_ARTIFACTS),
-    required_quality_gates: tuple[str, ...] = REQUIRED_QUALITY_GATES,
+    required_artifacts: tuple[str, ...] = RELEASE_EVIDENCE_REQUIRED_ARTIFACTS,
+    required_quality_gates: tuple[str, ...] = RELEASE_EVIDENCE_REQUIRED_QUALITY_GATES,
     expected_branch: str | None = "main",
 ) -> dict[str, Any]:
     run = gateway.latest_successful_run()

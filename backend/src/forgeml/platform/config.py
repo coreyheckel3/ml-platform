@@ -92,6 +92,34 @@ class Settings(BaseSettings):
         gt=0,
         alias="FORGEML_AIRFLOW_HTTP_TIMEOUT_SECONDS",
     )
+    release_evidence_provider: str = Field(
+        default="local_manifest",
+        alias="FORGEML_RELEASE_EVIDENCE_PROVIDER",
+    )
+    release_evidence_manifest_path: Path = Field(
+        default=Path("dist/release/forgeml-release-manifest.json"),
+        alias="FORGEML_RELEASE_EVIDENCE_MANIFEST_PATH",
+    )
+    release_evidence_github_repository: str = Field(
+        default="coreyheckel3/ml-platform",
+        alias="FORGEML_RELEASE_EVIDENCE_GITHUB_REPOSITORY",
+    )
+    release_evidence_github_branch: str = Field(
+        default="main",
+        alias="FORGEML_RELEASE_EVIDENCE_GITHUB_BRANCH",
+    )
+    release_evidence_github_workflow: str = Field(
+        default="ci.yml",
+        alias="FORGEML_RELEASE_EVIDENCE_GITHUB_WORKFLOW",
+    )
+    release_evidence_github_artifact_name: str = Field(
+        default="forgeml-release-manifest",
+        alias="FORGEML_RELEASE_EVIDENCE_GITHUB_ARTIFACT_NAME",
+    )
+    release_evidence_github_token: str | None = Field(
+        default=None,
+        alias="FORGEML_RELEASE_EVIDENCE_GITHUB_TOKEN",
+    )
     jwt_secret: str = Field(
         default="change-me-for-local-development",
         alias="FORGEML_JWT_SECRET",

@@ -13,6 +13,7 @@ ROLE_PERMISSIONS = {role.code: role.permissions for role in ROLE_PRESETS}
             "platform_admin",
             {
                 "admin:audit_log:read",
+                "admin:release_evidence:retrieve",
                 "model_versions:review",
                 "deployments:rollback",
                 "retraining_runs:approve",
@@ -29,6 +30,7 @@ ROLE_PERMISSIONS = {role.code: role.permissions for role in ROLE_PRESETS}
             },
             {
                 "admin:audit_log:read",
+                "admin:release_evidence:read",
                 "deployments:rollback",
                 "model_versions:review",
                 "retraining_runs:approve",
@@ -44,6 +46,7 @@ ROLE_PERMISSIONS = {role.code: role.permissions for role in ROLE_PRESETS}
             },
             {
                 "admin:audit_log:read",
+                "admin:release_evidence:retrieve",
                 "datasets:create",
                 "model_versions:review",
             },
@@ -67,6 +70,7 @@ ROLE_PERMISSIONS = {role.code: role.permissions for role in ROLE_PRESETS}
             "security_auditor",
             {
                 "admin:audit_log:read",
+                "admin:release_evidence:read",
                 "projects:read",
             },
             {
@@ -74,6 +78,7 @@ ROLE_PERMISSIONS = {role.code: role.permissions for role in ROLE_PRESETS}
                 "training_runs:create",
                 "monitoring:read",
                 "deployments:rollback",
+                "admin:release_evidence:retrieve",
             },
         ),
     ],

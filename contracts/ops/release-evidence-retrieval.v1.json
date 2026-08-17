@@ -14,7 +14,7 @@
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx"
   ],
   "required_cli_fragments": [
-    "forgeml.release_evidence_retrieval.v1",
+    "RELEASE_EVIDENCE_RETRIEVAL_SCHEMA_VERSION",
     "GitHubActionsReleaseEvidenceGateway",
     "LocalReleaseEvidenceGateway",
     "--repo",

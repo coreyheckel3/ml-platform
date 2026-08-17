@@ -4451,6 +4451,230 @@
         "title": "RegisteredModelResponse",
         "type": "object"
       },
+      "ReleaseEvidenceReportListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReleaseEvidenceReportResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ReleaseEvidenceReportListResponse",
+        "type": "object"
+      },
+      "ReleaseEvidenceReportResponse": {
+        "properties": {
+          "artifact_count": {
+            "title": "Artifact Count",
+            "type": "integer"
+          },
+          "artifact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Name"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "ci_run_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Run Url"
+          },
+          "comparison": {
+            "additionalProperties": true,
+            "title": "Comparison",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "manifest_git_branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Git Branch"
+          },
+          "manifest_git_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Git Sha"
+          },
+          "manifest_summary": {
+            "additionalProperties": true,
+            "title": "Manifest Summary",
+            "type": "object"
+          },
+          "missing_artifacts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Artifacts",
+            "type": "array"
+          },
+          "missing_quality_gates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Quality Gates",
+            "type": "array"
+          },
+          "organization_id": {
+            "title": "Organization Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "quality_gate_count": {
+            "title": "Quality Gate Count",
+            "type": "integer"
+          },
+          "report": {
+            "additionalProperties": true,
+            "title": "Report",
+            "type": "object"
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repository"
+          },
+          "requested_by_user_id": {
+            "title": "Requested By User Id",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "run_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Url"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow"
+          }
+        },
+        "required": [
+          "id",
+          "organization_id",
+          "requested_by_user_id",
+          "provider",
+          "status",
+          "repository",
+          "branch",
+          "workflow",
+          "artifact_name",
+          "run_id",
+          "run_url",
+          "manifest_git_sha",
+          "manifest_git_branch",
+          "ci_run_url",
+          "artifact_count",
+          "quality_gate_count",
+          "error_message",
+          "created_at"
+        ],
+        "title": "ReleaseEvidenceReportResponse",
+        "type": "object"
+      },
       "RequestModelApprovalRequest": {
         "properties": {
           "comment": {
@@ -5774,6 +5998,146 @@
           }
         ],
         "summary": "List Audit Log",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/admin/release-evidence/reports": {
+      "get": {
+        "operationId": "list_release_evidence_reports_api_v1_admin_release_evidence_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseEvidenceReportListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Release Evidence Reports",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/admin/release-evidence/reports/retrieve": {
+      "post": {
+        "operationId": "retrieve_release_evidence_report_api_v1_admin_release_evidence_reports_retrieve_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseEvidenceReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Retrieve Release Evidence Report",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/admin/release-evidence/reports/{report_id}": {
+      "get": {
+        "operationId": "get_release_evidence_report_api_v1_admin_release_evidence_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseEvidenceReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Release Evidence Report",
         "tags": [
           "administration"
         ]

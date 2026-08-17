@@ -43,7 +43,7 @@ REQUIRED_RETRIEVER_FRAGMENTS = (
 )
 
 REQUIRED_CLI_FRAGMENTS = (
-    "forgeml.release_evidence_retrieval.v1",
+    "RELEASE_EVIDENCE_RETRIEVAL_SCHEMA_VERSION",
     "GitHubActionsReleaseEvidenceGateway",
     "LocalReleaseEvidenceGateway",
     "--repo",

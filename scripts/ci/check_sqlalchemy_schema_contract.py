@@ -53,6 +53,7 @@ REQUIRED_TABLES = frozenset(
         "organizations",
         "projects",
         "registered_models",
+        "release_evidence_reports",
         "retraining_policies",
         "retraining_runs",
         "training_run_events",

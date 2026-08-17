@@ -92,6 +92,7 @@ type AlertEvent = Entity & {
 type ForgeMLApiMockState = {
   projects: Project[];
   auditLog: Entity[];
+  releaseEvidenceReports: Entity[];
   datasetsByProject: Map<string, Dataset[]>;
   versionsByDataset: Map<string, DatasetVersion[]>;
   schemasByVersion: Map<string, Entity>;
@@ -155,6 +156,8 @@ async function handleApiRoute(
         "deployments:rollback",
         "inference:predict",
         "admin:audit_log:read",
+        "admin:release_evidence:read",
+        "admin:release_evidence:retrieve",
       ],
     });
   }
@@ -184,6 +187,58 @@ async function handleApiRoute(
         (!resourceType || entry.resource_type === resourceType),
     );
     return fulfillJson(route, listResponse(items));
+  }
+
+  if (method === "GET" && path === "/api/v1/admin/release-evidence/reports") {
+    const query = new URL(route.request().url()).searchParams;
+    const status = query.get("status");
+    const limit = Number(query.get("limit") ?? "20");
+    const reports = state.releaseEvidenceReports
+      .filter((report) => !status || report.status === status)
+      .slice(0, Number.isFinite(limit) ? limit : 20);
+    return fulfillJson(route, listResponse(reports));
+  }
+
+  if (method === "POST" && path === "/api/v1/admin/release-evidence/reports/retrieve") {
+    const report = releaseEvidenceReport(
+      `release-evidence-report-${state.releaseEvidenceReports.length + 1}`,
+      "passed",
+      "2026-08-17T16:30:00Z",
+    );
+    const auditAction =
+      report.status === "passed"
+        ? "release_evidence.retrieve"
+        : "release_evidence.retrieve_failed";
+    state.releaseEvidenceReports = [report, ...state.releaseEvidenceReports];
+    state.auditLog = [
+      auditLogEntry({
+        id: `audit-${report.id}`,
+        action: auditAction,
+        resourceType: "release_evidence_report",
+        resourceId: stringValue(report.id, "release-evidence-report"),
+        metadata: {
+          status: "passed",
+          provider: "github_actions",
+          repository: "coreyheckel3/ml-platform",
+          branch: "main",
+        },
+        createdAt: stringValue(report.created_at, "2026-08-17T16:30:00Z"),
+      }),
+      ...state.auditLog,
+    ];
+    return fulfillJson(route, report, 201);
+  }
+
+  const releaseEvidenceReportMatch = path.match(
+    /^\/api\/v1\/admin\/release-evidence\/reports\/([^/]+)$/,
+  );
+  if (method === "GET" && releaseEvidenceReportMatch) {
+    const [, reportId] = releaseEvidenceReportMatch;
+    const report = state.releaseEvidenceReports.find((item) => item.id === reportId);
+    if (!report) {
+      return fulfillJson(route, { detail: "Release evidence report not found" }, 404);
+    }
+    return fulfillJson(route, report);
   }
 
   if (method === "GET" && path === "/api/v1/projects") {
@@ -982,6 +1037,13 @@ function createMockState(): ForgeMLApiMockState {
       ),
     ],
     auditLog: seedAuditLogEntries(),
+    releaseEvidenceReports: [
+      releaseEvidenceReport(
+        "release-evidence-report-main-1",
+        "passed",
+        "2026-08-17T15:00:00Z",
+      ),
+    ],
     datasetsByProject: new Map(),
     versionsByDataset: new Map(),
     schemasByVersion: new Map(),
@@ -1178,6 +1240,48 @@ function auditLogEntry({
     resource_type: resourceType,
     resource_id: resourceId,
     metadata,
+    created_at: createdAt,
+  };
+}
+
+function releaseEvidenceReport(id: string, status: string, createdAt: string): Entity {
+  return {
+    id,
+    organization_id: organizationId,
+    requested_by_user_id: userId,
+    provider: "github_actions",
+    status,
+    repository: "coreyheckel3/ml-platform",
+    branch: "main",
+    workflow: "ci.yml",
+    artifact_name: "forgeml-release-manifest",
+    run_id: "31826993476",
+    run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
+    manifest_git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
+    manifest_git_branch: "main",
+    ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
+    artifact_count: 37,
+    quality_gate_count: 26,
+    missing_artifacts: [],
+    missing_quality_gates: [],
+    comparison: {
+      passed: status === "passed",
+      required_artifacts_present: true,
+      required_quality_gates_present: true,
+      ci_evidence_present: true,
+    },
+    manifest_summary: {
+      git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
+      git_branch: "main",
+      artifact_names: ["release_evidence_drilldown_api_contract"],
+      quality_gate_names: ["release_evidence_drilldown_api_contract"],
+      ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
+    },
+    report: {
+      schema_version: "forgeml.release_evidence_retrieval.v1",
+      status,
+    },
+    error_message: null,
     created_at: createdAt,
   };
 }

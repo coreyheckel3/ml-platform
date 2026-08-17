@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
-from forgeml.modules.administration.domain.entities import AuditLogEntry, AuditLogEvent
+from forgeml.modules.administration.domain.entities import (
+    AuditLogEntry,
+    AuditLogEvent,
+    ReleaseEvidenceReport,
+)
 
 
 @dataclass(frozen=True)
@@ -25,4 +29,30 @@ class AuditLogRepository(AuditEventRecorder, Protocol):
         filters: AuditLogFilters,
         limit: int,
     ) -> list[AuditLogEntry]:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class ReleaseEvidenceReportFilters:
+    status: str | None = None
+
+
+class ReleaseEvidenceReportRepository(Protocol):
+    def save(self, report: ReleaseEvidenceReport) -> ReleaseEvidenceReport:
+        raise NotImplementedError
+
+    def list_reports(
+        self,
+        organization_id: UUID,
+        *,
+        filters: ReleaseEvidenceReportFilters,
+        limit: int,
+    ) -> list[ReleaseEvidenceReport]:
+        raise NotImplementedError
+
+    def get_report(
+        self,
+        organization_id: UUID,
+        report_id: UUID,
+    ) -> ReleaseEvidenceReport | None:
         raise NotImplementedError

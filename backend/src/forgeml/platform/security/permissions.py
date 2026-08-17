@@ -26,6 +26,18 @@ PERMISSIONS: tuple[PermissionDefinition, ...] = (
         "read",
         "Read organization audit log events.",
     ),
+    PermissionDefinition(
+        "admin:release_evidence:read",
+        "administration",
+        "read",
+        "Read organization release evidence retrieval reports.",
+    ),
+    PermissionDefinition(
+        "admin:release_evidence:retrieve",
+        "administration",
+        "execute",
+        "Retrieve and persist release evidence from the configured provider.",
+    ),
     PermissionDefinition("projects:create", "projects", "create", "Create projects."),
     PermissionDefinition("projects:read", "projects", "read", "Read project metadata."),
     PermissionDefinition("datasets:create", "datasets", "create", "Create datasets."),
@@ -428,7 +440,13 @@ ROLE_PRESETS: tuple[RolePreset, ...] = (
         code="security_auditor",
         name="Security Auditor",
         description="Read audit trails and platform activity without mutation rights.",
-        permissions=frozenset({"admin:audit_log:read", "projects:read"}),
+        permissions=frozenset(
+            {
+                "admin:audit_log:read",
+                "admin:release_evidence:read",
+                "projects:read",
+            }
+        ),
     ),
 )
 

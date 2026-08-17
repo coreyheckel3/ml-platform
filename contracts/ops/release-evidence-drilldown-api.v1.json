@@ -1,0 +1,89 @@
+{
+  "api": {
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/release-evidence/reports"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/admin/release-evidence/reports/{report_id}"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/admin/release-evidence/reports/retrieve"
+      }
+    ],
+    "response_models": [
+      "ReleaseEvidenceReportResponse",
+      "ReleaseEvidenceReportListResponse"
+    ]
+  },
+  "audit": {
+    "actions": [
+      "release_evidence.retrieve",
+      "release_evidence.retrieve_failed"
+    ]
+  },
+  "generated_from": [
+    "forgeml.modules.administration",
+    "forgeml.platform.release_evidence",
+    "frontend.modules.release_evidence"
+  ],
+  "persistence": {
+    "head_revision": "202607190016",
+    "repository": "ReleaseEvidenceReportRepository",
+    "sqlalchemy_repository": "SqlAlchemyReleaseEvidenceReportRepository",
+    "table": "release_evidence_reports"
+  },
+  "quality_gates": [
+    "python scripts/ci/check_release_evidence_drilldown_api_contract.py",
+    "backend/tests/api/test_administration_api.py",
+    "backend/tests/unit/administration/test_administration_service.py",
+    "backend/tests/integration/administration/test_audit_log_repository.py",
+    "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx"
+  ],
+  "rbac": {
+    "permissions": [
+      "admin:release_evidence:read",
+      "admin:release_evidence:retrieve"
+    ],
+    "read_role": "security_auditor",
+    "retrieve_role": "platform_admin"
+  },
+  "required_source_assets": [
+    "backend/src/forgeml/modules/administration/domain/entities.py",
+    "backend/src/forgeml/modules/administration/repositories/interfaces.py",
+    "backend/src/forgeml/modules/administration/application/services.py",
+    "backend/src/forgeml/modules/administration/api/routes.py",
+    "backend/src/forgeml/modules/administration/api/schemas.py",
+    "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_models.py",
+    "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_repositories.py",
+    "backend/src/forgeml/platform/release_evidence/retrieval.py",
+    "backend/alembic/versions/202607190016_release_evidence_reports.py",
+    "backend/tests/api/test_administration_api.py",
+    "backend/tests/unit/administration/test_administration_service.py",
+    "backend/tests/integration/administration/test_audit_log_repository.py",
+    "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
+    "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
+    "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
+    "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
+    "contracts/openapi/forgeml.v1.openapi.json",
+    "contracts/security/permission-catalog.v1.json",
+    "docs/runbooks/production-readiness.md",
+    "docs/portfolio/evidence-map.md",
+    "docs/portfolio/reviewer-guide.md",
+    "contracts/ops/README.md"
+  ],
+  "schema_version": "forgeml.release_evidence_drilldown_api_contract.v1",
+  "summary": {
+    "endpoint_count": 3,
+    "permission_count": 2,
+    "source_asset_count": 22
+  },
+  "ui": {
+    "api_client": "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
+    "route": "/release-evidence",
+    "section": "API Evidence Drilldown"
+  }
+}

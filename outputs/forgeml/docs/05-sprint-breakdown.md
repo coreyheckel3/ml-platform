@@ -2029,6 +2029,62 @@ Implemented scope:
 - Unit tests cover GitHub transport behavior, artifact archive parsing, local
   manifest fallback, CLI report serialization, and contract freshness.
 
+## Sprint 64: Release Evidence Drilldown API
+
+Goal: Make live release evidence retrieval available through the product as an
+authenticated, persisted, and auditable administration workflow.
+
+Scope:
+
+- Release evidence report domain entity
+- Administration repository interface and SQLAlchemy implementation
+- Alembic migration for persisted release evidence reports
+- Settings-backed GitHub Actions and local manifest gateway injection
+- Admin API endpoints for list, retrieve, and single-report drilldown
+- RBAC permissions for report read and retrieval execution
+- Audit log events for passed and failed retrieval attempts
+- Release Evidence frontend API client and drilldown panel
+- Contract checker, CI wiring, production-readiness, and release manifest evidence
+
+Acceptance criteria:
+
+- Admins can retrieve configured release evidence through
+  `POST /api/v1/admin/release-evidence/reports/retrieve`.
+- Retrieved reports are persisted with provider, source, run, manifest summary,
+  comparison details, missing artifacts, missing quality gates, and error
+  information.
+- `GET /api/v1/admin/release-evidence/reports` lists organization-scoped report
+  history with status filtering.
+- `GET /api/v1/admin/release-evidence/reports/{report_id}` returns one
+  organization-scoped report for frontend drilldown.
+- Retrieval attempts emit audit actions for both success and failure.
+- CI and production-readiness validate the release evidence drilldown API
+  contract.
+- Release manifest provenance includes the drilldown API contract as a required
+  operations artifact and quality gate.
+
+Implemented scope:
+
+- `backend/src/forgeml/modules/administration` now owns the
+  `ReleaseEvidenceReport` aggregate, application service methods, routes,
+  Pydantic schemas, repository interface, SQLAlchemy model, and repository
+  implementation.
+- `backend/alembic/versions/202607190016_release_evidence_reports.py` creates
+  the `release_evidence_reports` table with tenant, status, and created-time
+  indexes.
+- `backend/src/forgeml/platform/config.py` exposes release evidence provider,
+  manifest, GitHub repository, workflow, branch, artifact, and token settings.
+- `frontend/src/modules/release_evidence/api/releaseEvidence.ts` wraps the new
+  admin endpoints, and `ReleaseEvidencePage.tsx` renders the API Evidence
+  Drilldown panel with retrieval history, selected report details, CI links,
+  missing evidence, and audit action names.
+- `contracts/ops/release-evidence-drilldown-api.v1.json` and
+  `scripts/ci/check_release_evidence_drilldown_api_contract.py` lock the
+  backend, frontend, migration, RBAC, audit, OpenAPI, docs, CI, and release
+  manifest evidence.
+- Unit, API, integration, frontend, E2E mock, production-readiness, schema, and
+  RBAC tests cover the new workflow.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2056,7 +2112,8 @@ sequence.
 | 61 | Release Artifact Download / Evidence UX | Completed | Release Evidence app page, manifest artifact inventory, reviewer commands, quality gates, screenshot capture, UX contract, CI wiring, production-readiness, and release evidence. |
 | 62 | Operational Audit UX v2 | Completed | Dedicated Operational Audit app surface, audit timeline adapter, release evidence annotations, admin audit API integration, filters, event detail drilldowns, deterministic screenshots, UX contract, CI wiring, production-readiness, and release manifest evidence. |
 | 63 | Live Release Evidence Retrieval | Completed | GitHub Actions artifact adapter, local manifest fallback, release evidence retrieval report CLI, manifest comparison checks, Release Evidence retrieval panel, CI contract, production-readiness, and release manifest evidence. |
-| 64 | Release Evidence Drilldown API | Planned | Authenticated admin API for release evidence retrieval reports, persisted comparison history, audit events, and frontend drilldowns. |
+| 64 | Release Evidence Drilldown API | Completed | Authenticated admin API for release evidence retrieval reports, persisted comparison history, audit events, frontend drilldowns, CI contract, production-readiness, and release manifest evidence. |
+| 65 | Release Evidence Scheduled Refresh | Planned | Optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

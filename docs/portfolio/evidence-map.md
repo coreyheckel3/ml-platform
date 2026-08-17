@@ -22,6 +22,7 @@ training script.
 | Production readiness and release governance | `scripts/ci/production_readiness.py`, `scripts/ops/build_release_manifest.py`, `scripts/ops/verify_release_manifest.py`, `contracts/ops` |
 | Release evidence UX | `frontend/src/modules/release_evidence`, `contracts/ops/release-evidence-ux.v1.json`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Live release evidence retrieval | `backend/src/forgeml/platform/release_evidence`, `scripts/ops/retrieve_release_evidence.py`, `contracts/ops/release-evidence-retrieval.v1.json` |
+| Release evidence drilldown API | `backend/src/forgeml/modules/administration`, `frontend/src/modules/release_evidence/api`, `contracts/ops/release-evidence-drilldown-api.v1.json` |
 | Operational audit UX | `frontend/src/modules/operational_audit`, `contracts/ops/operational-audit-ux.v1.json`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Browser lifecycle coverage | `frontend/tests/e2e/platform-lifecycle.spec.ts`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Reviewer-ready demo path | `docs/runbooks/demo-readiness.md`, `scripts/dev/demo_stack.py`, `scripts/dev/refresh_demo_data.py`, `contracts/ops/demo-readiness.v1.json` |
@@ -37,7 +38,8 @@ The main CI workflow validates:
 - Docker image builds
 - Production readiness
 - API, database, security, observability, artifact, orchestration, deployment,
-  release, release evidence UX, live release evidence retrieval, operational
-  audit UX, demo, CI runtime, and portfolio readiness contracts
+  release, release evidence UX, live release evidence retrieval, release
+  evidence drilldown API, operational audit UX, demo, CI runtime, and portfolio
+  readiness contracts
 - Release manifest generation, verification, and artifact publication on
   main-branch pushes

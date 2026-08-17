@@ -15,6 +15,7 @@ REQUIRED_SOURCE_ASSETS = (
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
     "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
+    "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
     "frontend/src/app/navigation.ts",
     "frontend/src/app/routes.tsx",
     "frontend/tests/e2e/smoke.spec.ts",
@@ -43,6 +44,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         "required_ui_sections": [
             "Release Manifest",
             "Live Evidence Retrieval",
+            "API Evidence Drilldown",
             "Reviewer Commands",
             "Quality Gate Coverage",
             "Demo Screenshot Evidence",
@@ -52,9 +54,11 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "dist/release/forgeml-release-manifest.json",
             "contracts/ops/release-manifest.v1.json",
             "contracts/ops/release-evidence-retrieval.v1.json",
+            "contracts/ops/release-evidence-drilldown-api.v1.json",
             "contracts/ops/portfolio-readiness.v1.json",
             "release_manifest_verifier_contract",
             "release_evidence_retrieval_contract",
+            "release_evidence_drilldown_api_contract",
             "GitHubActionsReleaseEvidenceGateway",
             "make production-readiness",
             "make demo-screenshots",
@@ -67,6 +71,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         ],
         "quality_gates": [
             "python scripts/ci/check_release_evidence_ux_contract.py",
+            "python scripts/ci/check_release_evidence_drilldown_api_contract.py",
             "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
             "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
             "frontend/tests/e2e/smoke.spec.ts",
@@ -74,8 +79,8 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         ],
         "summary": {
             "source_asset_count": len(REQUIRED_SOURCE_ASSETS),
-            "ui_section_count": 5,
-            "release_signal_count": 11,
+            "ui_section_count": 6,
+            "release_signal_count": 13,
         },
     }
 
@@ -141,6 +146,9 @@ def validate_release_evidence_ux_definition(
     data_source = _read(
         repo_root, "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
     )
+    api_source = _read(
+        repo_root, "frontend/src/modules/release_evidence/api/releaseEvidence.ts"
+    )
     routes_source = _read(repo_root, "frontend/src/app/routes.tsx")
     navigation_source = _read(repo_root, "frontend/src/app/navigation.ts")
     smoke_source = _read(repo_root, "frontend/tests/e2e/smoke.spec.ts")
@@ -199,6 +207,10 @@ def validate_release_evidence_ux_definition(
         findings.append("Release evidence page unit test does not cover quality gates.")
     if "release_evidence_retrieval_contract" not in page_test_source:
         findings.append("Release evidence page unit test does not cover retrieval gates.")
+    if "API Evidence Drilldown" not in page_test_source:
+        findings.append("Release evidence page unit test does not cover API drilldown.")
+    if "listReleaseEvidenceReports" not in api_source:
+        findings.append("Release evidence API client does not list drilldown reports.")
 
     if contract["schema_version"] != RELEASE_EVIDENCE_UX_CONTRACT_SCHEMA_VERSION:
         findings.append("Release evidence UX contract schema version is inconsistent.")

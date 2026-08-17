@@ -43,6 +43,9 @@ try:
     from scripts.ci.check_portfolio_readiness_contract import (
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
     )
+    from scripts.ci.check_release_evidence_drilldown_api_contract import (
+        check_release_evidence_drilldown_api_contract as verify_drilldown_api_contract,
+    )
     from scripts.ci.check_release_evidence_retrieval_contract import (
         check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
     )
@@ -97,6 +100,9 @@ except ModuleNotFoundError:
     )
     from check_portfolio_readiness_contract import (  # type: ignore[no-redef]
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
+    )
+    from check_release_evidence_drilldown_api_contract import (  # type: ignore[no-redef]
+        check_release_evidence_drilldown_api_contract as verify_drilldown_api_contract,
     )
     from check_release_evidence_retrieval_contract import (  # type: ignore[no-redef]
         check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
@@ -253,6 +259,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-evidence-workflow.v1.json",
     "contracts/ops/release-evidence-ux.v1.json",
     "contracts/ops/release-evidence-retrieval.v1.json",
+    "contracts/ops/release-evidence-drilldown-api.v1.json",
     "contracts/ops/operational-audit-ux.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
@@ -260,15 +267,29 @@ REQUIRED_FILES = (
     "frontend/tests/e2e/demo-screenshots.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
     "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
+    "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
+    "backend/src/forgeml/modules/administration/domain/entities.py",
+    "backend/src/forgeml/modules/administration/repositories/interfaces.py",
+    "backend/src/forgeml/modules/administration/application/services.py",
+    "backend/src/forgeml/modules/administration/api/routes.py",
+    "backend/src/forgeml/modules/administration/api/schemas.py",
+    "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_models.py",
+    "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_repositories.py",
+    "backend/alembic/versions/202607190016_release_evidence_reports.py",
+    "backend/tests/api/test_administration_api.py",
+    "backend/tests/unit/administration/test_administration_service.py",
+    "backend/tests/integration/administration/test_audit_log_repository.py",
     "backend/src/forgeml/platform/release_evidence/__init__.py",
     "backend/src/forgeml/platform/release_evidence/retrieval.py",
     "scripts/ops/retrieve_release_evidence.py",
     "scripts/ci/check_release_evidence_retrieval_contract.py",
+    "scripts/ci/check_release_evidence_drilldown_api_contract.py",
     "backend/tests/unit/platform/test_release_evidence_retrieval.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_cli.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_contract.py",
+    "backend/tests/unit/ops/test_release_evidence_drilldown_api_contract.py",
     "frontend/src/modules/operational_audit/data/releaseEvidenceAuditEvents.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.test.ts",
@@ -347,6 +368,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_evidence_workflow_contract(repo_root),
         check_release_evidence_ux_contract(repo_root),
         check_release_evidence_retrieval_contract(repo_root),
+        check_release_evidence_drilldown_api_contract(repo_root),
         check_operational_audit_ux_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
@@ -648,6 +670,7 @@ def check_sqlalchemy_schema_contract(repo_root: Path) -> ReadinessCheck:
         "deployment_revisions",
         "inference_request_logs",
         "drift_reports",
+        "release_evidence_reports",
         "retraining_runs",
     }
     contract_current, contract_detail = verify_sqlalchemy_schema_contract(contract_path)
@@ -1318,6 +1341,8 @@ def check_permission_catalog_contract(repo_root: Path) -> ReadinessCheck:
         "deployments:rollback",
         "inference:predict",
         "admin:audit_log:read",
+        "admin:release_evidence:read",
+        "admin:release_evidence:retrieve",
     }
     required_roles = {"platform_admin", "ml_engineer", "ml_operator", "ml_viewer"}
     has_ci_gate = "python scripts/ci/check_permission_catalog.py" in ci_source
@@ -1921,7 +1946,7 @@ def check_release_evidence_retrieval_contract(repo_root: Path) -> ReadinessCheck
         and "Authorization" in retrieval_source
     )
     has_live_command = "scripts/ops/retrieve_release_evidence.py --repo" in runbook_source
-    emits_versioned_report = "forgeml.release_evidence_retrieval.v1" in cli_source
+    emits_versioned_report = "RELEASE_EVIDENCE_RETRIEVAL_SCHEMA_VERSION" in cli_source
     has_ui_surface = (
         "Live Evidence Retrieval" in page_source
         and "Comparison Signals" in page_source
@@ -1962,6 +1987,123 @@ def check_release_evidence_retrieval_contract(repo_root: Path) -> ReadinessCheck
                 f"has_live_command={has_live_command}, "
                 f"emits_versioned_report={emits_versioned_report}, "
                 f"has_ui_surface={has_ui_surface}, "
+                f"has_release_manifest_artifact={has_release_manifest_artifact}, "
+                f"has_contract_docs={has_contract_docs}"
+            )
+        ),
+    )
+
+
+def check_release_evidence_drilldown_api_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/release-evidence-drilldown-api.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = (
+        repo_root / "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    model_source = (
+        repo_root
+        / "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_models.py"
+    ).read_text(encoding="utf-8")
+    repository_source = (
+        repo_root
+        / "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_repositories.py"
+    ).read_text(encoding="utf-8")
+    frontend_api_source = (
+        repo_root / "frontend/src/modules/release_evidence/api/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    page_source = (
+        repo_root / "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    permissions = set(contract.get("rbac", {}).get("permissions", []))
+    endpoints = {
+        (endpoint.get("method"), endpoint.get("path"))
+        for endpoint in contract.get("api", {}).get("endpoints", [])
+        if isinstance(endpoint, dict)
+    }
+    has_ci_gate = (
+        "python scripts/ci/check_release_evidence_drilldown_api_contract.py"
+        in ci_source
+    )
+    contract_current, contract_detail = verify_drilldown_api_contract(
+        repo_root / "contracts/ops/release-evidence-drilldown-api.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_endpoints = {
+        ("GET", "/api/v1/admin/release-evidence/reports"),
+        ("GET", "/api/v1/admin/release-evidence/reports/{report_id}"),
+        ("POST", "/api/v1/admin/release-evidence/reports/retrieve"),
+    }.issubset(endpoints)
+    has_permissions = {
+        "admin:release_evidence:read",
+        "admin:release_evidence:retrieve",
+    }.issubset(permissions)
+    has_service_behavior = (
+        "retrieve_release_evidence" in service_source
+        and "release_evidence.retrieve" in service_source
+        and "release_evidence.retrieve_failed" in service_source
+        and "RELEASE_EVIDENCE_REQUIRED_ARTIFACTS" in service_source
+    )
+    has_route_surface = (
+        "/admin/release-evidence/reports" in route_source
+        and "/admin/release-evidence/reports/retrieve" in route_source
+        and "/admin/release-evidence/reports/{report_id}" in route_source
+    )
+    has_persistence = (
+        "ReleaseEvidenceReportModel" in model_source
+        and "release_evidence_reports" in model_source
+        and "SqlAlchemyReleaseEvidenceReportRepository" in repository_source
+    )
+    has_frontend_surface = (
+        "listReleaseEvidenceReports" in frontend_api_source
+        and "retrieveReleaseEvidenceReport" in frontend_api_source
+        and "API Evidence Drilldown" in page_source
+    )
+    has_release_manifest_artifact = (
+        "release_evidence_drilldown_api_contract" in manifest_source
+        and "contracts/ops/release-evidence-drilldown-api.v1.json" in manifest_source
+    )
+    has_contract_docs = "release-evidence-drilldown-api.v1.json" in contracts_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_endpoints
+        and has_permissions
+        and has_service_behavior
+        and has_route_surface
+        and has_persistence
+        and has_frontend_surface
+        and has_release_manifest_artifact
+        and has_contract_docs
+    )
+    return ReadinessCheck(
+        name="release evidence drilldown API contract",
+        passed=passed,
+        detail=(
+            "release evidence admin API, persistence, RBAC, audit logging, UI, "
+            "manifest artifact, docs, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_endpoints={has_endpoints}, "
+                f"has_permissions={has_permissions}, "
+                f"has_service_behavior={has_service_behavior}, "
+                f"has_route_surface={has_route_surface}, "
+                f"has_persistence={has_persistence}, "
+                f"has_frontend_surface={has_frontend_surface}, "
                 f"has_release_manifest_artifact={has_release_manifest_artifact}, "
                 f"has_contract_docs={has_contract_docs}"
             )

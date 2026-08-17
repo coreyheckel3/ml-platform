@@ -95,6 +95,7 @@ The project favors verifiable engineering behavior over static claims:
 PYTHONPATH=. .venv/bin/python scripts/ci/check_portfolio_readiness_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_ux_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_retrieval_contract.py
+PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_drilldown_api_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_operational_audit_ux_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/production_readiness.py
 PYTHONPATH=. .venv/bin/python scripts/ops/build_release_manifest.py --output /tmp/forgeml-release-manifest.json

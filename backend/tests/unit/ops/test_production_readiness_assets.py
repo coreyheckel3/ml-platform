@@ -82,7 +82,7 @@ def test_alembic_migration_contract_gate_is_enforced() -> None:
     assert "python scripts/ci/check_alembic_migration_contract.py" in workflow
     assert contract["schema_version"] == "forgeml.alembic_migrations.v1"
     assert contract["summary"]["base_revision"] == "202607180001"
-    assert contract["summary"]["head_revision"] == "202607190015"
+    assert contract["summary"]["head_revision"] == "202607190016"
     assert contract["summary"]["head_count"] == 1
     assert len(migrations) >= 14
     assert all(migration["has_upgrade"] and migration["has_downgrade"] for migration in migrations)
@@ -370,6 +370,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/release-evidence-workflow.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-ux.v1.json" in artifact_paths
     assert "contracts/ops/release-evidence-retrieval.v1.json" in artifact_paths
+    assert "contracts/ops/release-evidence-drilldown-api.v1.json" in artifact_paths
     assert "contracts/ops/operational-audit-ux.v1.json" in artifact_paths
     assert "contracts/ops/release-manifest-verification.v1.json" in artifact_paths
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
@@ -452,6 +453,7 @@ def test_release_evidence_ux_contract_gate_is_enforced() -> None:
     assert "forgeml-release-manifest" in release_data
     assert "release_manifest_verifier_contract" in release_data
     assert "release_evidence_retrieval_contract" in release_data
+    assert "release_evidence_drilldown_api_contract" in release_data
     assert "operational_audit_ux_contract" in release_data
     assert "09-release-evidence.png" in screenshot_catalog
 
@@ -489,10 +491,56 @@ def test_release_evidence_retrieval_contract_gate_is_enforced() -> None:
     assert "required_artifact_coverage" in contract["required_comparison_checks"]
     assert "archive_download_url" in retrieval_source
     assert "zipfile" in retrieval_source
-    assert "forgeml.release_evidence_retrieval.v1" in cli_source
+    assert "RELEASE_EVIDENCE_RETRIEVAL_SCHEMA_VERSION" in cli_source
     assert "Live Evidence Retrieval" in release_page
     assert "GitHubActionsReleaseEvidenceGateway" in release_data
     assert "release_evidence_retrieval_contract" in release_data
+
+
+def test_release_evidence_drilldown_api_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-evidence-drilldown-api.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    service_source = Path(
+        "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = Path(
+        "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    model_source = Path(
+        "backend/src/forgeml/modules/administration/infrastructure/sqlalchemy_models.py"
+    ).read_text(encoding="utf-8")
+    frontend_api_source = Path(
+        "frontend/src/modules/release_evidence/api/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    release_page = Path(
+        "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    release_data = Path(
+        "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_release_evidence_drilldown_api_contract.py" in workflow
+    assert "check_release_evidence_drilldown_api_contract.py" in runbook
+    assert (
+        contract["schema_version"]
+        == "forgeml.release_evidence_drilldown_api_contract.v1"
+    )
+    assert "admin:release_evidence:read" in contract["rbac"]["permissions"]
+    assert "admin:release_evidence:retrieve" in contract["rbac"]["permissions"]
+    assert contract["persistence"]["table"] == "release_evidence_reports"
+    assert "release_evidence.retrieve" in service_source
+    assert "release_evidence.retrieve_failed" in service_source
+    assert "/admin/release-evidence/reports" in route_source
+    assert "ReleaseEvidenceReportModel" in model_source
+    assert "listReleaseEvidenceReports" in frontend_api_source
+    assert "retrieveReleaseEvidenceReport" in frontend_api_source
+    assert "API Evidence Drilldown" in release_page
+    assert "release_evidence_drilldown_api_contract" in release_data
 
 
 def test_operational_audit_ux_contract_gate_is_enforced() -> None:

@@ -6,10 +6,10 @@
   ],
   "schema_version": "forgeml.sqlalchemy_schema.v1",
   "summary": {
-    "column_count": 407,
-    "foreign_key_count": 65,
-    "index_count": 113,
-    "table_count": 38,
+    "column_count": 430,
+    "foreign_key_count": 66,
+    "index_count": 117,
+    "table_count": 39,
     "unique_constraint_count": 15
   },
   "tables": [
@@ -4761,6 +4761,305 @@
           "name": ""
         }
       ]
+    },
+    {
+      "columns": [
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "id",
+          "nullable": false,
+          "primary_key": true,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [
+            "organizations.id"
+          ],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "organization_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "UUID",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "requested_by_user_id",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "provider",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": true,
+          "name": "status",
+          "nullable": false,
+          "primary_key": false,
+          "type": "VARCHAR(32)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "repository",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(256)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "branch",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "workflow",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_name",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "run_id",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "run_url",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "manifest_git_sha",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(64)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "manifest_git_branch",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(128)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "ci_run_url",
+          "nullable": true,
+          "primary_key": false,
+          "type": "VARCHAR(512)",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "artifact_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "quality_gate_count",
+          "nullable": false,
+          "primary_key": false,
+          "type": "INTEGER",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "missing_artifacts_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "missing_quality_gates_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "comparison_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "manifest_summary_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": true,
+          "has_server_default": false,
+          "index": false,
+          "name": "report_json",
+          "nullable": false,
+          "primary_key": false,
+          "type": "JSON",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": false,
+          "index": false,
+          "name": "error_message",
+          "nullable": true,
+          "primary_key": false,
+          "type": "TEXT",
+          "unique": false
+        },
+        {
+          "foreign_keys": [],
+          "has_python_default": false,
+          "has_server_default": true,
+          "index": false,
+          "name": "created_at",
+          "nullable": false,
+          "primary_key": false,
+          "type": "TIMESTAMP WITH TIME ZONE",
+          "unique": false
+        }
+      ],
+      "foreign_keys": [
+        "organization_id->organizations.id"
+      ],
+      "indexes": [
+        {
+          "columns": [
+            "organization_id",
+            "created_at"
+          ],
+          "name": "ix_release_evidence_reports_organization_created",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id"
+          ],
+          "name": "ix_release_evidence_reports_organization_id",
+          "unique": false
+        },
+        {
+          "columns": [
+            "organization_id",
+            "status"
+          ],
+          "name": "ix_release_evidence_reports_organization_status",
+          "unique": false
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "name": "ix_release_evidence_reports_status",
+          "unique": false
+        }
+      ],
+      "name": "release_evidence_reports",
+      "primary_key": [
+        "id"
+      ],
+      "unique_constraints": []
     },
     {
       "columns": [

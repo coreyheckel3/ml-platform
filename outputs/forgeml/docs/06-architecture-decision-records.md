@@ -618,3 +618,29 @@ Justification: Release evidence should be machine-checkable and portable across
 local demos, CI, and future admin APIs. A gateway boundary keeps GitHub-specific
 concerns isolated while giving reviewers a concrete command and UI surface for
 validating the latest successful main-branch release artifact.
+
+## ADR-032: Release Evidence Drilldown API
+
+Status: Accepted
+
+Decision: Add release evidence retrieval as an authenticated administration API
+with persisted report records, organization scoping, RBAC, audit events, and a
+frontend drilldown panel.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Admin API with persisted reports | Keeps GitHub credentials server-side, records evidence history, supports RBAC, and makes retrieval auditable | Adds database, migration, API, and contract maintenance |
+| Frontend direct GitHub API calls | Smaller backend surface and quick UI iteration | Exposes token handling to the browser and loses tenant-scoped audit history |
+| CLI-only retrieval | Simple and already useful for operators | Does not support in-product drilldown or organization-scoped evidence history |
+
+Recommendation: Use the administration module as the control-plane boundary,
+persist immutable release evidence reports, and keep GitHub/local manifest
+retrieval behind the existing `ReleaseEvidenceGateway` port.
+
+Justification: Release evidence is a governance workflow. It needs the same
+tenant isolation, permission checks, audit logging, and operational history as
+deployments and model approvals. Persisting reports also gives the portfolio
+demo a credible in-product evidence trail while keeping external provider
+details behind a testable adapter boundary.

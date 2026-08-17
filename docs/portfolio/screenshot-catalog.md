@@ -20,7 +20,7 @@ capability it demonstrates.
 | `06-deployments.png` | `/deployments` | Deployment revisions, health checks, canary promotion, and rollback readiness. |
 | `07-inference.png` | `/inference` | Endpoint creation, prediction probes, request logs, and metric snapshots. |
 | `08-monitoring.png` | `/monitoring` | Latency percentiles, error breakdowns, drift trends, training failures, and retraining activity. |
-| `09-release-evidence.png` | `/release-evidence` | Release manifest artifacts, quality gates, live evidence retrieval, reviewer commands, CI provenance, and screenshot evidence. |
+| `09-release-evidence.png` | `/release-evidence` | Release manifest artifacts, quality gates, live retrieval, API drilldown, reviewer commands, CI provenance, and screenshot evidence. |
 | `10-operational-audit.png` | `/operational-audit` | Unified audit timeline for release evidence, deployment, retraining, security, and registry events. |
 
 ## Capture Contract
