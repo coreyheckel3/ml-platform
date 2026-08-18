@@ -26,8 +26,8 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByRole("heading", { name: "Release Evidence" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("38")).toBeInTheDocument();
-    expect(screen.getByText("27")).toBeInTheDocument();
+    expect(screen.getByText("39")).toBeInTheDocument();
+    expect(screen.getByText("28")).toBeInTheDocument();
     expect(screen.getAllByText("forgeml-release-manifest").length).toBeGreaterThan(1);
     expect(screen.getByText("Release Manifest")).toBeInTheDocument();
     expect(screen.getByText("Live Evidence Retrieval")).toBeInTheDocument();
@@ -47,6 +47,9 @@ describe("ReleaseEvidencePage", () => {
       screen.getAllByText("Release Evidence Scheduled Refresh Contract").length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText("Security Hardening Contract").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("External Training Package Contract").length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("make production-readiness")).toBeInTheDocument();
     expect(
       screen.getAllByText(
@@ -63,6 +66,7 @@ describe("ReleaseEvidencePage", () => {
     expect(screen.getByText("backend_tests")).toBeInTheDocument();
     expect(screen.getByText("frontend_e2e")).toBeInTheDocument();
     expect(screen.getByText("release_manifest_verifier_contract")).toBeInTheDocument();
+    expect(screen.getByText("external_training_package_contract")).toBeInTheDocument();
     expect(screen.getByText("operational_audit_ux_contract")).toBeInTheDocument();
     expect(screen.getByText("release_evidence_retrieval_contract")).toBeInTheDocument();
     expect(screen.getByText("release_evidence_drilldown_api_contract")).toBeInTheDocument();

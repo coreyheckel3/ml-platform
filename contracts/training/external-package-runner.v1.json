@@ -1,0 +1,70 @@
+{
+  "api": {
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/api/v1/training-runner-profiles",
+        "permission": "training_runs:read"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/projects/{project_id}/training-runs",
+        "profile_selector_location": "hyperparameters"
+      }
+    ]
+  },
+  "frontend": {
+    "api_client": "listTrainingRunnerProfiles",
+    "page": "frontend/src/modules/training_runs/pages/TrainingRunsPage.tsx",
+    "profile_panel": "External Package Profiles"
+  },
+  "generated_from": [
+    "forgeml.modules.training.infrastructure.external_package",
+    "forgeml.modules.training.infrastructure.execution",
+    "forgeml.modules.training.api.routes",
+    "scripts.workers.run_training_worker",
+    "frontend.src.modules.training_runs"
+  ],
+  "profile_selector": "forgeml.external_training_profile",
+  "profiles": [
+    {
+      "algorithms": [
+        "movie-rec-svd",
+        "movie-rec-two-tower"
+      ],
+      "artifact_mapping": {
+        "*.joblib": "model_component",
+        "engine.joblib": "model",
+        "evaluation.json": "evaluation_report"
+      },
+      "default_data_dir": "data/sample",
+      "executable": ".venv/bin/movie-rec-build",
+      "objective_metric_name": "ndcg_at_k",
+      "package_name": "conversational-movie-recommender",
+      "repo_root_setting": "FORGEML_EXTERNAL_TRAINING_MOVIE_RECOMMENDER_REPO_ROOT",
+      "slug": "conversational-movie-recommender"
+    }
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_external_training_package_contract.py",
+    "backend/tests/unit/training/test_external_package_training.py",
+    "backend/tests/unit/ops/test_external_training_package_contract.py",
+    "backend/tests/api/test_training_api.py",
+    "frontend/src/modules/training_runs/pages/TrainingRunsPage.test.tsx"
+  ],
+  "runner": {
+    "class": "ExternalTrainingPackageRunner",
+    "composite_runner": "CompositeTrainingJobRunner",
+    "execution_policy": {
+      "fixed_output_root": "FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT",
+      "profile_allowlist": true,
+      "relative_data_paths_only": true,
+      "repo_root_from_settings": true,
+      "shell": false,
+      "timeout_setting": "FORGEML_EXTERNAL_TRAINING_COMMAND_TIMEOUT_SECONDS"
+    },
+    "factory": "build_training_job_runner"
+  },
+  "runtime_schema_version": "forgeml.external_training_package.v1",
+  "schema_version": "forgeml.external_training_package_contract.v1"
+}

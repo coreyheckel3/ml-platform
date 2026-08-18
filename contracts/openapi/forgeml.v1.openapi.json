@@ -5964,6 +5964,143 @@
         "title": "TrainingRunResponse",
         "type": "object"
       },
+      "TrainingRunnerProfileAvailabilityResponse": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "data_dir": {
+            "title": "Data Dir",
+            "type": "string"
+          },
+          "executable_path": {
+            "title": "Executable Path",
+            "type": "string"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "repo_root": {
+            "title": "Repo Root",
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "repo_root",
+          "executable_path",
+          "data_dir",
+          "missing"
+        ],
+        "title": "TrainingRunnerProfileAvailabilityResponse",
+        "type": "object"
+      },
+      "TrainingRunnerProfileListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TrainingRunnerProfileResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TrainingRunnerProfileListResponse",
+        "type": "object"
+      },
+      "TrainingRunnerProfileResponse": {
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/TrainingRunnerProfileAvailabilityResponse"
+          },
+          "command_preview": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Command Preview",
+            "type": "array"
+          },
+          "default_algorithm": {
+            "title": "Default Algorithm",
+            "type": "string"
+          },
+          "default_hyperparameters": {
+            "additionalProperties": true,
+            "title": "Default Hyperparameters",
+            "type": "object"
+          },
+          "default_model_type": {
+            "title": "Default Model Type",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "objective_metric_name": {
+            "title": "Objective Metric Name",
+            "type": "string"
+          },
+          "package_name": {
+            "title": "Package Name",
+            "type": "string"
+          },
+          "runner_kind": {
+            "title": "Runner Kind",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "supported_algorithms": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supported Algorithms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "display_name",
+          "runner_kind",
+          "package_name",
+          "description",
+          "supported_algorithms",
+          "default_algorithm",
+          "default_model_type",
+          "objective_metric_name",
+          "default_hyperparameters",
+          "availability",
+          "command_preview"
+        ],
+        "title": "TrainingRunnerProfileResponse",
+        "type": "object"
+      },
       "TriggerRetrainingRunRequest": {
         "properties": {
           "reason": {
@@ -11070,6 +11207,32 @@
         "summary": "Reject Retraining Run",
         "tags": [
           "retraining"
+        ]
+      }
+    },
+    "/api/v1/training-runner-profiles": {
+      "get": {
+        "operationId": "list_training_runner_profiles_api_v1_training_runner_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingRunnerProfileListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Training Runner Profiles",
+        "tags": [
+          "training-runs"
         ]
       }
     },

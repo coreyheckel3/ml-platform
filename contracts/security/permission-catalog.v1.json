@@ -541,6 +541,7 @@
       "code": "training_runs:read",
       "description": "Read training runs, events, and logs.",
       "enforced_at": [
+        "backend/src/forgeml/modules/training/api/routes.py:88",
         "backend/src/forgeml/modules/training/application/services.py:286",
         "backend/src/forgeml/modules/training/application/services.py:290",
         "backend/src/forgeml/modules/training/application/services.py:414",

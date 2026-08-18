@@ -15,6 +15,8 @@ from forgeml.modules.training.api.schemas import (
     TrainingRunListResponse,
     TrainingRunLogListResponse,
     TrainingRunLogResponse,
+    TrainingRunnerProfileListResponse,
+    TrainingRunnerProfileResponse,
     TrainingRunResponse,
 )
 from forgeml.modules.training.application.services import (
@@ -29,7 +31,10 @@ from forgeml.modules.training.domain.entities import (
     TrainingRunLog,
     TrainingRunStatus,
 )
-from forgeml.modules.training.infrastructure.execution import LocalExampleTrainingRunner
+from forgeml.modules.training.infrastructure.execution import (
+    build_training_job_runner,
+    external_training_profile_catalog,
+)
 from forgeml.modules.training.infrastructure.orchestrator import (
     build_training_workflow_orchestrator,
 )
@@ -39,6 +44,7 @@ from forgeml.modules.training.infrastructure.sqlalchemy_repositories import (
 )
 from forgeml.platform.api.dependencies import get_current_principal, get_db_session
 from forgeml.platform.config import Settings, get_settings
+from forgeml.platform.domain.errors import PermissionDeniedError
 from forgeml.platform.mlflow import build_mlflow_tracking_gateway
 from forgeml.platform.security.rbac import Principal
 
@@ -54,7 +60,7 @@ def get_training_run_service(
         experiment_runs=SqlAlchemyExperimentRunRecorder(session),
         orchestrator=build_training_workflow_orchestrator(settings),
         artifact_bucket=settings.object_storage_bucket,
-        runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
+        runner=build_training_job_runner(settings),
         audit_log=SqlAlchemyAuditLogRepository(session),
         retry_policy=TrainingRetryPolicy(
             max_attempts=settings.training_worker_max_attempts,
@@ -68,6 +74,24 @@ def get_training_run_service(
             timeout_seconds=settings.mlflow_http_timeout_seconds,
         ),
         mlflow_experiment_prefix=settings.mlflow_experiment_prefix,
+    )
+
+
+@router.get(
+    "/training-runner-profiles",
+    response_model=TrainingRunnerProfileListResponse,
+)
+def list_training_runner_profiles(
+    principal: Principal = Depends(get_current_principal),
+    settings: Settings = Depends(get_settings),
+) -> TrainingRunnerProfileListResponse:
+    if not principal.has("training_runs:read"):
+        raise PermissionDeniedError("You do not have permission to inspect training runners.")
+    return TrainingRunnerProfileListResponse(
+        items=[
+            TrainingRunnerProfileResponse.model_validate(profile)
+            for profile in external_training_profile_catalog(settings)
+        ]
     )
 
 

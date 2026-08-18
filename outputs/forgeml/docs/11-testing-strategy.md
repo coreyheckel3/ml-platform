@@ -297,6 +297,25 @@ requiring a long-running scheduler inside FastAPI:
   API/UI, operator script, docs, CI wiring, production-readiness, OpenAPI, and
   release manifest evidence.
 
+## External Training Package Adapter Tests
+
+External package adapter tests should prove that ForgeML can run a reviewed ML
+repository without coupling core modules to that repository:
+
+- Unit test profile selection, command generation, relative data-path
+  validation, timeout-aware process execution, failed-command mapping, metric
+  import from `evaluation.json`, and artifact metadata with checksums.
+- API test the training runner profile catalog route with RBAC and availability
+  details.
+- Frontend test the Training Runs profile panel and prefilled run creation
+  payload.
+- Run a live local smoke against
+  `$HOME/Documents/GitHub/conversational-movie-recommender` when the repo is
+  present.
+- Verify the external training package contract matches backend sources,
+  worker wiring, frontend UI, docs, CI wiring, production-readiness, and release
+  manifest evidence.
+
 ## Operational Audit UX Tests
 
 Operational audit UX tests should keep operator-facing timeline evidence

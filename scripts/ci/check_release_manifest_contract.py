@@ -144,6 +144,7 @@ def validate_release_manifest_definition(repo_root: Path = REPO_ROOT) -> tuple[s
         "ci_runtime_contract",
         "portfolio_readiness_contract",
         "artifact_manifest_contract",
+        "external_training_package_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
         "deployment_runtime_contract",

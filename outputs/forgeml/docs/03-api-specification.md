@@ -141,6 +141,7 @@ Dataset upload should use signed object-storage URLs:
 | Method | Path | Description |
 | --- | --- | --- |
 | `POST` | `/projects/{project_id}/training-runs` | Start training run |
+| `GET` | `/training-runner-profiles` | List configured external training package profiles and availability |
 | `GET` | `/projects/{project_id}/training-runs` | List training runs |
 | `GET` | `/training-runs/{training_run_id}` | Get training run |
 | `POST` | `/training-runs/{training_run_id}/result` | Record terminal result |
@@ -160,6 +161,13 @@ When Airflow orchestration is enabled, training submission triggers the
 configured training DAG using a versioned `forgeml.training_airflow_dag_run.v1`
 configuration payload. The orchestration-status endpoint returns the external
 state, mapped ForgeML status, terminal flag, Airflow URL, and adapter metadata.
+
+External package training profiles are allowlisted and configuration-driven.
+The profile catalog returns default algorithm, hyperparameters, command preview,
+and availability details. A training run opts into a profile by setting
+`forgeml.external_training_profile` in `hyperparameters`; the worker executes
+the package through the training runner boundary and imports model artifacts
+plus metrics back into ForgeML.
 
 Training job request:
 

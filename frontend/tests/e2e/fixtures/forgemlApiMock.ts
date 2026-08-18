@@ -175,6 +175,13 @@ async function handleApiRoute(
     return fulfillJson(route, { revoked: true });
   }
 
+  if (method === "GET" && path === "/api/v1/training-runner-profiles") {
+    return fulfillJson(route, {
+      items: [trainingRunnerProfile()],
+      next_cursor: null,
+    });
+  }
+
   if (method === "GET" && path === "/api/v1/admin/audit-log") {
     const query = new URL(route.request().url()).searchParams;
     const actorType = query.get("actor_type");
@@ -1264,8 +1271,8 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     manifest_git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
     manifest_git_branch: "main",
     ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
-    artifact_count: 38,
-    quality_gate_count: 27,
+    artifact_count: 39,
+    quality_gate_count: 28,
     missing_artifacts: [],
     missing_quality_gates: [],
     comparison: {
@@ -1278,10 +1285,12 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
       git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
       git_branch: "main",
       artifact_names: [
+        "external_training_package_contract",
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
       ],
       quality_gate_names: [
+        "external_training_package_contract",
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
       ],
@@ -1451,6 +1460,43 @@ function trainingOrchestrationStatus(run: TrainingRun): Entity {
       training_run_id: run.id,
     },
     observed_at: "2026-08-05T20:00:00Z",
+  };
+}
+
+function trainingRunnerProfile(): Entity {
+  return {
+    slug: "conversational-movie-recommender",
+    display_name: "Conversational Movie Recommender",
+    runner_kind: "external_package",
+    package_name: "conversational-movie-recommender",
+    description: "Runs the external recommender package build CLI.",
+    supported_algorithms: ["movie-rec-svd", "movie-rec-two-tower"],
+    default_algorithm: "movie-rec-svd",
+    default_model_type: "hybrid-recommender",
+    objective_metric_name: "ndcg_at_k",
+    default_hyperparameters: {
+      "forgeml.external_training_profile": "conversational-movie-recommender",
+      data_dir: "data/sample",
+      write_metrics: true,
+      eval_k: 5,
+      eval_max_users: 20,
+      quiet: true,
+    },
+    availability: {
+      available: true,
+      repo_root: "/Users/posh/Documents/GitHub/conversational-movie-recommender",
+      executable_path:
+        "/Users/posh/Documents/GitHub/conversational-movie-recommender/.venv/bin/movie-rec-build",
+      data_dir: "/Users/posh/Documents/GitHub/conversational-movie-recommender/data/sample",
+      missing: [],
+    },
+    command_preview: [
+      "/repo/.venv/bin/movie-rec-build",
+      "--data-dir",
+      "/repo/data/sample",
+      "--model-dir",
+      "<artifact-root>/<training-run-id>/conversational-movie-recommender/model",
+    ],
   };
 }
 

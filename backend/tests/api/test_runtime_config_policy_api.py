@@ -35,4 +35,5 @@ def _production_settings() -> Settings:
         cors_origins=["https://app.forgeml.example"],
         rate_limit_enabled=True,
         readiness_checks_enabled=True,
+        external_training_profiles_enabled=False,
     )

@@ -25,6 +25,7 @@ REQUIRED_GUARDRAILS = frozenset(
         "structured_logging_enabled",
         "request_logging_enabled",
         "readiness_checks_enabled",
+        "external_training_profiles_disabled",
         "cors_origins_non_empty",
         "cors_no_wildcard",
         "cors_no_localhost",
@@ -121,6 +122,7 @@ def _hardened_production_settings() -> Settings:
         cors_origins=["https://app.forgeml.example"],
         rate_limit_enabled=True,
         readiness_checks_enabled=True,
+        external_training_profiles_enabled=False,
     )
 
 
@@ -139,6 +141,9 @@ def _insecure_fixture_settings_by_guardrail() -> dict[str, Settings]:
         "request_logging_enabled": base.model_copy(update={"request_logging_enabled": False}),
         "readiness_checks_enabled": base.model_copy(
             update={"readiness_checks_enabled": False}
+        ),
+        "external_training_profiles_disabled": base.model_copy(
+            update={"external_training_profiles_enabled": True}
         ),
         "cors_origins_non_empty": base.model_copy(update={"cors_origins": []}),
         "cors_no_wildcard": base.model_copy(update={"cors_origins": ["*"]}),

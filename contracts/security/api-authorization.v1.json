@@ -954,6 +954,16 @@
     {
       "authorization": "principal",
       "method": "GET",
+      "operation_id": "list_training_runner_profiles_api_v1_training_runner_profiles_get",
+      "path": "/api/v1/training-runner-profiles",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "training-runs"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
       "operation_id": "get_training_run_api_v1_training_runs__training_run_id__get",
       "path": "/api/v1/training-runs/{training_run_id}",
       "reason": "Requires get_current_principal dependency.",
@@ -1111,8 +1121,8 @@
   ],
   "schema_version": "forgeml.api_authorization.v1",
   "summary": {
-    "protected_route_count": 101,
+    "protected_route_count": 102,
     "public_route_count": 6,
-    "total_route_count": 107
+    "total_route_count": 108
   }
 }

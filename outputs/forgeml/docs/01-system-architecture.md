@@ -23,6 +23,7 @@ flowchart LR
   API --> Airflow["Airflow Orchestrator Adapter"]
   API --> Metrics["Prometheus Metrics"]
   Airflow --> Workers["Pipeline and Training Workers"]
+  Workers --> ExternalML["External ML Package Adapters"]
   Workers --> Obj
   Workers --> MLflow
   Workers --> DB
@@ -136,6 +137,13 @@ local orchestrator used by the developer workflow. Training DAG runs receive a
 versioned `forgeml.training_airflow_dag_run.v1` configuration payload, and the
 API exposes an orchestration-status polling endpoint that maps Airflow states
 back into ForgeML training statuses.
+
+External ML packages can also run through named training profiles. The first
+profile targets the local `conversational-movie-recommender` repository and
+executes its `movie-rec-build` CLI from the background worker. ForgeML owns the
+profile selector, command construction, output directory, timeout, metrics
+import, and artifact metadata so the external repo remains a replaceable data
+plane dependency rather than a core-platform assumption.
 
 ## Deployment Runtime
 

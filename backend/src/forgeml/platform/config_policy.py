@@ -78,6 +78,14 @@ RUNTIME_CONFIG_GUARDRAILS = (
         description="Dependency readiness checks must be enabled in production-like runtimes.",
     ),
     RuntimeConfigGuardrail(
+        code="external_training_profiles_disabled",
+        setting="external_training_profiles_enabled",
+        description=(
+            "Local external training package execution must be disabled in "
+            "production-like runtimes."
+        ),
+    ),
+    RuntimeConfigGuardrail(
         code="cors_origins_non_empty",
         setting="cors_origins",
         description="CORS must list at least one explicit allowed origin.",
@@ -191,6 +199,17 @@ def validate_runtime_config(settings: Settings) -> tuple[RuntimeConfigViolation,
                 code="readiness_checks_enabled",
                 setting="readiness_checks_enabled",
                 message="Dependency readiness checks must be enabled outside local development.",
+            )
+        )
+    if settings.external_training_profiles_enabled:
+        violations.append(
+            RuntimeConfigViolation(
+                code="external_training_profiles_disabled",
+                setting="external_training_profiles_enabled",
+                message=(
+                    "FORGEML_EXTERNAL_TRAINING_PROFILES_ENABLED must be false outside "
+                    "local development."
+                ),
             )
         )
 

@@ -4,8 +4,10 @@ import {
   CheckCircle,
   CircleStop,
   ClipboardCheck,
+  PackageCheck,
   Play,
   Plus,
+  SquareTerminal,
   X,
 } from "lucide-react";
 import {
@@ -36,12 +38,14 @@ import {
   cancelTrainingRun,
   getTrainingRunOrchestrationStatus,
   getTrainingRun,
+  listTrainingRunnerProfiles,
   listTrainingRunEvents,
   listTrainingRunLogs,
   listTrainingRuns,
   recordTrainingResult,
   startTrainingRun,
   type TrainingOrchestrationStatus,
+  type TrainingRunnerProfile,
   type TrainingRun,
   type TrainingRunEvent,
   type TrainingRunLog,
@@ -98,9 +102,18 @@ export function TrainingRunsPage() {
     queryFn: () => listFeatureSets(projectId ?? "", token ?? ""),
     enabled: canLoadTrainingRuns,
   });
+  const runnerProfilesQuery = useQuery({
+    queryKey: ["training-runner-profiles", token],
+    queryFn: () => listTrainingRunnerProfiles(token ?? ""),
+    enabled: Boolean(token),
+  });
   const trainingRuns = useMemo(
     () => runsQuery.data?.items ?? [],
     [runsQuery.data?.items],
+  );
+  const runnerProfiles = useMemo(
+    () => runnerProfilesQuery.data?.items ?? [],
+    [runnerProfilesQuery.data?.items],
   );
   const experiments = useMemo(
     () => experimentsQuery.data?.items ?? [],
@@ -367,6 +380,28 @@ export function TrainingRunsPage() {
     setHyperparametersText(defaultHyperparametersText);
   }
 
+  function applyRunnerProfile(profile: TrainingRunnerProfile) {
+    setIsCreateOpen(true);
+    setLineageMode("dataset");
+    setRunName(`${profile.slug}-live-run`);
+    setAlgorithm(profile.default_algorithm);
+    setModelType(profile.default_model_type);
+    setObjectiveMetricName(profile.objective_metric_name);
+    setHyperparametersText(
+      JSON.stringify(profile.default_hyperparameters, null, 2),
+    );
+    setOperationMessage(
+      profile.availability.available
+        ? `Loaded ${profile.display_name} profile.`
+        : null,
+    );
+    setOperationError(
+      profile.availability.available
+        ? null
+        : `External profile is missing ${profile.availability.missing.join(", ")}.`,
+    );
+  }
+
   function handleStartRun(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (runName.trim().length < 3) {
@@ -445,6 +480,37 @@ export function TrainingRunsPage() {
           {operationError}
         </div>
       ) : null}
+
+      <div className="mt-6">
+        <DataPanel title="External Package Profiles">
+          {!token ? (
+            <StateMessage message="Sign in to inspect external package runners." />
+          ) : runnerProfilesQuery.error ? (
+            <StateMessage
+              message="External package profile request failed."
+              tone="danger"
+            />
+          ) : runnerProfiles.length === 0 ? (
+            <StateMessage
+              message={
+                runnerProfilesQuery.isFetching
+                  ? "Loading external package profiles."
+                  : "No external package profiles are configured."
+              }
+            />
+          ) : (
+            <div className="grid gap-3 xl:grid-cols-2">
+              {runnerProfiles.map((profile) => (
+                <ExternalTrainingProfileCard
+                  key={profile.slug}
+                  profile={profile}
+                  onUseProfile={() => applyRunnerProfile(profile)}
+                />
+              ))}
+            </div>
+          )}
+        </DataPanel>
+      </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <DataPanel
@@ -749,6 +815,76 @@ type StartRunFormProps = {
   onObjectiveMetricNameChange: (value: string) => void;
   onHyperparametersTextChange: (value: string) => void;
 };
+
+function ExternalTrainingProfileCard({
+  profile,
+  onUseProfile,
+}: {
+  profile: TrainingRunnerProfile;
+  onUseProfile: () => void;
+}) {
+  return (
+    <div className="rounded border border-slate-200 bg-white p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <PackageCheck className="h-4 w-4 text-signal" aria-hidden="true" />
+            {profile.display_name}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-steel">{profile.description}</p>
+        </div>
+        <span
+          className={[
+            "inline-flex h-7 shrink-0 items-center rounded border px-2 text-xs font-semibold",
+            profile.availability.available
+              ? "border-emerald-200 bg-emerald-50 text-signal"
+              : "border-amber-200 bg-amber-50 text-amber-700",
+          ].join(" ")}
+        >
+          {profile.availability.available ? "available" : "missing assets"}
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2 text-xs text-steel md:grid-cols-2">
+        <div className="truncate">package: {profile.package_name}</div>
+        <div className="truncate">runner: {profile.runner_kind}</div>
+        <div className="truncate">algorithm: {profile.default_algorithm}</div>
+        <div className="truncate">objective: {profile.objective_metric_name}</div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {profile.supported_algorithms.map((algorithm) => (
+          <span
+            key={algorithm}
+            className="inline-flex h-7 items-center rounded border border-slate-200 bg-field px-2 text-xs font-medium text-steel"
+          >
+            {algorithm}
+          </span>
+        ))}
+      </div>
+      <div className="mt-3 rounded border border-slate-200 bg-cloud p-3">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase text-steel">
+          <SquareTerminal className="h-4 w-4" aria-hidden="true" />
+          Command Preview
+        </div>
+        <code className="mt-2 block max-h-20 overflow-auto whitespace-pre-wrap break-words rounded bg-ink px-3 py-2 text-xs text-white">
+          {profile.command_preview.join(" ")}
+        </code>
+      </div>
+      <div className="mt-3 grid gap-2 text-xs text-steel">
+        <div className="truncate">repo: {profile.availability.repo_root}</div>
+        <div className="truncate">data: {profile.availability.data_dir}</div>
+      </div>
+      <button
+        type="button"
+        onClick={onUseProfile}
+        aria-label={`Use profile ${profile.display_name}`}
+        className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-ink px-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+      >
+        <Play className="h-4 w-4" aria-hidden="true" />
+        Use profile
+      </button>
+    </div>
+  );
+}
 
 function StartRunForm({
   experiments,

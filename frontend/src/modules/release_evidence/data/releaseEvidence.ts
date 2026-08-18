@@ -42,8 +42,8 @@ export type ScheduledReleaseEvidenceRefresh = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 38,
-  qualityGateCount: 27,
+  artifactCount: 39,
+  qualityGateCount: 28,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -74,6 +74,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     kind: "Runtime contract",
     path: "contracts/runtime/deployment-serving.v1.json",
     signal: "Covers revision resolution, canary traffic, rollback, and probes.",
+  },
+  {
+    name: "External Training Package Contract",
+    kind: "Integration contract",
+    path: "contracts/training/external-package-runner.v1.json",
+    signal:
+      "Covers allowlisted external package execution, training profile defaults, metric import, and artifact checksums.",
   },
   {
     name: "Release Manifest Contract",
@@ -151,6 +158,12 @@ export const qualityGates: EvidenceGate[] = [
     name: "security_hardening_contract",
     owner: "Security",
     signal: "Security controls and tests remain wired into CI and release evidence.",
+  },
+  {
+    name: "external_training_package_contract",
+    owner: "Platform",
+    signal:
+      "External package profiles, worker execution, artifact import, and UI wiring stay enforced in CI.",
   },
   {
     name: "release_manifest_verifier_contract",

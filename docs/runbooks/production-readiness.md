@@ -16,6 +16,7 @@ python scripts/ci/check_api_authorization_contract.py
 python scripts/ci/check_permission_catalog.py
 python scripts/ci/check_runtime_config_policy.py
 python scripts/ci/check_request_logging_contract.py
+python scripts/ci/check_external_training_package_contract.py
 python scripts/ci/check_release_smoke_contract.py
 python scripts/ci/check_release_manifest_contract.py
 python scripts/ci/check_release_evidence_workflow.py
@@ -91,6 +92,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Permission catalog check result proving enforced permissions and role presets are cataloged
 - Runtime config policy result proving production-like environments reject unsafe defaults
 - Request logging contract result proving HTTP access logs include trace IDs and redaction policy
+- External training package contract result proving reviewed ML repositories run through allowlisted profiles, worker execution, metric import, artifact checksums, and UI launch controls
 - Release smoke contract result proving live operator checks cover health, auth, project context, datasets, features, experiments, training, training logs, registry, deployment, inference, monitoring, alerting, drift, and retraining surfaces
 - Release smoke JSON result from the target environment showing all required stages passed
 - Release manifest JSON result containing Git source provenance, SHA-256 file hashes, Docker image targets, required contracts, CI evidence, and smoke evidence

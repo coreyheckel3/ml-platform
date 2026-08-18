@@ -60,8 +60,34 @@ export type TrainingOrchestrationStatus = {
   observed_at: string | null;
 };
 
+export type TrainingRunnerProfile = {
+  slug: string;
+  display_name: string;
+  runner_kind: string;
+  package_name: string;
+  description: string;
+  supported_algorithms: string[];
+  default_algorithm: string;
+  default_model_type: string;
+  objective_metric_name: string;
+  default_hyperparameters: Record<string, unknown>;
+  availability: {
+    available: boolean;
+    repo_root: string;
+    executable_path: string;
+    data_dir: string;
+    missing: string[];
+  };
+  command_preview: string[];
+};
+
 export type TrainingRunListResponse = {
   items: TrainingRun[];
+  next_cursor: string | null;
+};
+
+export type TrainingRunnerProfileListResponse = {
+  items: TrainingRunnerProfile[];
   next_cursor: string | null;
 };
 
@@ -175,6 +201,15 @@ export function getTrainingRunOrchestrationStatus(
 ): Promise<TrainingOrchestrationStatus> {
   return apiGet<TrainingOrchestrationStatus>(
     `/api/v1/training-runs/${trainingRunId}/orchestration-status`,
+    { token },
+  );
+}
+
+export function listTrainingRunnerProfiles(
+  token: string,
+): Promise<TrainingRunnerProfileListResponse> {
+  return apiGet<TrainingRunnerProfileListResponse>(
+    "/api/v1/training-runner-profiles",
     { token },
   );
 }

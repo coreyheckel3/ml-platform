@@ -40,6 +40,12 @@
       "severity": "critical"
     },
     {
+      "code": "external_training_profiles_disabled",
+      "description": "Local external training package execution must be disabled in production-like runtimes.",
+      "setting": "external_training_profiles_enabled",
+      "severity": "critical"
+    },
+    {
       "code": "jwt_secret_minimum_length",
       "description": "JWT signing secret must be at least 32 characters.",
       "setting": "jwt_secret",
@@ -101,7 +107,7 @@
   ],
   "schema_version": "forgeml.runtime_config_policy.v1",
   "summary": {
-    "guardrail_count": 15,
-    "required_guardrail_count": 15
+    "guardrail_count": 16,
+    "required_guardrail_count": 16
   }
 }

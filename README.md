@@ -26,6 +26,7 @@ Implemented foundation:
 - Example project manifests for Movie Recommendation, Semantic Search, and Fraud Detection, including fixture datasets, evaluation reports, SDK validation, and idempotent bootstrap automation through public APIs.
 - Deterministic local example training jobs that generate versioned model and evaluation artifacts for the three reference workloads.
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
+- External training package adapter with an allowlisted `conversational-movie-recommender` profile, worker-side CLI execution, metric import, artifact checksums, profile catalog API, and Training Runs UI launch path.
 - Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
 - Portfolio review kit with reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, Release Evidence and Operational Audit app surfaces, and CI-checked portfolio readiness contract.
 - Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
@@ -163,6 +164,13 @@ Run one local worker polling cycle for an organization:
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/workers/run_training_worker.py --organization-id <organization-id>
+```
+
+Run one external package training cycle after creating a run from the
+Conversational Movie Recommender profile:
+
+```bash
+PYTHONPATH=backend/src:. .venv/bin/python scripts/workers/run_training_worker.py --organization-id <organization-id> --worker-id external-package-worker --max-runs 1
 ```
 
 Refresh demo seed data against a running API:

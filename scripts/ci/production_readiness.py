@@ -31,6 +31,9 @@ try:
     from scripts.ci.check_deployment_runtime_contract import (
         check_deployment_runtime_contract as verify_deployment_runtime_contract,
     )
+    from scripts.ci.check_external_training_package_contract import (
+        check_external_training_package_contract as verify_external_training_package_contract,
+    )
     from scripts.ci.check_mlflow_tracking_contract import (
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
     )
@@ -91,6 +94,9 @@ except ModuleNotFoundError:
     )
     from check_deployment_runtime_contract import (  # type: ignore[no-redef]
         check_deployment_runtime_contract as verify_deployment_runtime_contract,
+    )
+    from check_external_training_package_contract import (  # type: ignore[no-redef]
+        check_external_training_package_contract as verify_external_training_package_contract,
     )
     from check_mlflow_tracking_contract import (  # type: ignore[no-redef]
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
@@ -202,6 +208,12 @@ REQUIRED_FILES = (
     "contracts/artifacts/artifact-manifest.v1.json",
     "backend/tests/unit/platform/test_artifact_manifest.py",
     "backend/tests/unit/ops/test_artifact_manifest_contract.py",
+    "backend/src/forgeml/modules/training/infrastructure/external_package.py",
+    "scripts/ci/check_external_training_package_contract.py",
+    "contracts/training/README.md",
+    "contracts/training/external-package-runner.v1.json",
+    "backend/tests/unit/training/test_external_package_training.py",
+    "backend/tests/unit/ops/test_external_training_package_contract.py",
     "backend/src/forgeml/platform/mlflow/tracking.py",
     "backend/src/forgeml/platform/mlflow/__init__.py",
     "scripts/ci/check_mlflow_tracking_contract.py",
@@ -359,6 +371,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_alembic_migration_contract(repo_root),
         check_sqlalchemy_schema_contract(repo_root),
         check_artifact_manifest_contract(repo_root),
+        check_external_training_package_contract(repo_root),
         check_mlflow_tracking_contract(repo_root),
         check_airflow_orchestration_contract(repo_root),
         check_deployment_runtime_contract(repo_root),
@@ -580,8 +593,10 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
         "forgeml.training_execution_result.v1": service_source,
         "EXAMPLE_PROJECT_SLUG_PARAMETER": runner_source,
         "LocalExampleTrainingRunner": runner_source,
+        "CompositeTrainingJobRunner": runner_source,
+        "build_training_job_runner": runner_source,
         "FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT": config_source,
-        "runner=LocalExampleTrainingRunner": routes_source,
+        "runner=build_training_job_runner": routes_source,
         "build_training_execution_report": bootstrap_source,
         "claim_training_run": (
             repo_root / "backend/src/forgeml/modules/training/repositories/interfaces.py"
@@ -600,6 +615,70 @@ def check_training_execution_contract(repo_root: Path) -> ReadinessCheck:
             "training execution runner is wired behind application contracts"
             if not missing
             else f"missing: {missing}"
+        ),
+    )
+
+
+def check_external_training_package_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/training/external-package-runner.v1.json"
+    external_source = (
+        repo_root / "backend/src/forgeml/modules/training/infrastructure/external_package.py"
+    ).read_text(encoding="utf-8")
+    execution_source = (
+        repo_root / "backend/src/forgeml/modules/training/infrastructure/execution.py"
+    ).read_text(encoding="utf-8")
+    routes_source = (
+        repo_root / "backend/src/forgeml/modules/training/api/routes.py"
+    ).read_text(encoding="utf-8")
+    worker_source = (repo_root / "scripts/workers/run_training_worker.py").read_text(
+        encoding="utf-8"
+    )
+    frontend_source = (
+        repo_root / "frontend/src/modules/training_runs/pages/TrainingRunsPage.tsx"
+    ).read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/demo-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    config_source = (repo_root / "backend/src/forgeml/platform/config.py").read_text(
+        encoding="utf-8"
+    )
+    has_ci_gate = (
+        "python scripts/ci/check_external_training_package_contract.py" in ci_source
+    )
+    contract_current, contract_detail = verify_external_training_package_contract(
+        contract_path,
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    required_fragments = {
+        "ExternalTrainingPackageRunner": external_source,
+        "shell=False": external_source,
+        "FORGEML_EXTERNAL_TRAINING_MOVIE_RECOMMENDER_REPO_ROOT": config_source,
+        "build_training_job_runner": execution_source,
+        "/training-runner-profiles": routes_source,
+        "runner=build_training_job_runner": worker_source,
+        "External Package Profiles": frontend_source,
+        "conversational-movie-recommender": runbook_source,
+    }
+    missing_fragments = sorted(
+        fragment
+        for fragment, source in required_fragments.items()
+        if fragment not in source
+    )
+    passed = has_ci_gate and contract_current and not missing_fragments
+    return ReadinessCheck(
+        name="external training package contract",
+        passed=passed,
+        detail=(
+            "external package profile adapter, worker, UI, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"missing_fragments={missing_fragments}"
+            )
         ),
     )
 
@@ -1664,6 +1743,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/security/api-authorization.v1.json",
         "contracts/observability/request-log-event.v1.json",
         "contracts/observability/monitoring-dashboard.v1.json",
+        "contracts/training/external-package-runner.v1.json",
         "contracts/mlflow/mlflow-tracking.v1.json",
         "contracts/orchestration/airflow-training.v1.json",
         "contracts/runtime/deployment-serving.v1.json",
@@ -1699,6 +1779,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "demo_readiness_contract",
         "ci_runtime_contract",
         "portfolio_readiness_contract",
+        "external_training_package_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
         "deployment_runtime_contract",

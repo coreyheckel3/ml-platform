@@ -670,3 +670,31 @@ request side effect. Deriving stale state from persisted reports avoids a second
 state store, and an external scheduler keeps the platform credible for local,
 staging, and future production deployments without creating hidden in-process
 timers.
+
+## ADR-034: External Training Package Adapter Boundary
+
+Status: Accepted
+
+Decision: Execute reviewed external ML repositories through named ForgeML
+training profiles, beginning with a local `conversational-movie-recommender`
+profile that runs `movie-rec-build` from the background worker and imports
+metrics plus artifacts back into the standard training execution manifest.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Named external package profiles | Keeps external code behind an allowlist, preserves ForgeML as the control-plane owner, and supports live local demos | Requires profile contracts and availability checks |
+| Import the recommender package directly into core training code | Simple function calls and easier debugging | Couples ForgeML modules to one application repository and weakens extraction paths |
+| Shell command supplied by the user per run | Flexible for arbitrary packages | Unsafe, hard to review, and difficult to reproduce in CI |
+
+Recommendation: Use a configuration-backed profile catalog, construct commands
+without a shell, restrict data paths to the reviewed repository root, write
+outputs under the ForgeML artifact root, and keep the worker responsible for
+execution.
+
+Justification: Internal ML platforms need to run many independently owned model
+packages while keeping governance, lineage, and security centralized. A named
+profile boundary lets ForgeML execute real external ML code today and later map
+the same contract to container jobs, Airflow DAGs, or remote compute without
+changing the training-run API.

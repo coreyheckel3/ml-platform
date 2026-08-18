@@ -46,6 +46,20 @@ class Settings(BaseSettings):
         default=Path("artifacts/training-runs"),
         alias="FORGEML_LOCAL_TRAINING_ARTIFACT_ROOT",
     )
+    external_training_profiles_enabled: bool = Field(
+        default=True,
+        alias="FORGEML_EXTERNAL_TRAINING_PROFILES_ENABLED",
+    )
+    external_training_command_timeout_seconds: float = Field(
+        default=900.0,
+        gt=0,
+        alias="FORGEML_EXTERNAL_TRAINING_COMMAND_TIMEOUT_SECONDS",
+    )
+    external_training_movie_recommender_repo_root: Path = Field(
+        default_factory=lambda: Path.home()
+        / "Documents/GitHub/conversational-movie-recommender",
+        alias="FORGEML_EXTERNAL_TRAINING_MOVIE_RECOMMENDER_REPO_ROOT",
+    )
     training_worker_max_attempts: int = Field(
         default=3,
         ge=1,

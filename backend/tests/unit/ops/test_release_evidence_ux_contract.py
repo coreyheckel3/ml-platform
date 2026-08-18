@@ -79,6 +79,10 @@ def test_release_evidence_ux_contract_shape() -> None:
     assert "Live Evidence Retrieval" in parsed["required_ui_sections"]
     assert "Scheduled Refresh" in parsed["required_ui_sections"]
     assert "09-release-evidence.png" in parsed["required_release_signals"]
+    assert "external_training_package_contract" in parsed["required_release_signals"]
+    assert "contracts/training/external-package-runner.v1.json" in parsed[
+        "required_release_signals"
+    ]
     assert "release_evidence_retrieval_contract" in parsed["required_release_signals"]
     assert (
         "release_evidence_scheduled_refresh_contract"

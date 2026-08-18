@@ -37,6 +37,19 @@ describe("TrainingRunsPage", () => {
     ).toBeInTheDocument();
     expect(await screen.findByText("Orchestration Status")).toBeInTheDocument();
     expect(await screen.findByText("adapter: airflow")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Conversational Movie Recommender"),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Use profile Conversational Movie Recommender",
+      }),
+    );
+    expect(screen.getByLabelText("Algorithm")).toHaveValue("movie-rec-svd");
+    expect(screen.getByLabelText("Objective Metric")).toHaveValue("ndcg_at_k");
+    expect(
+      (screen.getByLabelText("Hyperparameters") as HTMLTextAreaElement).value,
+    ).toContain("forgeml.external_training_profile");
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
     await waitFor(() =>
       expect(
@@ -157,6 +170,51 @@ function mockTrainingWorkflow() {
         path === "/api/v1/projects/project-1/training-runs"
       ) {
         return jsonResponse({ items: runs, next_cursor: null });
+      }
+
+      if (method === "GET" && path === "/api/v1/training-runner-profiles") {
+        return jsonResponse({
+          items: [
+            {
+              slug: "conversational-movie-recommender",
+              display_name: "Conversational Movie Recommender",
+              runner_kind: "external_package",
+              package_name: "conversational-movie-recommender",
+              description: "Runs the external recommender package build CLI.",
+              supported_algorithms: ["movie-rec-svd", "movie-rec-two-tower"],
+              default_algorithm: "movie-rec-svd",
+              default_model_type: "hybrid-recommender",
+              objective_metric_name: "ndcg_at_k",
+              default_hyperparameters: {
+                "forgeml.external_training_profile":
+                  "conversational-movie-recommender",
+                data_dir: "data/sample",
+                write_metrics: true,
+                eval_k: 5,
+                eval_max_users: 20,
+                quiet: true,
+              },
+              availability: {
+                available: true,
+                repo_root:
+                  "/Users/posh/Documents/GitHub/conversational-movie-recommender",
+                executable_path:
+                  "/Users/posh/Documents/GitHub/conversational-movie-recommender/.venv/bin/movie-rec-build",
+                data_dir:
+                  "/Users/posh/Documents/GitHub/conversational-movie-recommender/data/sample",
+                missing: [],
+              },
+              command_preview: [
+                "/repo/.venv/bin/movie-rec-build",
+                "--data-dir",
+                "/repo/data/sample",
+                "--model-dir",
+                "<artifact-root>/<training-run-id>/conversational-movie-recommender/model",
+              ],
+            },
+          ],
+          next_cursor: null,
+        });
       }
 
       if (method === "GET" && path.startsWith("/api/v1/training-runs/")) {

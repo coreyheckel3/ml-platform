@@ -11,6 +11,7 @@ training script.
 | Feature-store metadata and lineage | `backend/src/forgeml/modules/feature_store`, `frontend/src/modules/feature_store`, `backend/tests/api/test_feature_store_api.py` |
 | Experiment and training lifecycle | `backend/src/forgeml/modules/experiments`, `backend/src/forgeml/modules/training`, `backend/tests/api/test_training_runs_api.py` |
 | Worker-backed queued training execution | `scripts/workers/run_training_worker.py`, `backend/src/forgeml/modules/training/application/execution.py`, `backend/tests/unit/training` |
+| External ML package adapter | `backend/src/forgeml/modules/training/infrastructure/external_package.py`, `contracts/training/external-package-runner.v1.json`, `frontend/src/modules/training_runs/pages/TrainingRunsPage.tsx` |
 | Artifact storage abstraction | `backend/src/forgeml/platform/artifacts`, `contracts/artifacts/artifact-manifest.v1.json`, `scripts/ci/check_artifact_manifest_contract.py` |
 | MLflow integration boundary | `backend/src/forgeml/platform/mlflow/tracking.py`, `contracts/mlflow/mlflow-tracking.v1.json`, `backend/tests/unit/ops/test_mlflow_tracking_contract.py` |
 | Airflow orchestration boundary | `backend/src/forgeml/modules/training/infrastructure/orchestrator.py`, `contracts/orchestration/airflow-training.v1.json`, `pipelines/airflow/dags` |
@@ -38,9 +39,10 @@ The main CI workflow validates:
 - Frontend lint, unit tests, Playwright E2E, production build, and bundle budget
 - Docker image builds
 - Production readiness
-- API, database, security, observability, artifact, orchestration, deployment,
-  release, release evidence UX, live release evidence retrieval, release
-  evidence drilldown API, scheduled release evidence refresh, operational audit
-  UX, demo, CI runtime, and portfolio readiness contracts
+- API, database, security, observability, artifact, external training package,
+  orchestration, deployment, release, release evidence UX, live release
+  evidence retrieval, release evidence drilldown API, scheduled release
+  evidence refresh, operational audit UX, demo, CI runtime, and portfolio
+  readiness contracts
 - Release manifest generation, verification, and artifact publication on
   main-branch pushes

@@ -67,6 +67,10 @@ Training, MLflow, Airflow, artifact storage, and serving runtime integrations
 sit behind adapter boundaries:
 
 - Training jobs can run through the local example runner or orchestration adapters.
+- External ML packages can run through named training profiles. The local
+  `conversational-movie-recommender` profile executes its package CLI through
+  the training worker, imports `evaluation.json` metrics, and records model
+  artifacts in the standard ForgeML training execution manifest.
 - MLflow sync is isolated behind a tracking gateway.
 - Airflow orchestration is isolated behind a workflow gateway with local fallback.
 - Deployment serving semantics are isolated behind a serving runtime gateway.

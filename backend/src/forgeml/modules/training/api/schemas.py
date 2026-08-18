@@ -92,3 +92,31 @@ class TrainingOrchestrationStatusResponse(BaseModel):
     external_url: str | None
     metadata: dict[str, object]
     observed_at: str | None
+
+
+class TrainingRunnerProfileAvailabilityResponse(BaseModel):
+    available: bool
+    repo_root: str
+    executable_path: str
+    data_dir: str
+    missing: list[str]
+
+
+class TrainingRunnerProfileResponse(BaseModel):
+    slug: str
+    display_name: str
+    runner_kind: str
+    package_name: str
+    description: str
+    supported_algorithms: list[str]
+    default_algorithm: str
+    default_model_type: str
+    objective_metric_name: str
+    default_hyperparameters: dict[str, object]
+    availability: TrainingRunnerProfileAvailabilityResponse
+    command_preview: list[str]
+
+
+class TrainingRunnerProfileListResponse(BaseModel):
+    items: list[TrainingRunnerProfileResponse]
+    next_cursor: str | None = None

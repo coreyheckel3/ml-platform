@@ -33,6 +33,7 @@ def test_production_runtime_rejects_insecure_defaults() -> None:
         "object_storage_endpoint_not_localhost",
         "mlflow_tracking_uri_not_localhost",
         "airflow_base_url_not_localhost",
+        "external_training_profiles_disabled",
     }.issubset(violation_codes)
     assert all(
         "change-me-for-local-development" not in violation.message for violation in violations
@@ -104,6 +105,7 @@ def _production_settings(**overrides: object) -> Settings:
         "cors_origins": ["https://app.forgeml.example"],
         "rate_limit_enabled": True,
         "readiness_checks_enabled": True,
+        "external_training_profiles_enabled": False,
     }
     values.update(overrides)
     return Settings(**values)

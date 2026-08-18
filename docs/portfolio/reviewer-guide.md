@@ -82,10 +82,12 @@ The project favors verifiable engineering behavior over static claims:
 2. Open the dashboard and explain that the frontend is a real operations console.
 3. Select a project and walk through datasets, features, experiments, and
    training runs.
-4. Promote a succeeded training run to a registered model version.
-5. Approve, deploy, probe inference, and show monitoring snapshots.
-6. Explain how drift and alerts can hand off to retraining policies.
-7. Close with the release-governance loop: contracts, release manifest,
+4. Open the Training Runs external package profile panel and show how
+   `conversational-movie-recommender` can run through the worker adapter.
+5. Promote a succeeded training run to a registered model version.
+6. Approve, deploy, probe inference, and show monitoring snapshots.
+7. Explain how drift and alerts can hand off to retraining policies.
+8. Close with the release-governance loop: contracts, release manifest,
    verification, Docker, CI evidence, the Release Evidence page, and the
    Operational Audit timeline.
 
@@ -98,6 +100,7 @@ PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_retrieval_contra
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_drilldown_api_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_scheduled_refresh_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_operational_audit_ux_contract.py
+PYTHONPATH=backend/src:. .venv/bin/python scripts/ci/check_external_training_package_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/production_readiness.py
 PYTHONPATH=. .venv/bin/python scripts/ops/build_release_manifest.py --output /tmp/forgeml-release-manifest.json
 PYTHONPATH=. .venv/bin/python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json

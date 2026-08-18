@@ -16,6 +16,9 @@ engineering outcome.
 - Added realistic reference workloads for recommendation, semantic search, and
   fraud detection through public platform APIs instead of hardcoded product
   branches, demonstrating reusable platform abstractions.
+- Built an external training package adapter that launches a separate
+  conversational recommender repository through an allowlisted ForgeML profile,
+  imports ranking metrics, and records versioned model artifacts with checksums.
 
 ## MLOps Engineer
 

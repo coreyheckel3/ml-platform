@@ -58,6 +58,8 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "contracts/ops/release-evidence-drilldown-api.v1.json",
             "contracts/ops/release-evidence-scheduled-refresh.v1.json",
             "contracts/ops/portfolio-readiness.v1.json",
+            "contracts/training/external-package-runner.v1.json",
+            "external_training_package_contract",
             "release_manifest_verifier_contract",
             "release_evidence_retrieval_contract",
             "release_evidence_drilldown_api_contract",
@@ -85,7 +87,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         "summary": {
             "source_asset_count": len(REQUIRED_SOURCE_ASSETS),
             "ui_section_count": 7,
-            "release_signal_count": 16,
+            "release_signal_count": 18,
         },
     }
 

@@ -47,6 +47,8 @@ jobs:
         run: python scripts/ci/check_sqlalchemy_schema_contract.py
       - name: Check artifact manifest contract
         run: python scripts/ci/check_artifact_manifest_contract.py
+      - name: Check external training package contract
+        run: python scripts/ci/check_external_training_package_contract.py
       - name: Check MLflow tracking contract
         run: python scripts/ci/check_mlflow_tracking_contract.py
       - name: Check Airflow orchestration contract

@@ -13,7 +13,7 @@ from forgeml.modules.training.application.services import (
     TrainingRunService,
     TrainingWorkerRunSummary,
 )
-from forgeml.modules.training.infrastructure.execution import LocalExampleTrainingRunner
+from forgeml.modules.training.infrastructure.execution import build_training_job_runner
 from forgeml.modules.training.infrastructure.orchestrator import (
     build_training_workflow_orchestrator,
 )
@@ -49,7 +49,7 @@ def run_once(
             experiment_runs=SqlAlchemyExperimentRunRecorder(session),
             orchestrator=build_training_workflow_orchestrator(settings),
             artifact_bucket=settings.object_storage_bucket,
-            runner=LocalExampleTrainingRunner(settings.local_training_artifact_root),
+            runner=build_training_job_runner(settings),
             retry_policy=resolved_retry_policy,
             mlflow_tracking=build_mlflow_tracking_gateway(
                 enabled=settings.mlflow_sync_enabled,

@@ -12,7 +12,15 @@ from forgeml.modules.training.domain.entities import (
     TrainingRun,
     TrainingRunStatus,
 )
+from forgeml.modules.training.infrastructure.external_package import (
+    ExternalTrainingPackageProfile,
+    ExternalTrainingPackageRunner,
+    conversational_movie_recommender_profile,
+    preview_external_training_command,
+)
+from forgeml.modules.training.repositories.interfaces import TrainingJobRunner
 from forgeml.platform.artifacts import sha256_uri
+from forgeml.platform.config import Settings
 
 EXAMPLE_PROJECT_SLUG_PARAMETER = "forgeml.example_project_slug"
 
@@ -60,6 +68,67 @@ class LocalExampleTrainingRunner:
             runner_name="local-example-training-runner",
             external_run_id=f"local-example:{training_run.id}",
         )
+
+
+class CompositeTrainingJobRunner:
+    def __init__(self, runners: list[TrainingJobRunner]) -> None:
+        self._runners = tuple(runners)
+
+    def can_run(self, training_run: TrainingRun) -> bool:
+        return any(runner.can_run(training_run) for runner in self._runners)
+
+    def run(self, training_run: TrainingRun) -> TrainingExecutionResult:
+        for runner in self._runners:
+            if runner.can_run(training_run):
+                return runner.run(training_run)
+        raise ValueError("No composed training runner can execute this run.")
+
+
+def build_training_job_runner(settings: Settings) -> CompositeTrainingJobRunner:
+    runners: list[TrainingJobRunner] = [
+        LocalExampleTrainingRunner(settings.local_training_artifact_root)
+    ]
+    if settings.external_training_profiles_enabled:
+        runners.append(
+            ExternalTrainingPackageRunner(
+                artifact_root=settings.local_training_artifact_root,
+                profiles=configured_external_training_profiles(settings),
+            )
+        )
+    return CompositeTrainingJobRunner(runners)
+
+
+def configured_external_training_profiles(
+    settings: Settings,
+) -> tuple[ExternalTrainingPackageProfile, ...]:
+    return (
+        conversational_movie_recommender_profile(
+            repo_root=settings.external_training_movie_recommender_repo_root,
+            timeout_seconds=settings.external_training_command_timeout_seconds,
+        ),
+    )
+
+
+def external_training_profile_catalog(settings: Settings) -> list[dict[str, object]]:
+    if not settings.external_training_profiles_enabled:
+        return []
+    return [
+        {
+            "slug": profile.slug,
+            "display_name": profile.display_name,
+            "runner_kind": "external_package",
+            "package_name": profile.package_name,
+            "description": profile.description,
+            "supported_algorithms": [algorithm.algorithm for algorithm in profile.algorithms],
+            "default_algorithm": profile.default_algorithm_profile.algorithm,
+            "default_model_type": profile.default_algorithm_profile.model_type,
+            "objective_metric_name": profile.default_algorithm_profile.objective_metric_name,
+            "default_hyperparameters": profile.default_algorithm_profile.default_hyperparameters,
+            "availability": profile.availability(),
+            "command_preview": preview_external_training_command(profile),
+        }
+        for profile in configured_external_training_profiles(settings)
+    ]
 
 
 def _example_project_slug(training_run: TrainingRun) -> str:

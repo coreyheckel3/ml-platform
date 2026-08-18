@@ -124,6 +124,29 @@ def test_artifact_manifest_contract_gate_is_enforced() -> None:
     assert {"dataset_version", "model_version"}.issubset(producer_types)
 
 
+def test_external_training_package_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/training/external-package-runner.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    external_source = Path(
+        "backend/src/forgeml/modules/training/infrastructure/external_package.py"
+    ).read_text(encoding="utf-8")
+    training_page = Path(
+        "frontend/src/modules/training_runs/pages/TrainingRunsPage.tsx"
+    ).read_text(encoding="utf-8")
+
+    assert "python scripts/ci/check_external_training_package_contract.py" in workflow
+    assert contract["schema_version"] == "forgeml.external_training_package_contract.v1"
+    assert contract["profile_selector"] == "forgeml.external_training_profile"
+    assert contract["runner"]["execution_policy"]["shell"] is False
+    assert "conversational-movie-recommender" in contract["profiles"][0]["slug"]
+    assert "ExternalTrainingPackageRunner" in external_source
+    assert "External Package Profiles" in training_page
+
+
 def test_mlflow_tracking_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(
@@ -362,6 +385,7 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert contract["summary"]["required_artifact_count"] >= 14
     assert "contracts/openapi/forgeml.v1.openapi.json" in artifact_paths
     assert "contracts/artifacts/artifact-manifest.v1.json" in artifact_paths
+    assert "contracts/training/external-package-runner.v1.json" in artifact_paths
     assert "contracts/mlflow/mlflow-tracking.v1.json" in artifact_paths
     assert "contracts/orchestration/airflow-training.v1.json" in artifact_paths
     assert "contracts/observability/monitoring-dashboard.v1.json" in artifact_paths

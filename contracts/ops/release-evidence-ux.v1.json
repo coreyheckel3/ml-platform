@@ -28,6 +28,8 @@
     "contracts/ops/release-evidence-drilldown-api.v1.json",
     "contracts/ops/release-evidence-scheduled-refresh.v1.json",
     "contracts/ops/portfolio-readiness.v1.json",
+    "contracts/training/external-package-runner.v1.json",
+    "external_training_package_contract",
     "release_manifest_verifier_contract",
     "release_evidence_retrieval_contract",
     "release_evidence_drilldown_api_contract",
@@ -66,7 +68,7 @@
   },
   "schema_version": "forgeml.release_evidence_ux_contract.v1",
   "summary": {
-    "release_signal_count": 16,
+    "release_signal_count": 18,
     "source_asset_count": 10,
     "ui_section_count": 7
   }

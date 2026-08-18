@@ -13,6 +13,7 @@ from forgeml.modules.training.domain.entities import (
     TrainingRunStatus,
 )
 from forgeml.platform.api.dependencies import get_current_principal
+from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.security.rbac import Principal
 
 
@@ -182,3 +183,38 @@ def test_training_routes_expose_training_lifecycle() -> None:
     assert orchestration.json()["mapped_training_status"] == "queued"
     assert canceled.status_code == 200
     assert canceled.json()["status"] == "canceled"
+
+
+def test_training_runner_profile_route_exposes_external_package_profile(
+    tmp_path,
+) -> None:
+    organization_id = uuid4()
+    user_id = uuid4()
+    repo_root = tmp_path / "conversational-movie-recommender"
+    (repo_root / ".venv/bin").mkdir(parents=True)
+    (repo_root / ".venv/bin/movie-rec-build").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    (repo_root / "data/sample").mkdir(parents=True)
+    app = create_app()
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        user_id=str(user_id),
+        email="owner@example.com",
+        organization_id=str(organization_id),
+        permissions=frozenset({"training_runs:read"}),
+    )
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        external_training_movie_recommender_repo_root=repo_root,
+    )
+    client = TestClient(app)
+
+    response = client.get("/api/v1/training-runner-profiles")
+
+    assert response.status_code == 200
+    payload = response.json()
+    profile = payload["items"][0]
+    assert profile["slug"] == "conversational-movie-recommender"
+    assert profile["runner_kind"] == "external_package"
+    assert profile["availability"]["available"] is True
+    assert profile["default_hyperparameters"]["forgeml.external_training_profile"] == (
+        "conversational-movie-recommender"
+    )
+    assert profile["default_algorithm"] == "movie-rec-svd"

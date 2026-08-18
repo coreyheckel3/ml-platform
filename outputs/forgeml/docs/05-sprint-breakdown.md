@@ -2136,6 +2136,65 @@ Implemented scope:
 - Unit, API, frontend, E2E mock, contract, and production-readiness tests cover
   the refresh workflow.
 
+## Sprint 66: External Training Package Adapter
+
+Goal: Let ForgeML execute a reviewed external ML package through the existing
+training worker lifecycle, starting with the local
+`conversational-movie-recommender` repository.
+
+Scope:
+
+- External training package runner behind `TrainingJobRunner`
+- Composite runner for built-in examples and external package profiles
+- Named profile for `conversational-movie-recommender`
+- Safe command execution with fixed executable, no shell, relative data paths,
+  fixed artifact output root, and timeout control
+- Training runner profile catalog API
+- Training Runs UI profile panel and form population
+- Artifact and metric import from `movie-rec-build`
+- Contract checker, CI wiring, production-readiness, and release manifest
+  evidence
+
+Acceptance criteria:
+
+- `GET /api/v1/training-runner-profiles` exposes configured external training
+  package profiles to authenticated users with `training_runs:read`.
+- Training runs that declare `forgeml.external_training_profile` are executed by
+  the background worker through the external package adapter.
+- The adapter maps recommender ranking metrics from `evaluation.json` into
+  ForgeML training metrics.
+- The adapter maps `engine.joblib` as the model artifact and supporting files as
+  model components with checksums and control-plane URIs.
+- The Training Runs page shows the external package profile and can populate the
+  run form with a live-ready configuration.
+- Production-like environments reject local external package execution unless it
+  is disabled.
+- CI and production-readiness validate the external training package contract.
+- Release manifest provenance includes the external training package contract as
+  a required artifact and quality gate.
+
+Implemented scope:
+
+- `ExternalTrainingPackageRunner` runs named package profiles using
+  `subprocess.run(..., shell=False)` and returns ForgeML
+  `TrainingExecutionResult` objects.
+- `CompositeTrainingJobRunner` lets the same worker execute built-in example
+  jobs and external package jobs without changing application-layer training
+  orchestration.
+- `conversational_movie_recommender_profile` targets
+  `movie-rec-build --data-dir data/sample --write-metrics` and supports both
+  `movie-rec-svd` and `movie-rec-two-tower` algorithm profiles.
+- `/api/v1/training-runner-profiles` exposes profile availability, default
+  hyperparameters, supported algorithms, and command previews.
+- `TrainingRunsPage.tsx` renders External Package Profiles and applies the
+  profile into the start-run form.
+- `contracts/training/external-package-runner.v1.json` and
+  `scripts/ci/check_external_training_package_contract.py` lock the backend,
+  frontend, worker, security guardrail, docs, CI, production-readiness, and
+  release manifest evidence.
+- Unit, API, frontend, E2E mock, contract, config-policy, and worker tests cover
+  the adapter workflow.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2165,11 +2224,12 @@ sequence.
 | 63 | Live Release Evidence Retrieval | Completed | GitHub Actions artifact adapter, local manifest fallback, release evidence retrieval report CLI, manifest comparison checks, Release Evidence retrieval panel, CI contract, production-readiness, and release manifest evidence. |
 | 64 | Release Evidence Drilldown API | Completed | Authenticated admin API for release evidence retrieval reports, persisted comparison history, audit events, frontend drilldowns, CI contract, production-readiness, and release manifest evidence. |
 | 65 | Release Evidence Scheduled Refresh | Completed | Optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
-| 66 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
-| 67 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
-| 68 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
-| 69 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
-| 70 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 66 | External Training Package Adapter | Completed | Reviewed external ML package execution through the training worker, `conversational-movie-recommender` profile, profile catalog API, Training Runs UI profile panel, artifact/metric import, security guardrail, CI contract, production-readiness, and release manifest evidence. |
+| 67 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 68 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 69 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 70 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 71 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

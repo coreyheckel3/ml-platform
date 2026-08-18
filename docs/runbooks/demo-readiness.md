@@ -58,6 +58,30 @@ metadata, experiments, succeeded training runs, registered models, approved mode
 versions, deployments, inference endpoints, monitoring snapshots, alert
 evaluation, drift reports, and retraining policy evaluation.
 
+## External Movie Recommender Training
+
+ForgeML can execute the local `conversational-movie-recommender` package through
+the Training Runs page and background worker. The default profile points at
+`$HOME/Documents/GitHub/conversational-movie-recommender`; override it with
+`FORGEML_EXTERNAL_TRAINING_MOVIE_RECOMMENDER_REPO_ROOT` when the repository
+lives somewhere else.
+
+To run the adapter live:
+
+1. Start the demo stack.
+2. Open Training Runs.
+3. Click `Use profile` on `Conversational Movie Recommender`.
+4. Start the training run.
+5. Run one worker polling cycle:
+
+```bash
+PYTHONPATH=backend/src:. .venv/bin/python scripts/workers/run_training_worker.py --organization-id <organization-id> --worker-id external-package-worker --max-runs 1
+```
+
+The worker invokes `movie-rec-build --write-metrics`, imports
+`evaluation.json`, records model artifacts with checksums, and appends execution
+logs to the training run.
+
 ## Screenshot Capture
 
 Generate reviewer-ready screenshots against deterministic browser API mocks:
