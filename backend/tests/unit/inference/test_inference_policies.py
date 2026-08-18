@@ -85,7 +85,10 @@ def _serving_reference(
         project_id=uuid4(),
         deployment_status="active",
         revision_status="healthy",
+        revision_runtime_config={},
         traffic_percentage=traffic_percentage,
         model_version_id=uuid4(),
+        model_artifact_uri="s3://forgeml/models/model-v1",
+        model_format="xgboost-booster",
         model_signature={"inputs": ["amount"], "outputs": ["score"]},
     )

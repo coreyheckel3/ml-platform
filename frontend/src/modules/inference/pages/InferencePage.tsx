@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Play, RadioTower, Send } from "lucide-react";
+import { BarChart3, Film, Play, RadioTower, Send } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
@@ -275,6 +275,12 @@ export function InferencePage() {
     snapshotMutation.mutate();
   }
 
+  function applyMovieRecommenderProbePayload() {
+    setProbePayloadText(JSON.stringify(movieRecommenderProbePayload, null, 2));
+    setOperationError(null);
+    setOperationMessage("Applied movie recommender probe payload.");
+  }
+
   return (
     <>
       <PageHeader
@@ -541,7 +547,18 @@ export function InferencePage() {
                 />
               </label>
               <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
-                Payload
+                <span className="flex items-center justify-between gap-2">
+                  <span>Payload</span>
+                  <button
+                    type="button"
+                    aria-label="Movie request"
+                    onClick={applyMovieRecommenderProbePayload}
+                    className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-2 text-xs font-semibold normal-case text-steel transition hover:border-signal hover:text-ink"
+                  >
+                    <Film className="h-3.5 w-3.5" />
+                    Movie request
+                  </button>
+                </span>
                 <textarea
                   value={probePayloadText}
                   onChange={(event) => setProbePayloadText(event.target.value)}
@@ -722,6 +739,12 @@ const defaultProbePayload = {
   customer_tenure_days: 418,
   request_source: "control-plane-probe",
   amount: 128.45,
+};
+const movieRecommenderProbePayload = {
+  message: "mind bending sci-fi with a hopeful ending",
+  user_id: 3,
+  liked_movie_ids: [1, 2],
+  limit: 5,
 };
 
 function createProbeRequestId(): string {

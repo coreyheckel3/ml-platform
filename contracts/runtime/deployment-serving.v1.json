@@ -7,16 +7,31 @@
       "probe_revision"
     ],
     "deployment_orchestrator": "LocalDeploymentOrchestrator",
+    "external_adapters": [
+      "conversational-movie-recommender"
+    ],
+    "external_serving_schema_version": "forgeml.external_movie_recommender_serving.v1",
     "gateway_protocol": "ServingRuntimeGateway",
+    "inference_runtime_router": "RoutedInferenceRuntime",
     "local_gateway": "InMemoryServingRuntimeGateway"
   },
   "api_surface": [
     "POST /api/v1/deployment-revisions/{revision_id}/health-probe",
     "POST /api/v1/deployments/{deployment_id}/canary-simulation",
+    "POST /api/v1/inference-endpoints/{endpoint_id}/predict",
     "GET /api/v1/inference-endpoints/{endpoint_id}/health-probe"
   ],
+  "external_adapter_semantics": {
+    "conversational-movie-recommender": {
+      "default_base_url_setting": "FORGEML_EXTERNAL_SERVING_MOVIE_RECOMMENDER_BASE_URL",
+      "request_contract": "ForgeML accepts message/text/query plus optional user and history fields, then calls POST /api/recommend on the external service",
+      "response_contract": "ForgeML records normalized recommendations, parsed query, trace, model artifact URI, model format, and model version provenance",
+      "selector": "deployment revision runtime_config.serving_adapter"
+    }
+  },
   "generated_from": [
     "forgeml.platform.serving.runtime",
+    "forgeml.platform.config",
     "forgeml.modules.deployments.infrastructure.orchestrator",
     "forgeml.modules.deployments.application.services",
     "forgeml.modules.inference.application.services",
@@ -25,12 +40,14 @@
   ],
   "health_probe_semantics": {
     "deployment_probe": "serving runtime probe records a normal deployment health check",
+    "external_adapter_probe": "external movie recommender adapter maps upstream /health to serving health and reports unhealthy on transport failures",
     "inference_probe": "endpoint probe resolves the same runtime revision path used by prediction"
   },
   "quality_gates": [
     "python scripts/ci/check_deployment_runtime_contract.py",
     "backend/tests/unit/platform/test_serving_runtime.py",
     "backend/tests/unit/deployments/test_deployment_service.py",
+    "backend/tests/unit/inference/test_inference_serving_runtime.py",
     "backend/tests/unit/inference/test_inference_service.py",
     "backend/tests/api/test_deployments_api.py",
     "backend/tests/api/test_inference_api.py"

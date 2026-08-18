@@ -448,6 +448,7 @@ export function ModelsPage() {
 
 const modelFormatOptions = [
   "mlflow",
+  "joblib",
   "xgboost-booster",
   "lightgbm-booster",
   "torchscript",
@@ -474,6 +475,9 @@ function firstMetric(metrics: Record<string, number>): string {
 function inferModelFormat(run: TrainingRun): string {
   const modelType = run.model_type.toLowerCase();
   const algorithm = run.algorithm.toLowerCase();
+  if (algorithm.includes("movie-rec")) {
+    return "joblib";
+  }
   if (modelType.includes("xgboost") || algorithm.includes("xgboost")) {
     return "xgboost-booster";
   }
@@ -493,6 +497,38 @@ function inferModelFormat(run: TrainingRun): string {
 }
 
 function buildDefaultSignature(run: TrainingRun): Record<string, unknown> {
+  if (run.algorithm.toLowerCase().includes("movie-rec")) {
+    return {
+      inputs: [
+        {
+          name: "message",
+          type: "string",
+          required: true
+        },
+        {
+          name: "user_id",
+          type: "integer",
+          required: false
+        },
+        {
+          name: "liked_movie_ids",
+          type: "array",
+          required: false
+        }
+      ],
+      outputs: [
+        {
+          name: "recommendations",
+          type: "array"
+        }
+      ],
+      serving_adapter: "conversational-movie-recommender",
+      metadata: {
+        training_run_id: run.id,
+        model_type: run.model_type
+      }
+    };
+  }
   return {
     inputs: [
       {

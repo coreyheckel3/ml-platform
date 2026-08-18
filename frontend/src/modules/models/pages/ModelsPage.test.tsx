@@ -59,29 +59,78 @@ describe("ModelsPage", () => {
       status: "approved"
     });
   });
+
+  it("infers joblib format and recommender serving signature for movie-rec runs", async () => {
+    const fetchMock = mockRegistryWorkflow({
+      registeredModel: {
+        ...defaultRegisteredModel(),
+        name: "Movie Candidate Ranker",
+        slug: "movie-candidate-ranker",
+        description: "Personalized movie recommendations",
+        task_type: "recommendation"
+      },
+      trainingRun: {
+        ...defaultTrainingRun(),
+        algorithm: "movie-rec-svd",
+        model_type: "hybrid-recommender",
+        objective_metric_name: "ndcg_at_k",
+        metrics: { ndcg_at_k: 0.42 }
+      }
+    });
+    window.localStorage.setItem("forgeml_access_token", "token-123");
+    window.localStorage.setItem("forgeml_project_id", "project-1");
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } }
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ModelsPage />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByRole("form", { name: "Promote training run" })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Promote" })).not.toBeDisabled()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Promote" }));
+
+    expect(await screen.findByText("Promoted v1 from 11111111")).toBeInTheDocument();
+    const promoteCall = findFetchCall(fetchMock, "promote-training-run");
+    expect(JSON.parse(String(promoteCall[1]?.body))).toMatchObject({
+      training_run_id: trainingRunId,
+      model_format: "joblib",
+      signature: {
+        serving_adapter: "conversational-movie-recommender",
+        inputs: [
+          { name: "message", type: "string", required: true },
+          { name: "user_id", type: "integer", required: false },
+          { name: "liked_movie_ids", type: "array", required: false }
+        ],
+        outputs: [{ name: "recommendations", type: "array" }],
+        metadata: {
+          training_run_id: trainingRunId,
+          model_type: "hybrid-recommender"
+        }
+      }
+    });
+  });
 });
 
-function mockRegistryWorkflow() {
+function mockRegistryWorkflow(options: {
+  registeredModel?: Record<string, unknown>;
+  trainingRun?: Record<string, unknown>;
+} = {}) {
   let versions: Array<Record<string, unknown>> = [];
+  const registeredModel = options.registeredModel ?? defaultRegisteredModel();
+  const trainingRun = options.trainingRun ?? defaultTrainingRun();
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input);
     const method = init?.method ?? "GET";
 
     if (method === "GET" && path === "/api/v1/projects/project-1/models") {
       return jsonResponse({
-        items: [
-          {
-            id: modelId,
-            organization_id: "org-1",
-            project_id: "project-1",
-            name: "Fraud Risk XGB",
-            slug: "fraud-risk-xgb",
-            description: "Payment risk scoring",
-            task_type: "classification",
-            owner_user_id: "user-1",
-            status: "active"
-          }
-        ],
+        items: [registeredModel],
         next_cursor: null
       });
     }
@@ -92,36 +141,7 @@ function mockRegistryWorkflow() {
 
     if (method === "GET" && path === "/api/v1/projects/project-1/training-runs") {
       return jsonResponse({
-        items: [
-          {
-            id: trainingRunId,
-            organization_id: "org-1",
-            project_id: "project-1",
-            experiment_id: "experiment-1",
-            experiment_run_id: "experiment-run-1",
-            dataset_version_id: "dataset-version-1",
-            feature_set_id: "feature-set-1",
-            algorithm: "xgboost",
-            model_type: "xgboost",
-            objective_metric_name: "auc",
-            hyperparameters: { max_depth: 6 },
-            status: "succeeded",
-            requested_by: "user-1",
-            artifact_uri: "s3://forgeml/training-runs/run-1",
-            orchestrator_run_id: "workflow-1",
-            metrics: { auc: 0.94 },
-            error_message: null,
-            attempt_count: 1,
-            max_attempts: 3,
-            worker_id: null,
-            lease_expires_at: null,
-            last_heartbeat_at: "2026-08-05T20:00:00Z",
-            queued_at: "2026-08-05T19:55:00Z",
-            started_at: "2026-08-05T19:56:00Z",
-            completed_at: "2026-08-05T20:05:00Z",
-            next_retry_at: null
-          }
-        ],
+        items: [trainingRun],
         next_cursor: null
       });
     }
@@ -162,6 +182,51 @@ function mockRegistryWorkflow() {
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+function defaultRegisteredModel(): Record<string, unknown> {
+  return {
+    id: modelId,
+    organization_id: "org-1",
+    project_id: "project-1",
+    name: "Fraud Risk XGB",
+    slug: "fraud-risk-xgb",
+    description: "Payment risk scoring",
+    task_type: "classification",
+    owner_user_id: "user-1",
+    status: "active"
+  };
+}
+
+function defaultTrainingRun(): Record<string, unknown> {
+  return {
+    id: trainingRunId,
+    organization_id: "org-1",
+    project_id: "project-1",
+    experiment_id: "experiment-1",
+    experiment_run_id: "experiment-run-1",
+    dataset_version_id: "dataset-version-1",
+    feature_set_id: "feature-set-1",
+    algorithm: "xgboost",
+    model_type: "xgboost",
+    objective_metric_name: "auc",
+    hyperparameters: { max_depth: 6 },
+    status: "succeeded",
+    requested_by: "user-1",
+    artifact_uri: "s3://forgeml/training-runs/run-1",
+    orchestrator_run_id: "workflow-1",
+    metrics: { auc: 0.94 },
+    error_message: null,
+    attempt_count: 1,
+    max_attempts: 3,
+    worker_id: null,
+    lease_expires_at: null,
+    last_heartbeat_at: "2026-08-05T20:00:00Z",
+    queued_at: "2026-08-05T19:55:00Z",
+    started_at: "2026-08-05T19:56:00Z",
+    completed_at: "2026-08-05T20:05:00Z",
+    next_retry_at: null
+  };
 }
 
 function modelVersion(status: string): Record<string, unknown> {

@@ -80,8 +80,11 @@ class DeploymentRevisionServingReference:
     project_id: UUID
     deployment_status: str
     revision_status: str
+    revision_runtime_config: dict[str, object]
     traffic_percentage: int
     model_version_id: UUID
+    model_artifact_uri: str
+    model_format: str
     model_signature: dict[str, object]
 
 

@@ -57,6 +57,26 @@ def validate_serving_image(serving_image: str) -> None:
 def validate_runtime_config(runtime_config: dict[str, object]) -> None:
     if len(runtime_config) > 100:
         raise DomainValidationError("Deployment runtime config cannot exceed 100 keys.")
+    for key in (
+        "serving_adapter",
+        "adapter",
+        "external_base_url",
+        "recommend_path",
+        "health_path",
+    ):
+        value = runtime_config.get(key)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise DomainValidationError(f"Deployment runtime config {key} must be a string.")
+    timeout_seconds = runtime_config.get("timeout_seconds")
+    if timeout_seconds is not None:
+        if not isinstance(timeout_seconds, int | float) or isinstance(timeout_seconds, bool):
+            raise DomainValidationError(
+                "Deployment runtime config timeout_seconds must be numeric."
+            )
+        if float(timeout_seconds) <= 0:
+            raise DomainValidationError(
+                "Deployment runtime config timeout_seconds must be greater than zero."
+            )
 
 
 def validate_traffic_percentage(traffic_percentage: int) -> None:

@@ -38,6 +38,10 @@ describe("DeploymentsPage", () => {
         screen.getByRole("button", { name: "Create revision" }),
       ).not.toBeDisabled(),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Movie adapter" }));
+    expect(
+      await screen.findByText("Applied external movie recommender runtime config."),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Create revision" }));
 
     expect(await screen.findByText("Created revision 2.")).toBeInTheDocument();
@@ -48,12 +52,14 @@ describe("DeploymentsPage", () => {
     );
     expect(JSON.parse(String(revisionCall[1]?.body))).toMatchObject({
       model_version_id: approvedVersionId,
-      serving_image: "ghcr.io/forgeml/serving-runtime:latest",
+      serving_image: "ghcr.io/forgeml/adapters/movie-recommender:0.1.0",
       traffic_percentage: 10,
       runtime_config: {
+        serving_adapter: "conversational-movie-recommender",
+        external_base_url: "http://127.0.0.1:8000",
         resources: {
-          cpu: "500m",
-          memory: "1Gi",
+          cpu: "1000m",
+          memory: "2Gi",
         },
       },
     });

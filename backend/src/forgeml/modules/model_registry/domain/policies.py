@@ -20,6 +20,7 @@ _ALLOWED_TASK_TYPES = {
     "retrieval",
 }
 _ALLOWED_MODEL_FORMATS = {
+    "joblib",
     "lightgbm-booster",
     "mlflow",
     "onnx",

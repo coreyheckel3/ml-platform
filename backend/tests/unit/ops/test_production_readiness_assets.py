@@ -194,13 +194,21 @@ def test_deployment_runtime_contract_gate_is_enforced() -> None:
     serving_source = Path("backend/src/forgeml/platform/serving/runtime.py").read_text(
         encoding="utf-8"
     )
+    inference_runtime_source = Path(
+        "backend/src/forgeml/modules/inference/infrastructure/runtime.py"
+    ).read_text(encoding="utf-8")
 
     assert "python scripts/ci/check_deployment_runtime_contract.py" in workflow
     assert contract["schema_version"] == "forgeml.deployment_runtime_contract.v1"
     assert contract["serving_runtime_schema_version"] == "forgeml.serving_runtime.v1"
     assert contract["adapter_boundary"]["gateway_protocol"] == "ServingRuntimeGateway"
+    assert contract["adapter_boundary"]["inference_runtime_router"] == "RoutedInferenceRuntime"
+    assert "conversational-movie-recommender" in contract["adapter_boundary"][
+        "external_adapters"
+    ]
     assert "rollback" in contract["traffic_semantics"]
     assert "InMemoryServingRuntimeGateway" in serving_source
+    assert "ExternalMovieRecommenderRuntime" in inference_runtime_source
 
 
 def test_monitoring_dashboard_contract_gate_is_enforced() -> None:

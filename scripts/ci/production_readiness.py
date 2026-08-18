@@ -237,6 +237,7 @@ REQUIRED_FILES = (
     "contracts/runtime/deployment-serving.v1.json",
     "backend/tests/unit/platform/test_serving_runtime.py",
     "backend/tests/unit/ops/test_deployment_runtime_contract.py",
+    "backend/tests/unit/inference/test_inference_serving_runtime.py",
     "scripts/ci/check_monitoring_dashboard_contract.py",
     "contracts/observability/monitoring-dashboard.v1.json",
     "backend/src/forgeml/modules/monitoring/application/services.py",
@@ -991,15 +992,20 @@ def check_deployment_runtime_contract(repo_root: Path) -> ReadinessCheck:
     adapter_boundary = contract.get("adapter_boundary", {})
     traffic_semantics = contract.get("traffic_semantics", {})
     api_surface = set(contract.get("api_surface", []))
+    external_adapter_semantics = contract.get("external_adapter_semantics", {})
     contract_current, contract_detail = verify_deployment_runtime_contract(contract_path)
     has_adapter_boundary = (
         adapter_boundary.get("gateway_protocol") == "ServingRuntimeGateway"
         and adapter_boundary.get("local_gateway") == "InMemoryServingRuntimeGateway"
         and adapter_boundary.get("deployment_orchestrator") == "LocalDeploymentOrchestrator"
+        and adapter_boundary.get("inference_runtime_router") == "RoutedInferenceRuntime"
+        and "conversational-movie-recommender"
+        in adapter_boundary.get("external_adapters", [])
     )
     has_api_surface = {
         "POST /api/v1/deployment-revisions/{revision_id}/health-probe",
         "POST /api/v1/deployments/{deployment_id}/canary-simulation",
+        "POST /api/v1/inference-endpoints/{endpoint_id}/predict",
         "GET /api/v1/inference-endpoints/{endpoint_id}/health-probe",
     }.issubset(api_surface)
     has_runtime_semantics = {
@@ -1008,12 +1014,21 @@ def check_deployment_runtime_contract(repo_root: Path) -> ReadinessCheck:
         "rollback",
         "routing",
     }.issubset(traffic_semantics)
+    runtime_source = (
+        repo_root / "backend/src/forgeml/modules/inference/infrastructure/runtime.py"
+    ).read_text(encoding="utf-8")
+    has_external_adapter = (
+        "ExternalMovieRecommenderRuntime" in runtime_source
+        and "EXTERNAL_MOVIE_RECOMMENDER_SERVING_SCHEMA_VERSION" in runtime_source
+        and "conversational-movie-recommender" in external_adapter_semantics
+    )
     passed = (
         has_ci_gate
         and contract_current
         and has_adapter_boundary
         and has_api_surface
         and has_runtime_semantics
+        and has_external_adapter
     )
     return ReadinessCheck(
         name="deployment runtime contract",
@@ -1030,7 +1045,8 @@ def check_deployment_runtime_contract(repo_root: Path) -> ReadinessCheck:
                 f"contract_detail={contract_detail}, "
                 f"has_adapter_boundary={has_adapter_boundary}, "
                 f"has_api_surface={has_api_surface}, "
-                f"has_runtime_semantics={has_runtime_semantics}"
+                f"has_runtime_semantics={has_runtime_semantics}, "
+                f"has_external_adapter={has_external_adapter}"
             )
         ),
     )

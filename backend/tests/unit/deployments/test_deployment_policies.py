@@ -12,6 +12,7 @@ from forgeml.modules.deployments.domain.policies import (
     validate_deployable_model_version,
     validate_health_check,
     validate_rollback_target,
+    validate_runtime_config,
     validate_traffic_percentage,
     validate_traffic_target_status,
 )
@@ -68,6 +69,22 @@ def test_validate_health_check_rejects_invalid_error_rate() -> None:
             latency_ms=12.0,
             error_rate=1.5,
         )
+
+
+def test_validate_runtime_config_rejects_invalid_adapter_fields() -> None:
+    validate_runtime_config(
+        {
+            "serving_adapter": "conversational-movie-recommender",
+            "external_base_url": "http://127.0.0.1:8000",
+            "timeout_seconds": 5,
+        }
+    )
+
+    with pytest.raises(DomainValidationError, match="serving_adapter"):
+        validate_runtime_config({"serving_adapter": ""})
+
+    with pytest.raises(DomainValidationError, match="timeout_seconds"):
+        validate_runtime_config({"timeout_seconds": 0})
 
 
 def test_validate_rollback_target_requires_healthy_revision() -> None:

@@ -29,11 +29,12 @@ from forgeml.modules.inference.domain.entities import (
     InferencePrediction,
     InferenceRequestLog,
 )
-from forgeml.modules.inference.infrastructure.runtime import LocalInferenceRuntime
+from forgeml.modules.inference.infrastructure.runtime import build_local_inference_runtime
 from forgeml.modules.inference.infrastructure.sqlalchemy_repositories import (
     SqlAlchemyInferenceRepository,
 )
 from forgeml.platform.api.dependencies import get_current_principal, get_db_session
+from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.security.rbac import Principal
 
 router = APIRouter(tags=["inference"])
@@ -41,10 +42,14 @@ router = APIRouter(tags=["inference"])
 
 def get_inference_service(
     session: Session = Depends(get_db_session),
+    settings: Settings = Depends(get_settings),
 ) -> InferenceService:
     return InferenceService(
         repository=SqlAlchemyInferenceRepository(session),
-        runtime=LocalInferenceRuntime(),
+        runtime=build_local_inference_runtime(
+            movie_recommender_base_url=settings.external_serving_movie_recommender_base_url,
+            timeout_seconds=settings.external_serving_http_timeout_seconds,
+        ),
     )
 
 

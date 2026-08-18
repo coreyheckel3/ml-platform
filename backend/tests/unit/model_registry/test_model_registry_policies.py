@@ -26,6 +26,7 @@ def test_registry_policy_accepts_supported_tasks_and_formats() -> None:
     assert normalize_task_type("classification") == "classification"
     assert normalize_task_type("recommendation") == "recommendation"
     assert normalize_model_format("xgboost-booster") == "xgboost-booster"
+    assert normalize_model_format("joblib") == "joblib"
     assert normalize_model_format("torchscript") == "torchscript"
 
 

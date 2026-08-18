@@ -42,6 +42,14 @@ def test_checked_in_deployment_runtime_contract_matches_builder() -> None:
     )
 
     assert contract == build_deployment_runtime_contract()
+    assert contract["adapter_boundary"]["inference_runtime_router"] == "RoutedInferenceRuntime"
+    assert "conversational-movie-recommender" in contract["adapter_boundary"][
+        "external_adapters"
+    ]
+    assert "POST /api/v1/inference-endpoints/{endpoint_id}/predict" in contract[
+        "api_surface"
+    ]
     assert "GET /api/v1/inference-endpoints/{endpoint_id}/health-probe" in contract[
         "api_surface"
     ]
+    assert "conversational-movie-recommender" in contract["external_adapter_semantics"]

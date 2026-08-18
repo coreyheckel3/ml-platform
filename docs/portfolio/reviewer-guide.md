@@ -60,7 +60,8 @@ External systems sit behind adapter boundaries:
 - MLflow integration uses a tracking gateway.
 - Airflow orchestration uses a workflow gateway with local fallback.
 - Serving uses a runtime gateway for endpoint revision resolution, canary
-  simulation, rollback, and probes.
+  simulation, rollback, probes, and a routed external movie-recommender
+  inference adapter.
 
 ### Production Engineering Signals
 

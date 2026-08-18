@@ -82,6 +82,32 @@ The worker invokes `movie-rec-build --write-metrics`, imports
 `evaluation.json`, records model artifacts with checksums, and appends execution
 logs to the training run.
 
+## External Movie Recommender Serving
+
+ForgeML can route inference traffic to the local movie recommender service after
+an external movie recommender run is promoted and deployed.
+
+Start the recommender service in the external repository:
+
+```bash
+cd ~/Documents/GitHub/conversational-movie-recommender
+MOVIE_REC_AGENT=langgraph MOVIE_REC_LLM_PROVIDER=ollama MOVIE_REC_LLM_MODEL=llama3.2:3b PYTHONPATH=src .venv/bin/python -m movie_recommender.api --model-dir models/sample --port 8000
+```
+
+Then in ForgeML:
+
+1. Open Models and promote the succeeded `movie-rec-svd` or
+   `movie-rec-two-tower` run. The UI defaults the model format to `joblib` and
+   stamps `conversational-movie-recommender` into the model signature.
+2. Request and approve the model version.
+3. Open Deployments, click `Movie adapter` in the revision form, and create the
+   revision.
+4. Probe the revision health.
+5. Open Inference, click `Movie request`, and probe the endpoint.
+
+The prediction log stores normalized recommendations, the recommender answer,
+parsed query, adapter trace, model version, model format, and model artifact URI.
+
 ## Screenshot Capture
 
 Generate reviewer-ready screenshots against deterministic browser API mocks:

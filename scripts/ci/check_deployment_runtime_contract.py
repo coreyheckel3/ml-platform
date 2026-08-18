@@ -13,6 +13,10 @@ for import_path in (REPO_ROOT, BACKEND_SRC):
     if import_path_value not in sys.path:
         sys.path.insert(0, import_path_value)
 
+from forgeml.modules.inference.infrastructure.runtime import (  # noqa: E402
+    EXTERNAL_MOVIE_RECOMMENDER_ADAPTER,
+    EXTERNAL_MOVIE_RECOMMENDER_SERVING_SCHEMA_VERSION,
+)
 from forgeml.platform.serving import SERVING_RUNTIME_SCHEMA_VERSION  # noqa: E402
 
 DEPLOYMENT_RUNTIME_CONTRACT_SCHEMA_VERSION = "forgeml.deployment_runtime_contract.v1"
@@ -26,6 +30,7 @@ def build_deployment_runtime_contract() -> dict[str, Any]:
         "serving_runtime_schema_version": SERVING_RUNTIME_SCHEMA_VERSION,
         "generated_from": [
             "forgeml.platform.serving.runtime",
+            "forgeml.platform.config",
             "forgeml.modules.deployments.infrastructure.orchestrator",
             "forgeml.modules.deployments.application.services",
             "forgeml.modules.inference.application.services",
@@ -36,6 +41,9 @@ def build_deployment_runtime_contract() -> dict[str, Any]:
             "gateway_protocol": "ServingRuntimeGateway",
             "local_gateway": "InMemoryServingRuntimeGateway",
             "deployment_orchestrator": "LocalDeploymentOrchestrator",
+            "inference_runtime_router": "RoutedInferenceRuntime",
+            "external_serving_schema_version": EXTERNAL_MOVIE_RECOMMENDER_SERVING_SCHEMA_VERSION,
+            "external_adapters": [EXTERNAL_MOVIE_RECOMMENDER_ADAPTER],
             "deployment_operations": [
                 "deploy_revision",
                 "apply_traffic_plan",
@@ -46,6 +54,7 @@ def build_deployment_runtime_contract() -> dict[str, Any]:
         "api_surface": [
             "POST /api/v1/deployment-revisions/{revision_id}/health-probe",
             "POST /api/v1/deployments/{deployment_id}/canary-simulation",
+            "POST /api/v1/inference-endpoints/{endpoint_id}/predict",
             "GET /api/v1/inference-endpoints/{endpoint_id}/health-probe",
         ],
         "traffic_semantics": {
@@ -70,11 +79,32 @@ def build_deployment_runtime_contract() -> dict[str, Any]:
             "inference_probe": (
                 "endpoint probe resolves the same runtime revision path used by prediction"
             ),
+            "external_adapter_probe": (
+                "external movie recommender adapter maps upstream /health to serving "
+                "health and reports unhealthy on transport failures"
+            ),
+        },
+        "external_adapter_semantics": {
+            EXTERNAL_MOVIE_RECOMMENDER_ADAPTER: {
+                "selector": "deployment revision runtime_config.serving_adapter",
+                "default_base_url_setting": (
+                    "FORGEML_EXTERNAL_SERVING_MOVIE_RECOMMENDER_BASE_URL"
+                ),
+                "request_contract": (
+                    "ForgeML accepts message/text/query plus optional user and history "
+                    "fields, then calls POST /api/recommend on the external service"
+                ),
+                "response_contract": (
+                    "ForgeML records normalized recommendations, parsed query, trace, "
+                    "model artifact URI, model format, and model version provenance"
+                ),
+            }
         },
         "quality_gates": [
             "python scripts/ci/check_deployment_runtime_contract.py",
             "backend/tests/unit/platform/test_serving_runtime.py",
             "backend/tests/unit/deployments/test_deployment_service.py",
+            "backend/tests/unit/inference/test_inference_serving_runtime.py",
             "backend/tests/unit/inference/test_inference_service.py",
             "backend/tests/api/test_deployments_api.py",
             "backend/tests/api/test_inference_api.py",
@@ -127,17 +157,20 @@ def validate_deployment_runtime_definition(repo_root: Path = REPO_ROOT) -> tuple
     required_files = [
         "backend/src/forgeml/platform/serving/runtime.py",
         "backend/src/forgeml/platform/serving/__init__.py",
+        "backend/src/forgeml/platform/config.py",
         "backend/src/forgeml/modules/deployments/infrastructure/orchestrator.py",
         "backend/src/forgeml/modules/deployments/application/services.py",
         "backend/src/forgeml/modules/deployments/api/routes.py",
         "backend/src/forgeml/modules/deployments/api/schemas.py",
         "backend/src/forgeml/modules/inference/application/services.py",
+        "backend/src/forgeml/modules/inference/domain/entities.py",
         "backend/src/forgeml/modules/inference/domain/policies.py",
         "backend/src/forgeml/modules/inference/infrastructure/runtime.py",
         "backend/src/forgeml/modules/inference/api/routes.py",
         "backend/src/forgeml/modules/inference/api/schemas.py",
         "backend/tests/unit/platform/test_serving_runtime.py",
         "backend/tests/unit/deployments/test_deployment_service.py",
+        "backend/tests/unit/inference/test_inference_serving_runtime.py",
         "backend/tests/unit/inference/test_inference_service.py",
         "backend/tests/api/test_deployments_api.py",
         "backend/tests/api/test_inference_api.py",
@@ -189,15 +222,47 @@ def validate_deployment_runtime_definition(repo_root: Path = REPO_ROOT) -> tuple
             sources["backend/src/forgeml/modules/inference/domain/policies.py"],
         ),
         (
+            "build_local_inference_runtime",
+            sources["backend/src/forgeml/modules/inference/api/routes.py"],
+        ),
+        (
             "list_deployment_serving_references",
             sources["backend/src/forgeml/modules/inference/application/services.py"],
+        ),
+        (
+            "RoutedInferenceRuntime",
+            sources["backend/src/forgeml/modules/inference/infrastructure/runtime.py"],
+        ),
+        (
+            "ExternalMovieRecommenderRuntime",
+            sources["backend/src/forgeml/modules/inference/infrastructure/runtime.py"],
+        ),
+        (
+            "EXTERNAL_MOVIE_RECOMMENDER_SERVING_SCHEMA_VERSION",
+            sources["backend/src/forgeml/modules/inference/infrastructure/runtime.py"],
+        ),
+        (
+            "FORGEML_EXTERNAL_SERVING_MOVIE_RECOMMENDER_BASE_URL",
+            sources["backend/src/forgeml/platform/config.py"],
         ),
         (
             "health_probe",
             sources["backend/src/forgeml/modules/inference/infrastructure/runtime.py"],
         ),
         (
+            "model_artifact_uri",
+            sources["backend/src/forgeml/modules/inference/domain/entities.py"],
+        ),
+        (
+            "revision_runtime_config",
+            sources["backend/src/forgeml/modules/inference/domain/entities.py"],
+        ),
+        (
             "/health-probe",
+            sources["backend/src/forgeml/modules/inference/api/routes.py"],
+        ),
+        (
+            "/predict",
             sources["backend/src/forgeml/modules/inference/api/routes.py"],
         ),
         ("deterministic request-id weighted routing", contract),
@@ -211,10 +276,17 @@ def validate_deployment_runtime_definition(repo_root: Path = REPO_ROOT) -> tuple
     runtime_contract = build_deployment_runtime_contract()
     if runtime_contract["serving_runtime_schema_version"] != SERVING_RUNTIME_SCHEMA_VERSION:
         findings.append("Serving runtime schema version is inconsistent.")
-    if len(runtime_contract["api_surface"]) < 3:
-        findings.append("Deployment runtime contract must include probe and canary API coverage.")
+    if len(runtime_contract["api_surface"]) < 4:
+        findings.append(
+            "Deployment runtime contract must include probe, predict, and canary API coverage."
+        )
     if "rollback" not in runtime_contract["traffic_semantics"]:
         findings.append("Deployment runtime contract must include rollback semantics.")
+    if (
+        EXTERNAL_MOVIE_RECOMMENDER_ADAPTER
+        not in runtime_contract["adapter_boundary"]["external_adapters"]
+    ):
+        findings.append("Deployment runtime contract must include external recommender serving.")
 
     return tuple(findings)
 

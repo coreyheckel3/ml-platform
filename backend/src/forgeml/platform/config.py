@@ -60,6 +60,15 @@ class Settings(BaseSettings):
         / "Documents/GitHub/conversational-movie-recommender",
         alias="FORGEML_EXTERNAL_TRAINING_MOVIE_RECOMMENDER_REPO_ROOT",
     )
+    external_serving_movie_recommender_base_url: str = Field(
+        default="http://127.0.0.1:8000",
+        alias="FORGEML_EXTERNAL_SERVING_MOVIE_RECOMMENDER_BASE_URL",
+    )
+    external_serving_http_timeout_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        alias="FORGEML_EXTERNAL_SERVING_HTTP_TIMEOUT_SECONDS",
+    )
     training_worker_max_attempts: int = Field(
         default=3,
         ge=1,

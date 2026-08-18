@@ -67,6 +67,10 @@ describe("InferencePage", () => {
         screen.getByRole("button", { name: "Probe endpoint" }),
       ).not.toBeDisabled(),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Movie request" }));
+    expect(
+      await screen.findByText("Applied movie recommender probe payload."),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Probe endpoint" }));
 
     expect(
@@ -83,9 +87,10 @@ describe("InferencePage", () => {
     expect(probeBody.request_id).toMatch(/^control-plane-probe-/);
     expect(probeBody).toMatchObject({
       payload: {
-        customer_tenure_days: 418,
-        request_source: "control-plane-probe",
-        amount: 128.45,
+        message: "mind bending sci-fi with a hopeful ending",
+        user_id: 3,
+        liked_movie_ids: [1, 2],
+        limit: 5,
       },
     });
 

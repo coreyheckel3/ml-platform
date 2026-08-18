@@ -2195,6 +2195,53 @@ Implemented scope:
 - Unit, API, frontend, E2E mock, contract, config-policy, and worker tests cover
   the adapter workflow.
 
+## Sprint 67: External Movie Recommender Serving Adapter
+
+Theme: make externally trained movie recommender models usable through ForgeML
+inference, not only visible as completed training artifacts.
+
+Acceptance criteria:
+
+- Inference serving references expose the registered model artifact URI, model
+  format, model signature, and deployment revision runtime config.
+- Deployment revisions can declare `serving_adapter:
+  conversational-movie-recommender` through runtime config.
+- ForgeML routes configured movie recommendation inference requests to the
+  external package HTTP contract.
+- The adapter accepts `message`, `text`, or `query` payload fields plus optional
+  user context, liked movie ids, chat summary, history, and limit.
+- Prediction logs store normalized recommendations, recommender answer, parsed
+  query, trace, model version, model format, and model artifact URI.
+- Health probes map the external `/health` response into ForgeML serving health
+  semantics and report unhealthy on transport failure.
+- Generic models continue to use the existing deterministic local runtime.
+- Models UI infers `joblib` and recommendation-shaped signatures for
+  `movie-rec-*` runs.
+- Deployments and Inference UI expose one-click movie recommender runtime and
+  probe payload templates.
+- CI and production-readiness validate the expanded deployment runtime contract.
+
+Implemented scope:
+
+- Added `RoutedInferenceRuntime` and `ExternalMovieRecommenderRuntime` behind
+  the existing inference runtime interface.
+- Added `FORGEML_EXTERNAL_SERVING_MOVIE_RECOMMENDER_BASE_URL` and
+  `FORGEML_EXTERNAL_SERVING_HTTP_TIMEOUT_SECONDS` settings for local adapter
+  configuration.
+- Extended `DeploymentRevisionServingReference` and SQLAlchemy joins with
+  artifact URI, model format, and revision runtime config.
+- Added deployment runtime-config validation for adapter selector, route, URL,
+  and timeout fields.
+- Added `joblib` as a first-class registered model format.
+- Added deployment and inference console controls for external movie
+  recommender runtime config and request payload templates.
+- Expanded `contracts/runtime/deployment-serving.v1.json` and the runtime
+  contract checker to include the external adapter semantics.
+- Updated demo and architecture docs with the live external serving path.
+- Added backend unit/integration tests and frontend tests for adapter routing,
+  health probes, fallback behavior, repository reference metadata, policy
+  validation, `joblib` inference, and UI payload/config templates.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2225,11 +2272,12 @@ sequence.
 | 64 | Release Evidence Drilldown API | Completed | Authenticated admin API for release evidence retrieval reports, persisted comparison history, audit events, frontend drilldowns, CI contract, production-readiness, and release manifest evidence. |
 | 65 | Release Evidence Scheduled Refresh | Completed | Optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
 | 66 | External Training Package Adapter | Completed | Reviewed external ML package execution through the training worker, `conversational-movie-recommender` profile, profile catalog API, Training Runs UI profile panel, artifact/metric import, security guardrail, CI contract, production-readiness, and release manifest evidence. |
-| 67 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
-| 68 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
-| 69 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
-| 70 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
-| 71 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 67 | External Movie Recommender Serving Adapter | Completed | Routed inference runtime, external recommender HTTP adapter, normalized recommendation prediction logs, health probes, model artifact provenance, `joblib` registry support, deployment/inference UI templates, docs, CI contract, and production-readiness. |
+| 68 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 69 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 70 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 71 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 72 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

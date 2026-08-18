@@ -260,8 +260,11 @@ def _serving_reference_to_domain(
         project_id=registered_model.project_id,
         deployment_status=deployment.status,
         revision_status=revision.status,
+        revision_runtime_config=revision.runtime_config_json,
         traffic_percentage=revision.traffic_percentage,
         model_version_id=model_version.id,
+        model_artifact_uri=model_version.artifact_uri,
+        model_format=model_version.model_format,
         model_signature=model_version.signature_json,
     )
 

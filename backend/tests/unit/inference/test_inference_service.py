@@ -427,7 +427,10 @@ def _serving_reference(
         project_id=project_id,
         deployment_status="active",
         revision_status=revision_status,
+        revision_runtime_config={},
         traffic_percentage=traffic_percentage,
         model_version_id=uuid4(),
+        model_artifact_uri="s3://forgeml/models/fraud-risk-xgb/v1",
+        model_format="xgboost-booster",
         model_signature={"inputs": ["amount"], "outputs": ["score"]},
     )

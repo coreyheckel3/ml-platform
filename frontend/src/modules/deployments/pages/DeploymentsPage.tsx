@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   Gauge,
+  Plug,
   Plus,
   Rocket,
   RotateCcw,
@@ -430,6 +431,13 @@ export function DeploymentsPage() {
     createRevisionMutation.mutate();
   }
 
+  function applyMovieRecommenderRuntimeTemplate() {
+    setServingImage("ghcr.io/forgeml/adapters/movie-recommender:0.1.0");
+    setRuntimeConfigText(JSON.stringify(movieRecommenderRuntimeConfig, null, 2));
+    setOperationError(null);
+    setOperationMessage("Applied external movie recommender runtime config.");
+  }
+
   return (
     <>
       <PageHeader
@@ -578,7 +586,18 @@ export function DeploymentsPage() {
                   />
                 </label>
                 <label className="grid gap-1 text-xs font-semibold uppercase text-steel">
-                  Runtime config
+                  <span className="flex items-center justify-between gap-2">
+                    <span>Runtime config</span>
+                    <button
+                      type="button"
+                      aria-label="Movie adapter"
+                      onClick={applyMovieRecommenderRuntimeTemplate}
+                      className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-2 text-xs font-semibold normal-case text-steel transition hover:border-signal hover:text-ink"
+                    >
+                      <Plug className="h-3.5 w-3.5" />
+                      Movie adapter
+                    </button>
+                  </span>
                   <textarea
                     value={runtimeConfigText}
                     onChange={(event) =>
@@ -990,6 +1009,25 @@ const defaultRuntimeConfig = {
   autoscaling: {
     min_replicas: 1,
     max_replicas: 3,
+  },
+  observability: {
+    metrics_enabled: true,
+    logs_enabled: true,
+  },
+};
+const movieRecommenderRuntimeConfig = {
+  serving_adapter: "conversational-movie-recommender",
+  external_base_url: "http://127.0.0.1:8000",
+  recommend_path: "/api/recommend",
+  health_path: "/health",
+  timeout_seconds: 5,
+  resources: {
+    cpu: "1000m",
+    memory: "2Gi",
+  },
+  autoscaling: {
+    min_replicas: 1,
+    max_replicas: 2,
   },
   observability: {
     metrics_enabled: true,

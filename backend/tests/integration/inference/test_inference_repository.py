@@ -309,6 +309,9 @@ def test_inference_repository_round_trips_endpoints_requests_metrics_and_referen
     assert metric_snapshots[0].prediction_count == 1200
     assert reference is not None
     assert reference.revision_status == "healthy"
+    assert reference.revision_runtime_config == {"replicas": 3}
+    assert reference.model_artifact_uri == "s3://forgeml/training-runs/run-1"
+    assert reference.model_format == "xgboost-booster"
     assert reference.model_signature["outputs"] == ["score"]
 
     with Session(engine) as session:

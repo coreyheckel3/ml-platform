@@ -74,6 +74,10 @@ sit behind adapter boundaries:
 - MLflow sync is isolated behind a tracking gateway.
 - Airflow orchestration is isolated behind a workflow gateway with local fallback.
 - Deployment serving semantics are isolated behind a serving runtime gateway.
+- Inference uses a routed runtime adapter boundary. Generic models keep the
+  deterministic local runtime, while deployment revisions that declare the
+  `conversational-movie-recommender` adapter call the external package over its
+  `/api/recommend` and `/health` HTTP contract.
 - Monitoring dashboards consume platform APIs rather than direct database reads.
 
 These seams keep the modular monolith practical today while protecting future
