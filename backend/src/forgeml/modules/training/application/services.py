@@ -193,7 +193,7 @@ class TrainingRunService:
                 experiment_id=command.experiment_id,
                 project_id=command.project_id,
                 run_name=command.run_name.strip(),
-                status=ExperimentRunStatus.RUNNING,
+                status=ExperimentRunStatus.QUEUED,
                 model_type=command.model_type.strip(),
                 started_by=command.requested_by,
                 dataset_version_id=command.dataset_version_id,
@@ -284,11 +284,16 @@ class TrainingRunService:
 
     def list_training_runs(self, project_id: UUID, principal: Principal) -> list[TrainingRun]:
         self._require(principal, "training_runs:read")
-        return self._training_runs.list_training_runs(UUID(principal.organization_id), project_id)
+        runs = self._training_runs.list_training_runs(UUID(principal.organization_id), project_id)
+        for run in runs:
+            self._reconcile_linked_experiment_run(run)
+        return runs
 
     def get_training_run(self, training_run_id: UUID, principal: Principal) -> TrainingRun:
         self._require(principal, "training_runs:read")
-        return self._get_scoped_training_run(training_run_id, principal)
+        training_run = self._get_scoped_training_run(training_run_id, principal)
+        self._reconcile_linked_experiment_run(training_run)
+        return training_run
 
     def record_result(
         self,
@@ -434,6 +439,12 @@ class TrainingRunService:
             training_worker_claims_total.labels(outcome="rejected").inc()
             raise DomainValidationError("Training run is no longer executable.")
         training_worker_claims_total.labels(outcome="claimed").inc()
+        self._sync_experiment_run_status(
+            claimed.experiment_run_id,
+            status=ExperimentRunStatus.RUNNING,
+            metrics=claimed.metrics,
+            error_message=None,
+        )
         self._training_runs.add_event(
             TrainingRunEvent(
                 id=uuid4(),
@@ -598,6 +609,13 @@ class TrainingRunService:
                 next_retry_at=next_retry_at,
             )
             saved = self._training_runs.update_training_run(retry)
+            self._sync_experiment_run_status(
+                saved.experiment_run_id,
+                status=ExperimentRunStatus.QUEUED,
+                metrics=saved.metrics,
+                evaluation_report=evaluation_report,
+                error_message=error_message,
+            )
             training_worker_retries_total.labels(outcome="scheduled").inc()
             self._training_runs.add_event(
                 TrainingRunEvent(
@@ -712,6 +730,27 @@ class TrainingRunService:
                 next_retry_at=next_retry_at,
             )
             saved = self._training_runs.update_training_run(retry)
+            self._sync_experiment_run_status(
+                saved.experiment_run_id,
+                status=ExperimentRunStatus.QUEUED,
+                metrics=saved.metrics,
+                evaluation_report={
+                    "training_execution": {
+                        "schema_version": "forgeml.training_execution_result.v1",
+                        "runner_name": "expired-worker-lease",
+                        "external_run_id": saved.orchestrator_run_id,
+                        "artifacts": [],
+                    },
+                    "lease_recovery": {
+                        "previous_worker_id": expired.worker_id,
+                        "attempt_count": saved.attempt_count,
+                        "max_attempts": saved.max_attempts,
+                        "lease_expires_at": _datetime_isoformat(expired.lease_expires_at),
+                        "next_retry_at": _datetime_isoformat(saved.next_retry_at),
+                    },
+                },
+                error_message="Training run lease expired before completion.",
+            )
             training_worker_expired_leases_total.labels(outcome="requeued").inc()
             self._training_runs.add_event(
                 TrainingRunEvent(
@@ -756,12 +795,11 @@ class TrainingRunService:
             next_retry_at=None,
         )
         saved = self._training_runs.update_training_run(canceled)
-        self._experiment_runs.update_experiment_run(
+        self._sync_experiment_run_status(
             saved.experiment_run_id,
-            ExperimentRunStatus.CANCELED,
-            saved.metrics,
-            {},
-            "Training run was canceled.",
+            status=ExperimentRunStatus.CANCELED,
+            metrics=saved.metrics,
+            error_message="Training run was canceled.",
         )
         self._training_runs.add_event(
             TrainingRunEvent(
@@ -859,12 +897,12 @@ class TrainingRunService:
             next_retry_at=None,
         )
         saved = self._training_runs.update_training_run(updated)
-        experiment_run = self._experiment_runs.update_experiment_run(
+        experiment_run = self._sync_experiment_run_status(
             saved.experiment_run_id,
-            _to_experiment_status(status),
-            saved.metrics,
-            evaluation_report,
-            error_message,
+            status=_to_experiment_status(status),
+            metrics=saved.metrics,
+            evaluation_report=evaluation_report,
+            error_message=error_message,
         )
         synced_evaluation_report = self._sync_mlflow_tracking(
             training_run=saved,
@@ -901,6 +939,46 @@ class TrainingRunService:
             },
         )
         return saved
+
+    def _sync_experiment_run_status(
+        self,
+        run_id: UUID,
+        *,
+        status: ExperimentRunStatus,
+        metrics: dict[str, float],
+        evaluation_report: dict[str, object] | None = None,
+        error_message: str | None,
+    ) -> ExperimentRun:
+        current = self._experiment_runs.get_experiment_run(run_id)
+        if current is None:
+            raise ResourceNotFoundError("Experiment run was not found.")
+        return self._experiment_runs.update_experiment_run(
+            run_id,
+            status,
+            metrics,
+            current.evaluation_report if evaluation_report is None else evaluation_report,
+            error_message,
+        )
+
+    def _reconcile_linked_experiment_run(self, training_run: TrainingRun) -> None:
+        current = self._experiment_runs.get_experiment_run(training_run.experiment_run_id)
+        if current is None:
+            return
+        expected_status = _to_experiment_status(training_run.status)
+        if current.status == expected_status:
+            return
+        error_message = (
+            None
+            if expected_status == ExperimentRunStatus.RUNNING
+            else current.error_message
+        )
+        self._experiment_runs.update_experiment_run(
+            current.id,
+            expected_status,
+            training_run.metrics,
+            current.evaluation_report,
+            error_message,
+        )
 
     def _sync_mlflow_tracking(
         self,
@@ -1014,6 +1092,10 @@ class TrainingRunService:
 
 
 def _to_experiment_status(status: TrainingRunStatus) -> ExperimentRunStatus:
+    if status in {TrainingRunStatus.REQUESTED, TrainingRunStatus.QUEUED}:
+        return ExperimentRunStatus.QUEUED
+    if status == TrainingRunStatus.RUNNING:
+        return ExperimentRunStatus.RUNNING
     if status == TrainingRunStatus.SUCCEEDED:
         return ExperimentRunStatus.SUCCEEDED
     if status in {TrainingRunStatus.FAILED, TrainingRunStatus.DEAD_LETTERED}:

@@ -523,7 +523,7 @@
       "code": "training_runs:cancel",
       "description": "Cancel queued or running training runs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/training/application/services.py:747"
+        "backend/src/forgeml/modules/training/application/services.py:786"
       ],
       "module": "training"
     },
@@ -543,10 +543,10 @@
       "enforced_at": [
         "backend/src/forgeml/modules/training/api/routes.py:88",
         "backend/src/forgeml/modules/training/application/services.py:286",
-        "backend/src/forgeml/modules/training/application/services.py:290",
-        "backend/src/forgeml/modules/training/application/services.py:414",
-        "backend/src/forgeml/modules/training/application/services.py:808",
-        "backend/src/forgeml/modules/training/application/services.py:817"
+        "backend/src/forgeml/modules/training/application/services.py:293",
+        "backend/src/forgeml/modules/training/application/services.py:419",
+        "backend/src/forgeml/modules/training/application/services.py:846",
+        "backend/src/forgeml/modules/training/application/services.py:855"
       ],
       "module": "training"
     },
@@ -555,10 +555,10 @@
       "code": "training_runs:write",
       "description": "Record training results and execute training runs.",
       "enforced_at": [
-        "backend/src/forgeml/modules/training/application/services.py:298",
-        "backend/src/forgeml/modules/training/application/services.py:313",
-        "backend/src/forgeml/modules/training/application/services.py:333",
-        "backend/src/forgeml/modules/training/application/services.py:397"
+        "backend/src/forgeml/modules/training/application/services.py:303",
+        "backend/src/forgeml/modules/training/application/services.py:318",
+        "backend/src/forgeml/modules/training/application/services.py:338",
+        "backend/src/forgeml/modules/training/application/services.py:402"
       ],
       "module": "training"
     }

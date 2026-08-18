@@ -97,6 +97,9 @@ class ExperimentRunRecorder(Protocol):
     def add_experiment_run(self, run: ExperimentRun) -> ExperimentRun:
         raise NotImplementedError
 
+    def get_experiment_run(self, run_id: UUID) -> ExperimentRun | None:
+        raise NotImplementedError
+
     def update_experiment_run(
         self,
         run_id: UUID,

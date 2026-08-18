@@ -132,7 +132,7 @@ def test_training_repository_round_trips_training_runs_events_and_reference_chec
                 experiment_id=experiment_id,
                 project_id=project_id,
                 run_name="xgb-depth-6",
-                status=ExperimentRunStatus.RUNNING,
+                status=ExperimentRunStatus.QUEUED,
                 model_type="xgboost",
                 started_by=user_id,
                 dataset_version_id=dataset_version_id,

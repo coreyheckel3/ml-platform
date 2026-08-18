@@ -524,20 +524,43 @@ def _read_evaluation_report(model_dir: Path) -> dict[str, object]:
 
 
 def _metrics_from_evaluation(evaluation_report: Mapping[str, object]) -> dict[str, float]:
-    metric_names = {
+    metric_names = (
+        "ndcg_at_k",
         "precision_at_k",
         "recall_at_k",
-        "ndcg_at_k",
         "hit_rate_at_k",
         "mrr_at_k",
         "evaluated_users",
-    }
+    )
     metrics: dict[str, float] = {}
     for name in metric_names:
         value = evaluation_report.get(name)
         if isinstance(value, int | float) and not isinstance(value, bool):
             metrics[name] = float(value)
+    component_metrics = evaluation_report.get("component_metrics")
+    if isinstance(component_metrics, Mapping):
+        for component_name, component_payload in component_metrics.items():
+            if not isinstance(component_name, str) or not isinstance(component_payload, Mapping):
+                continue
+            safe_component_name = _metric_name_part(component_name)
+            for metric_name in metric_names:
+                value = component_payload.get(metric_name)
+                if isinstance(value, int | float) and not isinstance(value, bool):
+                    metrics[f"component.{safe_component_name}.{metric_name}"] = float(value)
+    baseline_summary = evaluation_report.get("baseline_summary")
+    if isinstance(baseline_summary, Mapping):
+        for name, value in baseline_summary.items():
+            if (
+                isinstance(name, str)
+                and isinstance(value, int | float)
+                and not isinstance(value, bool)
+            ):
+                metrics[f"baseline.{_metric_name_part(name)}"] = float(value)
     return metrics
+
+
+def _metric_name_part(value: str) -> str:
+    return "".join(character if character.isalnum() else "_" for character in value).strip("_")
 
 
 def _environment_for(repo_root: Path) -> dict[str, str]:

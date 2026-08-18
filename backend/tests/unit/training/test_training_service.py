@@ -184,10 +184,14 @@ class FakeTrainingRunRepository:
 class FakeExperimentRunRecorder:
     def __init__(self) -> None:
         self.runs: dict[UUID, ExperimentRun] = {}
+        self.updates: list[ExperimentRun] = []
 
     def add_experiment_run(self, run: ExperimentRun) -> ExperimentRun:
         self.runs[run.id] = run
         return run
+
+    def get_experiment_run(self, run_id: UUID) -> ExperimentRun | None:
+        return self.runs.get(run_id)
 
     def update_experiment_run(
         self,
@@ -215,6 +219,7 @@ class FakeExperimentRunRecorder:
             error_message=error_message,
         )
         self.runs[run_id] = updated
+        self.updates.append(updated)
         return updated
 
 
@@ -432,6 +437,13 @@ def test_training_service_creates_linked_experiment_run_and_records_result() -> 
         ),
         actor,
     )
+
+    assert training_run.status == TrainingRunStatus.QUEUED
+    assert training_run.orchestrator_run_id.startswith("workflow:")
+    assert recorder.updates == []
+    assert recorder.runs[training_run.experiment_run_id].status == ExperimentRunStatus.QUEUED
+    assert recorder.runs[training_run.experiment_run_id].parameters["max_depth"] == 6
+
     completed = service.record_result(
         RecordTrainingResultCommand(
             training_run_id=training_run.id,
@@ -442,9 +454,6 @@ def test_training_service_creates_linked_experiment_run_and_records_result() -> 
         actor,
     )
 
-    assert training_run.status == TrainingRunStatus.QUEUED
-    assert training_run.orchestrator_run_id.startswith("workflow:")
-    assert recorder.runs[training_run.experiment_run_id].parameters["max_depth"] == 6
     assert completed.metrics["auc"] == 0.94
     assert recorder.runs[training_run.experiment_run_id].status == ExperimentRunStatus.SUCCEEDED
     assert repository.events[0].event_type == "queued"
@@ -551,7 +560,9 @@ def test_training_service_executes_queued_run_with_runner() -> None:
     )
 
     evaluation_report = recorder.runs[training_run.experiment_run_id].evaluation_report
+    status_updates = [update.status for update in recorder.updates]
     assert completed.status == TrainingRunStatus.SUCCEEDED
+    assert status_updates == [ExperimentRunStatus.RUNNING, ExperimentRunStatus.SUCCEEDED]
     assert completed.metrics["auc"] == 0.95
     assert evaluation_report["training_execution"]["schema_version"] == (
         "forgeml.training_execution_result.v1"
@@ -650,6 +661,25 @@ def test_training_service_polls_orchestration_status() -> None:
     assert status.mapped_training_status == TrainingRunStatus.QUEUED
     assert status.is_terminal is False
     assert status.external_url == "http://orchestrator.local/runs/workflow-1"
+
+
+def test_training_service_reconciles_stale_experiment_run_status_on_read() -> None:
+    context = started_training_run_context(runner=None)
+    stale_experiment_run = replace(
+        context.recorder.runs[context.training_run.experiment_run_id],
+        status=ExperimentRunStatus.RUNNING,
+    )
+    context.recorder.runs[stale_experiment_run.id] = stale_experiment_run
+
+    listed = context.service.list_training_runs(context.project_id, context.actor)
+    fetched = context.service.get_training_run(context.training_run.id, context.actor)
+
+    assert listed == [context.training_run]
+    assert fetched == context.training_run
+    assert context.recorder.runs[context.training_run.experiment_run_id].status == (
+        ExperimentRunStatus.QUEUED
+    )
+    assert [update.status for update in context.recorder.updates] == [ExperimentRunStatus.QUEUED]
 
 
 def test_training_service_rejects_execution_without_matching_runner() -> None:
@@ -810,7 +840,8 @@ def test_training_service_worker_schedules_retry_for_failed_attempt() -> None:
     assert retry.worker_id is None
     assert retry.lease_expires_at is None
     assert retry.next_retry_at is not None
-    assert context.recorder.runs[retry.experiment_run_id].status == ExperimentRunStatus.RUNNING
+    assert context.recorder.runs[retry.experiment_run_id].status == ExperimentRunStatus.QUEUED
+    assert context.recorder.runs[retry.experiment_run_id].error_message == "runner failed"
     assert "retry_scheduled" in [event.event_type for event in context.repository.events]
     assert context.repository.logs[-1].message == (
         "Training run attempt failed and was scheduled for retry."
@@ -914,6 +945,7 @@ def test_training_service_recovers_expired_running_lease() -> None:
     assert recovered.worker_id is None
     assert recovered.lease_expires_at is None
     assert recovered.next_retry_at is not None
+    assert context.recorder.runs[recovered.experiment_run_id].status == ExperimentRunStatus.QUEUED
     assert context.repository.events[-1].event_type == "lease_expired"
 
 

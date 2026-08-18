@@ -10,6 +10,7 @@ class ExperimentStatus(StrEnum):
 
 class ExperimentRunStatus(StrEnum):
     PENDING = "pending"
+    QUEUED = "queued"
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"

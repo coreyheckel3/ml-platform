@@ -316,6 +316,10 @@ class SqlAlchemyExperimentRunRecorder:
         self._session.flush()
         return _experiment_run_to_domain(model)
 
+    def get_experiment_run(self, run_id: UUID) -> ExperimentRun | None:
+        model = self._session.get(ExperimentRunModel, run_id)
+        return _experiment_run_to_domain(model) if model else None
+
     def update_experiment_run(
         self,
         run_id: UUID,
