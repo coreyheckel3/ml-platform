@@ -49,6 +49,9 @@ try:
     from scripts.ci.check_release_evidence_retrieval_contract import (
         check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
     )
+    from scripts.ci.check_release_evidence_scheduled_refresh_contract import (
+        check_release_evidence_scheduled_refresh_contract as verify_scheduled_refresh_contract,
+    )
     from scripts.ci.check_release_evidence_ux_contract import (
         check_release_evidence_ux_contract as verify_release_evidence_ux_contract,
     )
@@ -106,6 +109,9 @@ except ModuleNotFoundError:
     )
     from check_release_evidence_retrieval_contract import (  # type: ignore[no-redef]
         check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
+    )
+    from check_release_evidence_scheduled_refresh_contract import (  # type: ignore[no-redef]
+        check_release_evidence_scheduled_refresh_contract as verify_scheduled_refresh_contract,
     )
     from check_release_evidence_ux_contract import (  # type: ignore[no-redef]
         check_release_evidence_ux_contract as verify_release_evidence_ux_contract,
@@ -260,6 +266,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-evidence-ux.v1.json",
     "contracts/ops/release-evidence-retrieval.v1.json",
     "contracts/ops/release-evidence-drilldown-api.v1.json",
+    "contracts/ops/release-evidence-scheduled-refresh.v1.json",
     "contracts/ops/operational-audit-ux.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
@@ -284,12 +291,16 @@ REQUIRED_FILES = (
     "backend/src/forgeml/platform/release_evidence/__init__.py",
     "backend/src/forgeml/platform/release_evidence/retrieval.py",
     "scripts/ops/retrieve_release_evidence.py",
+    "scripts/ops/refresh_release_evidence.py",
     "scripts/ci/check_release_evidence_retrieval_contract.py",
     "scripts/ci/check_release_evidence_drilldown_api_contract.py",
+    "scripts/ci/check_release_evidence_scheduled_refresh_contract.py",
     "backend/tests/unit/platform/test_release_evidence_retrieval.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_cli.py",
+    "backend/tests/unit/ops/test_release_evidence_refresh.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_contract.py",
     "backend/tests/unit/ops/test_release_evidence_drilldown_api_contract.py",
+    "backend/tests/unit/ops/test_release_evidence_scheduled_refresh_contract.py",
     "frontend/src/modules/operational_audit/data/releaseEvidenceAuditEvents.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.test.ts",
@@ -369,6 +380,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_evidence_ux_contract(repo_root),
         check_release_evidence_retrieval_contract(repo_root),
         check_release_evidence_drilldown_api_contract(repo_root),
+        check_release_evidence_scheduled_refresh_contract(repo_root),
         check_operational_audit_ux_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
@@ -2103,6 +2115,103 @@ def check_release_evidence_drilldown_api_contract(repo_root: Path) -> ReadinessC
                 f"has_service_behavior={has_service_behavior}, "
                 f"has_route_surface={has_route_surface}, "
                 f"has_persistence={has_persistence}, "
+                f"has_frontend_surface={has_frontend_surface}, "
+                f"has_release_manifest_artifact={has_release_manifest_artifact}, "
+                f"has_contract_docs={has_contract_docs}"
+            )
+        ),
+    )
+
+
+def check_release_evidence_scheduled_refresh_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract_path = repo_root / "contracts/ops/release-evidence-scheduled-refresh.v1.json"
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = (
+        repo_root / "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    cli_source = (repo_root / "scripts/ops/refresh_release_evidence.py").read_text(
+        encoding="utf-8"
+    )
+    frontend_api_source = (
+        repo_root / "frontend/src/modules/release_evidence/api/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    page_source = (
+        repo_root / "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    endpoints = {
+        (endpoint.get("method"), endpoint.get("path"))
+        for endpoint in contract.get("api", {}).get("endpoints", [])
+        if isinstance(endpoint, dict)
+    }
+    has_ci_gate = (
+        "python scripts/ci/check_release_evidence_scheduled_refresh_contract.py"
+        in ci_source
+    )
+    contract_current, contract_detail = verify_scheduled_refresh_contract(
+        contract_path,
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_endpoint = (
+        "GET",
+        "/api/v1/admin/release-evidence/refresh/status",
+    ) in endpoints and "/admin/release-evidence/refresh/status" in route_source
+    has_service_summary = (
+        "ReleaseEvidenceRefreshStatus" in service_source
+        and "last_success_older_than_threshold" in service_source
+        and "latest_report_failed" in service_source
+        and "_refresh_operator_command" in service_source
+    )
+    has_cli_automation = (
+        "run_release_evidence_refresh_once" in cli_source
+        and "--interval-seconds" in cli_source
+        and "--print-cron" in cli_source
+        and "forgeml.release_evidence_refresh.v1" in cli_source
+    )
+    has_frontend_surface = (
+        "getReleaseEvidenceRefreshStatus" in frontend_api_source
+        and "Scheduled Refresh" in page_source
+        and "Last Success Summary" in page_source
+        and "Stale Indicators" in page_source
+    )
+    has_release_manifest_artifact = (
+        "release_evidence_scheduled_refresh_contract" in manifest_source
+        and "contracts/ops/release-evidence-scheduled-refresh.v1.json"
+        in manifest_source
+    )
+    has_contract_docs = "release-evidence-scheduled-refresh.v1.json" in contracts_source
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_endpoint
+        and has_service_summary
+        and has_cli_automation
+        and has_frontend_surface
+        and has_release_manifest_artifact
+        and has_contract_docs
+    )
+    return ReadinessCheck(
+        name="release evidence scheduled refresh contract",
+        passed=passed,
+        detail=(
+            "release evidence stale summaries, scheduler command, UI indicators, "
+            "manifest artifact, docs, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_endpoint={has_endpoint}, "
+                f"has_service_summary={has_service_summary}, "
+                f"has_cli_automation={has_cli_automation}, "
                 f"has_frontend_surface={has_frontend_surface}, "
                 f"has_release_manifest_artifact={has_release_manifest_artifact}, "
                 f"has_contract_docs={has_contract_docs}"

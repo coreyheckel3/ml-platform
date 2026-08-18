@@ -47,3 +47,26 @@ class ReleaseEvidenceReportResponse(BaseModel):
 class ReleaseEvidenceReportListResponse(BaseModel):
     items: list[ReleaseEvidenceReportResponse]
     next_cursor: str | None = None
+
+
+class ReleaseEvidenceRefreshStatusResponse(BaseModel):
+    schema_version: str = "forgeml.release_evidence_refresh_status.v1"
+    organization_id: str
+    provider: str
+    repository: str | None
+    branch: str | None
+    workflow: str | None
+    artifact_name: str | None
+    status: str
+    stale: bool
+    stale_after_seconds: int
+    refresh_interval_seconds: int
+    latest_report: ReleaseEvidenceReportResponse | None
+    last_successful_report: ReleaseEvidenceReportResponse | None
+    latest_report_age_seconds: int | None
+    last_success_age_seconds: int | None
+    next_refresh_at: str | None
+    checked_at: str
+    stale_reasons: list[str] = Field(default_factory=list)
+    recommended_action: str
+    operator_command: str

@@ -4451,6 +4451,177 @@
         "title": "RegisteredModelResponse",
         "type": "object"
       },
+      "ReleaseEvidenceRefreshStatusResponse": {
+        "properties": {
+          "artifact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Name"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "last_success_age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success Age Seconds"
+          },
+          "last_successful_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReleaseEvidenceReportResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReleaseEvidenceReportResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_report_age_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Report Age Seconds"
+          },
+          "next_refresh_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Refresh At"
+          },
+          "operator_command": {
+            "title": "Operator Command",
+            "type": "string"
+          },
+          "organization_id": {
+            "title": "Organization Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "recommended_action": {
+            "title": "Recommended Action",
+            "type": "string"
+          },
+          "refresh_interval_seconds": {
+            "title": "Refresh Interval Seconds",
+            "type": "integer"
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repository"
+          },
+          "schema_version": {
+            "default": "forgeml.release_evidence_refresh_status.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "stale_after_seconds": {
+            "title": "Stale After Seconds",
+            "type": "integer"
+          },
+          "stale_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stale Reasons",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow"
+          }
+        },
+        "required": [
+          "organization_id",
+          "provider",
+          "repository",
+          "branch",
+          "workflow",
+          "artifact_name",
+          "status",
+          "stale",
+          "stale_after_seconds",
+          "refresh_interval_seconds",
+          "latest_report",
+          "last_successful_report",
+          "latest_report_age_seconds",
+          "last_success_age_seconds",
+          "next_refresh_at",
+          "checked_at",
+          "recommended_action",
+          "operator_command"
+        ],
+        "title": "ReleaseEvidenceRefreshStatusResponse",
+        "type": "object"
+      },
       "ReleaseEvidenceReportListResponse": {
         "properties": {
           "items": {
@@ -5998,6 +6169,80 @@
           }
         ],
         "summary": "List Audit Log",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/admin/release-evidence/refresh/status": {
+      "get": {
+        "operationId": "get_release_evidence_refresh_status_api_v1_admin_release_evidence_refresh_status_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "stale_after_seconds",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2592000,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stale After Seconds"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh_interval_seconds",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 604800,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Refresh Interval Seconds"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseEvidenceRefreshStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Release Evidence Refresh Status",
         "tags": [
           "administration"
         ]

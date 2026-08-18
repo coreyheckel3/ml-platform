@@ -1,10 +1,11 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
 
 from forgeml.modules.administration.application.services import (
     AdministrationService,
+    GetReleaseEvidenceRefreshStatusQuery,
     GetReleaseEvidenceReportQuery,
     ListAuditLogQuery,
     ListReleaseEvidenceReportsQuery,
@@ -338,6 +339,133 @@ def test_administration_service_persists_release_evidence_retrieval_errors() -> 
     assert audit_log.recorded_events[0].metadata["error_message"] == report.error_message
 
 
+def test_administration_service_returns_fresh_release_evidence_refresh_status() -> None:
+    organization_id = uuid4()
+    now = datetime(2026, 8, 17, 18, 0, tzinfo=UTC)
+    report = release_evidence_report(
+        organization_id,
+        status="passed",
+        created_at=now - timedelta(minutes=30),
+    )
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        release_evidence_reports=FakeReleaseEvidenceReportRepository([report]),
+        release_evidence_config=release_evidence_config(),
+    )
+
+    status = service.get_release_evidence_refresh_status(
+        GetReleaseEvidenceRefreshStatusQuery(
+            organization_id=organization_id,
+            stale_after_seconds=86_400,
+            refresh_interval_seconds=3_600,
+            now=now,
+        ),
+        principal(organization_id, {"admin:release_evidence:read"}),
+    )
+
+    assert status.status == "fresh"
+    assert status.stale is False
+    assert status.latest_report == report
+    assert status.last_successful_report == report
+    assert status.last_success_age_seconds == 1_800
+    assert status.stale_reasons == ()
+    assert status.recommended_action == "wait_until_next_refresh"
+    assert "refresh_release_evidence.py" in status.operator_command
+
+
+def test_administration_service_marks_release_evidence_refresh_status_stale() -> None:
+    organization_id = uuid4()
+    now = datetime(2026, 8, 17, 18, 0, tzinfo=UTC)
+    report = release_evidence_report(
+        organization_id,
+        status="passed",
+        created_at=now - timedelta(days=2),
+    )
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        release_evidence_reports=FakeReleaseEvidenceReportRepository([report]),
+        release_evidence_config=release_evidence_config(),
+    )
+
+    status = service.get_release_evidence_refresh_status(
+        GetReleaseEvidenceRefreshStatusQuery(
+            organization_id=organization_id,
+            stale_after_seconds=86_400,
+            refresh_interval_seconds=3_600,
+            now=now,
+        ),
+        principal(organization_id, {"admin:release_evidence:read"}),
+    )
+
+    assert status.status == "stale"
+    assert status.stale is True
+    assert status.last_success_age_seconds == 172_800
+    assert status.stale_reasons == ("last_success_older_than_threshold",)
+    assert status.recommended_action == "retrieve_now"
+
+
+def test_administration_service_marks_release_evidence_refresh_status_missing() -> None:
+    organization_id = uuid4()
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        release_evidence_reports=FakeReleaseEvidenceReportRepository(),
+        release_evidence_config=release_evidence_config(),
+    )
+
+    status = service.get_release_evidence_refresh_status(
+        GetReleaseEvidenceRefreshStatusQuery(
+            organization_id=organization_id,
+            stale_after_seconds=86_400,
+            refresh_interval_seconds=3_600,
+            now=datetime(2026, 8, 17, 18, 0, tzinfo=UTC),
+        ),
+        principal(organization_id, {"admin:release_evidence:read"}),
+    )
+
+    assert status.status == "missing"
+    assert status.stale is True
+    assert status.latest_report is None
+    assert status.last_successful_report is None
+    assert status.stale_reasons == ("no_reports", "no_successful_report")
+
+
+def test_administration_service_marks_latest_failed_refresh_status_attention() -> None:
+    organization_id = uuid4()
+    now = datetime(2026, 8, 17, 18, 0, tzinfo=UTC)
+    failed = release_evidence_report(
+        organization_id,
+        status="failed",
+        created_at=now - timedelta(minutes=5),
+    )
+    passed = release_evidence_report(
+        organization_id,
+        status="passed",
+        created_at=now - timedelta(minutes=20),
+    )
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        release_evidence_reports=FakeReleaseEvidenceReportRepository([failed, passed]),
+        release_evidence_config=release_evidence_config(),
+    )
+
+    status = service.get_release_evidence_refresh_status(
+        GetReleaseEvidenceRefreshStatusQuery(
+            organization_id=organization_id,
+            stale_after_seconds=86_400,
+            refresh_interval_seconds=3_600,
+            now=now,
+        ),
+        principal(organization_id, {"admin:release_evidence:read"}),
+    )
+
+    assert status.status == "attention"
+    assert status.stale is False
+    assert status.latest_report == failed
+    assert status.last_successful_report == passed
+    assert status.stale_reasons == ("latest_report_failed",)
+    assert status.recommended_action == "retrieve_now"
+
+
 def principal(organization_id: UUID, permissions: set[str]) -> Principal:
     return Principal(
         user_id=str(uuid4()),
@@ -361,6 +489,7 @@ def release_evidence_report(
     organization_id: UUID,
     *,
     status: str,
+    created_at: datetime | None = None,
 ) -> ReleaseEvidenceReport:
     return ReleaseEvidenceReport(
         id=uuid4(),
@@ -385,7 +514,7 @@ def release_evidence_report(
         manifest_summary={"git_sha": "a" * 40},
         report={"schema_version": "forgeml.release_evidence_retrieval.v1"},
         error_message=None,
-        created_at=datetime.now(UTC),
+        created_at=created_at or datetime.now(UTC),
     )
 
 

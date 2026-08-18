@@ -31,6 +31,29 @@ export type ReleaseEvidenceReportListResponse = {
   next_cursor: string | null;
 };
 
+export type ReleaseEvidenceRefreshStatus = {
+  schema_version: string;
+  organization_id: string;
+  provider: string;
+  repository: string | null;
+  branch: string | null;
+  workflow: string | null;
+  artifact_name: string | null;
+  status: string;
+  stale: boolean;
+  stale_after_seconds: number;
+  refresh_interval_seconds: number;
+  latest_report: ReleaseEvidenceReport | null;
+  last_successful_report: ReleaseEvidenceReport | null;
+  latest_report_age_seconds: number | null;
+  last_success_age_seconds: number | null;
+  next_refresh_at: string | null;
+  checked_at: string;
+  stale_reasons: string[];
+  recommended_action: string;
+  operator_command: string;
+};
+
 export type ReleaseEvidenceReportFilters = {
   status?: string;
   limit?: number;
@@ -68,6 +91,15 @@ export function retrieveReleaseEvidenceReport(
   return apiPost<Record<string, never>, ReleaseEvidenceReport>(
     "/api/v1/admin/release-evidence/reports/retrieve",
     {},
+    { token },
+  );
+}
+
+export function getReleaseEvidenceRefreshStatus(
+  token: string,
+): Promise<ReleaseEvidenceRefreshStatus> {
+  return apiGet<ReleaseEvidenceRefreshStatus>(
+    "/api/v1/admin/release-evidence/refresh/status",
     { token },
   );
 }

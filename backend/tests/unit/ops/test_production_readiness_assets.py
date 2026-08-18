@@ -447,6 +447,7 @@ def test_release_evidence_ux_contract_gate_is_enforced() -> None:
     assert contract["route"]["label"] == "Release Evidence"
     assert "Release Manifest" in release_page
     assert "Live Evidence Retrieval" in release_page
+    assert "Scheduled Refresh" in release_page
     assert "Comparison Signals" in release_page
     assert "Quality Gate Coverage" in release_page
     assert "Demo Screenshot Evidence" in release_page
@@ -454,6 +455,7 @@ def test_release_evidence_ux_contract_gate_is_enforced() -> None:
     assert "release_manifest_verifier_contract" in release_data
     assert "release_evidence_retrieval_contract" in release_data
     assert "release_evidence_drilldown_api_contract" in release_data
+    assert "release_evidence_scheduled_refresh_contract" in release_data
     assert "operational_audit_ux_contract" in release_data
     assert "09-release-evidence.png" in screenshot_catalog
 
@@ -541,6 +543,52 @@ def test_release_evidence_drilldown_api_contract_gate_is_enforced() -> None:
     assert "retrieveReleaseEvidenceReport" in frontend_api_source
     assert "API Evidence Drilldown" in release_page
     assert "release_evidence_drilldown_api_contract" in release_data
+
+
+def test_release_evidence_scheduled_refresh_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-evidence-scheduled-refresh.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    service_source = Path(
+        "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = Path(
+        "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    frontend_api_source = Path(
+        "frontend/src/modules/release_evidence/api/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    release_page = Path(
+        "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    release_data = Path(
+        "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    refresh_cli = Path("scripts/ops/refresh_release_evidence.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "python scripts/ci/check_release_evidence_scheduled_refresh_contract.py"
+        in workflow
+    )
+    assert "refresh_release_evidence.py" in runbook
+    assert (
+        contract["schema_version"]
+        == "forgeml.release_evidence_scheduled_refresh_contract.v1"
+    )
+    assert contract["api"]["response_model"] == "ReleaseEvidenceRefreshStatusResponse"
+    assert "last_success_older_than_threshold" in contract["stale_semantics"]["reasons"]
+    assert "GetReleaseEvidenceRefreshStatusQuery" in service_source
+    assert "/admin/release-evidence/refresh/status" in route_source
+    assert "getReleaseEvidenceRefreshStatus" in frontend_api_source
+    assert "Scheduled Refresh" in release_page
+    assert "release_evidence_scheduled_refresh_contract" in release_data
+    assert "run_release_evidence_refresh_once" in refresh_cli
 
 
 def test_operational_audit_ux_contract_gate_is_enforced() -> None:

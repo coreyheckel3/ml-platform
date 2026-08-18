@@ -9,7 +9,10 @@ import {
   TOKEN_EXPIRES_AT_KEY,
   TOKEN_TYPE_KEY,
 } from "../../auth/session/sessionStore";
-import type { ReleaseEvidenceReport } from "../api/releaseEvidence";
+import type {
+  ReleaseEvidenceRefreshStatus,
+  ReleaseEvidenceReport,
+} from "../api/releaseEvidence";
 
 afterEach(() => {
   window.localStorage.clear();
@@ -23,11 +26,12 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByRole("heading", { name: "Release Evidence" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("37")).toBeInTheDocument();
-    expect(screen.getByText("26")).toBeInTheDocument();
+    expect(screen.getByText("38")).toBeInTheDocument();
+    expect(screen.getByText("27")).toBeInTheDocument();
     expect(screen.getAllByText("forgeml-release-manifest").length).toBeGreaterThan(1);
     expect(screen.getByText("Release Manifest")).toBeInTheDocument();
     expect(screen.getByText("Live Evidence Retrieval")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled Refresh")).toBeInTheDocument();
     expect(screen.getByText("API Evidence Drilldown")).toBeInTheDocument();
     expect(screen.getByText("GitHubActionsReleaseEvidenceGateway")).toBeInTheDocument();
     expect(screen.getByText("Comparison Signals")).toBeInTheDocument();
@@ -38,6 +42,9 @@ describe("ReleaseEvidencePage", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getAllByText("Release Evidence Drilldown API Contract").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Release Evidence Scheduled Refresh Contract").length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText("Security Hardening Contract").length).toBeGreaterThan(0);
     expect(screen.getByText("make production-readiness")).toBeInTheDocument();
@@ -59,6 +66,9 @@ describe("ReleaseEvidencePage", () => {
     expect(screen.getByText("operational_audit_ux_contract")).toBeInTheDocument();
     expect(screen.getByText("release_evidence_retrieval_contract")).toBeInTheDocument();
     expect(screen.getByText("release_evidence_drilldown_api_contract")).toBeInTheDocument();
+    expect(
+      screen.getByText("release_evidence_scheduled_refresh_contract"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Demo Screenshot Evidence")).toBeInTheDocument();
     expect(screen.getByText("09-release-evidence.png")).toBeInTheDocument();
     expect(screen.getByText("10-operational-audit.png")).toBeInTheDocument();
@@ -73,8 +83,12 @@ describe("ReleaseEvidencePage", () => {
       missing_quality_gates: ["release_evidence_drilldown_api_contract"],
     });
     let reports = [report];
+    let refreshStatus = releaseEvidenceRefreshStatus(report);
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = input.toString();
+      if (url.endsWith("/api/v1/admin/release-evidence/refresh/status")) {
+        return jsonResponse(refreshStatus);
+      }
       if (url.includes("/api/v1/admin/release-evidence/reports?")) {
         return jsonResponse({ items: reports, next_cursor: null });
       }
@@ -87,6 +101,14 @@ describe("ReleaseEvidencePage", () => {
       if (url.endsWith("/api/v1/admin/release-evidence/reports/retrieve")) {
         expect(init?.method).toBe("POST");
         reports = [retrievedReport, ...reports];
+        refreshStatus = releaseEvidenceRefreshStatus(retrievedReport, {
+          status: "attention",
+          stale: false,
+          stale_reasons: ["latest_report_failed"],
+          recommended_action: "retrieve_now",
+          latest_report: retrievedReport,
+          last_successful_report: report,
+        });
         return jsonResponse(retrievedReport, 201);
       }
       return jsonResponse({ detail: `unexpected request: ${url}` }, 500);
@@ -95,6 +117,7 @@ describe("ReleaseEvidencePage", () => {
 
     renderReleaseEvidencePage();
 
+    expect(await screen.findByText("Last Success Summary")).toBeInTheDocument();
     expect(await screen.findByText("release_evidence.retrieve")).toBeInTheDocument();
     expect(screen.getByText("1 loaded")).toBeInTheDocument();
     expect(screen.getByText("abc123def456")).toBeInTheDocument();
@@ -115,6 +138,7 @@ describe("ReleaseEvidencePage", () => {
       ),
     );
     expect(await screen.findByText("Retrieval recorded as failed.")).toBeInTheDocument();
+    expect(await screen.findByText("latest_report_failed")).toBeInTheDocument();
     expect(screen.getByText("release_evidence.retrieve_failed")).toBeInTheDocument();
     expect(
       screen.getAllByText("release_evidence_drilldown_api_contract").length,
@@ -170,8 +194,14 @@ function releaseEvidenceReport(
     missing_quality_gates: [],
     comparison: { passed: status === "passed" },
     manifest_summary: {
-      artifact_names: ["release_evidence_drilldown_api_contract"],
-      quality_gate_names: ["release_evidence_drilldown_api_contract"],
+      artifact_names: [
+        "release_evidence_drilldown_api_contract",
+        "release_evidence_scheduled_refresh_contract",
+      ],
+      quality_gate_names: [
+        "release_evidence_drilldown_api_contract",
+        "release_evidence_scheduled_refresh_contract",
+      ],
     },
     report: {
       schema_version: "forgeml.release_evidence_retrieval.v1",
@@ -179,6 +209,36 @@ function releaseEvidenceReport(
     },
     error_message: null,
     created_at: "2026-08-17T12:30:00Z",
+    ...overrides,
+  };
+}
+
+function releaseEvidenceRefreshStatus(
+  report: ReleaseEvidenceReport,
+  overrides: Partial<ReleaseEvidenceRefreshStatus> = {},
+): ReleaseEvidenceRefreshStatus {
+  return {
+    schema_version: "forgeml.release_evidence_refresh_status.v1",
+    organization_id: "org-1",
+    provider: "github_actions",
+    repository: "coreyheckel3/ml-platform",
+    branch: "main",
+    workflow: "ci.yml",
+    artifact_name: "forgeml-release-manifest",
+    status: "fresh",
+    stale: false,
+    stale_after_seconds: 86_400,
+    refresh_interval_seconds: 3_600,
+    latest_report: report,
+    last_successful_report: report,
+    latest_report_age_seconds: 1_800,
+    last_success_age_seconds: 1_800,
+    next_refresh_at: "2026-08-17T13:30:00Z",
+    checked_at: "2026-08-17T13:00:00Z",
+    stale_reasons: [],
+    recommended_action: "wait_until_next_refresh",
+    operator_command:
+      "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400",
     ...overrides,
   };
 }

@@ -34,9 +34,16 @@ export type LiveReleaseEvidenceRetrieval = {
   operatorCommand: string;
 };
 
+export type ScheduledReleaseEvidenceRefresh = {
+  staleAfterSeconds: number;
+  refreshIntervalSeconds: number;
+  operatorCommand: string;
+  cronCommand: string;
+};
+
 export const releaseEvidenceSummary = {
-  artifactCount: 37,
-  qualityGateCount: 26,
+  artifactCount: 38,
+  qualityGateCount: 27,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -93,6 +100,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     path: "contracts/ops/release-evidence-drilldown-api.v1.json",
     signal:
       "Verifies persisted retrieval reports, admin RBAC, audit events, and frontend drilldown behavior.",
+  },
+  {
+    name: "Release Evidence Scheduled Refresh Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/release-evidence-scheduled-refresh.v1.json",
+    signal:
+      "Verifies stale evidence summaries, scheduled refresh automation, operator commands, and UI status indicators.",
   },
   {
     name: "Portfolio Readiness Contract",
@@ -160,6 +174,12 @@ export const qualityGates: EvidenceGate[] = [
     signal:
       "Admin API retrieval, report persistence, audit logging, and drilldown UI stay enforced in CI.",
   },
+  {
+    name: "release_evidence_scheduled_refresh_contract",
+    owner: "Operations",
+    signal:
+      "Stale evidence status, last-success summaries, scheduler CLI behavior, and UI indicators stay enforced in CI.",
+  },
 ];
 
 export const screenshotEvidence: ScreenshotEvidence[] = [
@@ -214,6 +234,15 @@ export const liveReleaseEvidenceRetrieval: LiveReleaseEvidenceRetrieval = {
     "PYTHONPATH=backend/src:. python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest",
 };
 
+export const scheduledReleaseEvidenceRefresh: ScheduledReleaseEvidenceRefresh = {
+  staleAfterSeconds: 86_400,
+  refreshIntervalSeconds: 3_600,
+  operatorCommand:
+    "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400",
+  cronCommand:
+    "*/30 * * * * cd /path/to/ml-platform && PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --stale-after-seconds 86400",
+};
+
 export const reviewerCommands: ReviewerCommand[] = [
   {
     label: "Run production readiness",
@@ -237,6 +266,12 @@ export const reviewerCommands: ReviewerCommand[] = [
     command: liveReleaseEvidenceRetrieval.operatorCommand,
     signal:
       "Fetches the latest successful main-branch release manifest artifact and compares it with the release contract.",
+  },
+  {
+    label: "Refresh stale release evidence",
+    command: scheduledReleaseEvidenceRefresh.operatorCommand,
+    signal:
+      "Checks the persisted last-success report and retrieves new evidence only when the platform marks it stale.",
   },
   {
     label: "Capture demo screenshots",

@@ -189,6 +189,10 @@ async function handleApiRoute(
     return fulfillJson(route, listResponse(items));
   }
 
+  if (method === "GET" && path === "/api/v1/admin/release-evidence/refresh/status") {
+    return fulfillJson(route, releaseEvidenceRefreshStatus(state.releaseEvidenceReports));
+  }
+
   if (method === "GET" && path === "/api/v1/admin/release-evidence/reports") {
     const query = new URL(route.request().url()).searchParams;
     const status = query.get("status");
@@ -1260,8 +1264,8 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     manifest_git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
     manifest_git_branch: "main",
     ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
-    artifact_count: 37,
-    quality_gate_count: 26,
+    artifact_count: 38,
+    quality_gate_count: 27,
     missing_artifacts: [],
     missing_quality_gates: [],
     comparison: {
@@ -1273,8 +1277,14 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     manifest_summary: {
       git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
       git_branch: "main",
-      artifact_names: ["release_evidence_drilldown_api_contract"],
-      quality_gate_names: ["release_evidence_drilldown_api_contract"],
+      artifact_names: [
+        "release_evidence_drilldown_api_contract",
+        "release_evidence_scheduled_refresh_contract",
+      ],
+      quality_gate_names: [
+        "release_evidence_drilldown_api_contract",
+        "release_evidence_scheduled_refresh_contract",
+      ],
       ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
     },
     report: {
@@ -1283,6 +1293,53 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     },
     error_message: null,
     created_at: createdAt,
+  };
+}
+
+function releaseEvidenceRefreshStatus(reports: Entity[]): Entity {
+  const latestReport = reports[0] ?? null;
+  const lastSuccessfulReport =
+    reports.find((report) => report.status === "passed") ?? null;
+  const staleReasons: string[] = [];
+  if (!latestReport) {
+    staleReasons.push("no_reports");
+  }
+  if (!lastSuccessfulReport) {
+    staleReasons.push("no_successful_report");
+  }
+  if (latestReport && latestReport.status !== "passed") {
+    staleReasons.push("latest_report_failed");
+  }
+  const stale = staleReasons.includes("no_successful_report");
+  const status = !latestReport
+    ? "missing"
+    : stale
+      ? "stale"
+      : latestReport.status !== "passed"
+        ? "attention"
+        : "fresh";
+  return {
+    schema_version: "forgeml.release_evidence_refresh_status.v1",
+    organization_id: organizationId,
+    provider: "github_actions",
+    repository: "coreyheckel3/ml-platform",
+    branch: "main",
+    workflow: "ci.yml",
+    artifact_name: "forgeml-release-manifest",
+    status,
+    stale,
+    stale_after_seconds: 86_400,
+    refresh_interval_seconds: 3_600,
+    latest_report: latestReport,
+    last_successful_report: lastSuccessfulReport,
+    latest_report_age_seconds: latestReport ? 1_800 : null,
+    last_success_age_seconds: lastSuccessfulReport ? 1_800 : null,
+    next_refresh_at: "2026-08-17T17:00:00Z",
+    checked_at: "2026-08-17T16:30:00Z",
+    stale_reasons: staleReasons,
+    recommended_action: status === "fresh" ? "wait_until_next_refresh" : "retrieve_now",
+    operator_command:
+      "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400",
   };
 }
 

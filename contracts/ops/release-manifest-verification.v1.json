@@ -23,8 +23,8 @@
   "schema_version": "forgeml.release_manifest_verification_contract.v1",
   "summary": {
     "image_target_count": 5,
-    "quality_gate_count": 26,
-    "required_artifact_count": 37,
+    "quality_gate_count": 27,
+    "required_artifact_count": 38,
     "required_check_count": 9
   },
   "verification_schema_version": "forgeml.release_manifest_verification.v1"

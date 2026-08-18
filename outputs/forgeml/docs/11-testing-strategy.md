@@ -280,6 +280,23 @@ workflow tenant-scoped, auditable, and backed by persisted reports:
   permission catalog, Alembic migration, frontend API/UI, docs, CI wiring,
   production-readiness, and release manifest evidence.
 
+## Release Evidence Scheduled Refresh Tests
+
+Scheduled refresh tests should keep release evidence freshness visible without
+requiring a long-running scheduler inside FastAPI:
+
+- Unit test fresh, stale, missing, and latest-failed refresh status derivation
+  from persisted release evidence reports.
+- API test `GET /api/v1/admin/release-evidence/refresh/status` with
+  tenant-scoped service wiring and configurable stale/refresh intervals.
+- Unit test the operator refresh CLI for fresh skips, stale retrievals,
+  dry-run behavior, JSON report serialization, and cron command generation.
+- Frontend test authenticated refresh status loading, stale indicators,
+  last-success summary, and the Scheduled Refresh panel.
+- Verify the scheduled refresh contract matches backend sources, frontend
+  API/UI, operator script, docs, CI wiring, production-readiness, OpenAPI, and
+  release manifest evidence.
+
 ## Operational Audit UX Tests
 
 Operational audit UX tests should keep operator-facing timeline evidence

@@ -120,6 +120,16 @@ class Settings(BaseSettings):
         default=None,
         alias="FORGEML_RELEASE_EVIDENCE_GITHUB_TOKEN",
     )
+    release_evidence_stale_after_seconds: int = Field(
+        default=86_400,
+        ge=1,
+        alias="FORGEML_RELEASE_EVIDENCE_STALE_AFTER_SECONDS",
+    )
+    release_evidence_refresh_interval_seconds: int = Field(
+        default=3_600,
+        ge=1,
+        alias="FORGEML_RELEASE_EVIDENCE_REFRESH_INTERVAL_SECONDS",
+    )
     jwt_secret: str = Field(
         default="change-me-for-local-development",
         alias="FORGEML_JWT_SECRET",

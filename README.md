@@ -107,6 +107,12 @@ Retrieve and compare the latest main-branch release manifest artifact from GitHu
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
 ```
 
+Refresh release evidence when the platform marks the last successful report stale:
+
+```bash
+PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
+```
+
 Verify the checked database migration contract:
 
 ```bash

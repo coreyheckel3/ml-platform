@@ -77,8 +77,13 @@ def test_release_evidence_ux_contract_shape() -> None:
     ]
     assert "Release Manifest" in parsed["required_ui_sections"]
     assert "Live Evidence Retrieval" in parsed["required_ui_sections"]
+    assert "Scheduled Refresh" in parsed["required_ui_sections"]
     assert "09-release-evidence.png" in parsed["required_release_signals"]
     assert "release_evidence_retrieval_contract" in parsed["required_release_signals"]
+    assert (
+        "release_evidence_scheduled_refresh_contract"
+        in parsed["required_release_signals"]
+    )
     assert "GitHubActionsReleaseEvidenceGateway" in parsed["required_release_signals"]
     assert "python scripts/ci/check_release_evidence_ux_contract.py" in parsed[
         "quality_gates"

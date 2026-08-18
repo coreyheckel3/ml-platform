@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from forgeml.modules.administration.domain.entities import (
@@ -61,12 +61,43 @@ class RetrieveReleaseEvidenceCommand:
 
 
 @dataclass(frozen=True)
+class GetReleaseEvidenceRefreshStatusQuery:
+    organization_id: UUID
+    stale_after_seconds: int
+    refresh_interval_seconds: int
+    now: datetime | None = None
+
+
+@dataclass(frozen=True)
 class ReleaseEvidenceRetrievalConfig:
     provider: str
     repository: str | None
     branch: str | None
     workflow: str | None
     artifact_name: str | None
+
+
+@dataclass(frozen=True)
+class ReleaseEvidenceRefreshStatus:
+    organization_id: UUID
+    provider: str
+    repository: str | None
+    branch: str | None
+    workflow: str | None
+    artifact_name: str | None
+    status: str
+    stale: bool
+    stale_after_seconds: int
+    refresh_interval_seconds: int
+    latest_report: ReleaseEvidenceReport | None
+    last_successful_report: ReleaseEvidenceReport | None
+    latest_report_age_seconds: int | None
+    last_success_age_seconds: int | None
+    next_refresh_at: datetime | None
+    checked_at: datetime
+    stale_reasons: tuple[str, ...]
+    recommended_action: str
+    operator_command: str
 
 
 class AdministrationService:
@@ -187,6 +218,86 @@ class AdministrationService:
         )
         return saved
 
+    def get_release_evidence_refresh_status(
+        self,
+        query: GetReleaseEvidenceRefreshStatusQuery,
+        principal: Principal,
+    ) -> ReleaseEvidenceRefreshStatus:
+        self._require_release_evidence_read(query.organization_id, principal)
+        repository = self._require_release_evidence_repository()
+        config = self._require_release_evidence_config()
+        now = _ensure_utc(query.now or datetime.now(UTC))
+        stale_after_seconds = max(query.stale_after_seconds, 1)
+        refresh_interval_seconds = max(query.refresh_interval_seconds, 1)
+        latest_report = _first_or_none(
+            repository.list_reports(
+                query.organization_id,
+                filters=ReleaseEvidenceReportFilters(),
+                limit=1,
+            )
+        )
+        last_successful_report = _first_or_none(
+            repository.list_reports(
+                query.organization_id,
+                filters=ReleaseEvidenceReportFilters(status="passed"),
+                limit=1,
+            )
+        )
+        latest_age_seconds = (
+            _age_seconds(latest_report.created_at, now) if latest_report else None
+        )
+        last_success_age_seconds = (
+            _age_seconds(last_successful_report.created_at, now)
+            if last_successful_report
+            else None
+        )
+        stale_reasons = _release_evidence_stale_reasons(
+            latest_report=latest_report,
+            last_successful_report=last_successful_report,
+            last_success_age_seconds=last_success_age_seconds,
+            stale_after_seconds=stale_after_seconds,
+        )
+        stale = (
+            "no_successful_report" in stale_reasons
+            or "last_success_older_than_threshold" in stale_reasons
+        )
+        status = _refresh_status_label(
+            latest_report=latest_report,
+            stale=stale,
+            stale_reasons=stale_reasons,
+        )
+        next_refresh_at = (
+            last_successful_report.created_at + timedelta(seconds=refresh_interval_seconds)
+            if last_successful_report
+            else now
+        )
+        recommended_action = (
+            "retrieve_now"
+            if stale or "latest_report_failed" in stale_reasons
+            else "wait_until_next_refresh"
+        )
+        return ReleaseEvidenceRefreshStatus(
+            organization_id=query.organization_id,
+            provider=config.provider,
+            repository=config.repository,
+            branch=config.branch,
+            workflow=config.workflow,
+            artifact_name=config.artifact_name,
+            status=status,
+            stale=stale,
+            stale_after_seconds=stale_after_seconds,
+            refresh_interval_seconds=refresh_interval_seconds,
+            latest_report=latest_report,
+            last_successful_report=last_successful_report,
+            latest_report_age_seconds=latest_age_seconds,
+            last_success_age_seconds=last_success_age_seconds,
+            next_refresh_at=next_refresh_at,
+            checked_at=now,
+            stale_reasons=stale_reasons,
+            recommended_action=recommended_action,
+            operator_command=_refresh_operator_command(stale_after_seconds),
+        )
+
     def _require_release_evidence_read(
         self,
         organization_id: UUID,
@@ -224,6 +335,66 @@ def _clean_filter(value: str | None) -> str | None:
         return None
     cleaned = value.strip()
     return cleaned or None
+
+
+def _first_or_none(reports: list[ReleaseEvidenceReport]) -> ReleaseEvidenceReport | None:
+    return reports[0] if reports else None
+
+
+def _ensure_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+def _age_seconds(created_at: datetime, now: datetime) -> int:
+    age = now - _ensure_utc(created_at)
+    return max(int(age.total_seconds()), 0)
+
+
+def _release_evidence_stale_reasons(
+    *,
+    latest_report: ReleaseEvidenceReport | None,
+    last_successful_report: ReleaseEvidenceReport | None,
+    last_success_age_seconds: int | None,
+    stale_after_seconds: int,
+) -> tuple[str, ...]:
+    reasons: list[str] = []
+    if latest_report is None:
+        reasons.append("no_reports")
+    if last_successful_report is None:
+        reasons.append("no_successful_report")
+    elif (
+        last_success_age_seconds is not None
+        and last_success_age_seconds > stale_after_seconds
+    ):
+        reasons.append("last_success_older_than_threshold")
+    if latest_report is not None and latest_report.status != "passed":
+        reasons.append("latest_report_failed")
+    return tuple(reasons)
+
+
+def _refresh_status_label(
+    *,
+    latest_report: ReleaseEvidenceReport | None,
+    stale: bool,
+    stale_reasons: tuple[str, ...],
+) -> str:
+    if latest_report is None:
+        return "missing"
+    if stale:
+        return "stale"
+    if "latest_report_failed" in stale_reasons:
+        return "attention"
+    return "fresh"
+
+
+def _refresh_operator_command(stale_after_seconds: int) -> str:
+    return (
+        "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py "
+        "--base-url http://127.0.0.1:8001 --once "
+        f"--stale-after-seconds {stale_after_seconds}"
+    )
 
 
 def _retrieve_release_evidence_report(

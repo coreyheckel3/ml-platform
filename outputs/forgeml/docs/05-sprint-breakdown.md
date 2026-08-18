@@ -2085,6 +2085,57 @@ Implemented scope:
 - Unit, API, integration, frontend, E2E mock, production-readiness, schema, and
   RBAC tests cover the new workflow.
 
+## Sprint 65: Release Evidence Scheduled Refresh
+
+Goal: Make release evidence freshness observable and refreshable through a
+safe operator automation path instead of relying on manual report retrieval.
+
+Scope:
+
+- Release evidence refresh status query derived from persisted reports
+- Configurable stale threshold and refresh cadence settings
+- Admin API endpoint for current freshness, latest report, and last-success
+  summary
+- Operator CLI for one-shot, dry-run, forced, and scheduled refresh execution
+- Cron command generation for runbook automation
+- Release Evidence frontend scheduled refresh panel
+- Contract checker, CI wiring, production-readiness, and release manifest
+  evidence
+
+Acceptance criteria:
+
+- `GET /api/v1/admin/release-evidence/refresh/status` returns organization-scoped
+  freshness state for `fresh`, `attention`, `stale`, and `missing` cases.
+- Stale reasons identify missing reports, missing successful reports,
+  threshold-expired evidence, and a latest failed retrieval.
+- Operators can run `scripts/ops/refresh_release_evidence.py` once or on a
+  cadence, and the command skips fresh evidence unless `--force` is supplied.
+- The Release Evidence page shows Scheduled Refresh, Last Success Summary,
+  Stale Indicators, next refresh, and the operator command.
+- CI and production-readiness validate the scheduled refresh contract.
+- Release manifest provenance includes the scheduled refresh contract as a
+  required operations artifact and quality gate.
+
+Implemented scope:
+
+- `AdministrationService.get_release_evidence_refresh_status` derives freshness
+  from the latest report and latest passed report with configurable thresholds.
+- `ReleaseEvidenceRefreshStatusResponse` and
+  `/admin/release-evidence/refresh/status` expose the status through the
+  authenticated administration API.
+- `scripts/ops/refresh_release_evidence.py` provides access-token or
+  email/password auth, one-shot refresh, scheduled loop mode, dry-run,
+  forced-refresh, JSON output, and cron command generation.
+- `frontend/src/modules/release_evidence` now renders Scheduled Refresh with
+  stale indicators, last-success summary, cadence, next refresh, and operator
+  automation command.
+- `contracts/ops/release-evidence-scheduled-refresh.v1.json` and
+  `scripts/ci/check_release_evidence_scheduled_refresh_contract.py` lock the
+  backend, frontend, CLI, docs, CI, production-readiness, OpenAPI, and release
+  manifest evidence.
+- Unit, API, frontend, E2E mock, contract, and production-readiness tests cover
+  the refresh workflow.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2113,7 +2164,12 @@ sequence.
 | 62 | Operational Audit UX v2 | Completed | Dedicated Operational Audit app surface, audit timeline adapter, release evidence annotations, admin audit API integration, filters, event detail drilldowns, deterministic screenshots, UX contract, CI wiring, production-readiness, and release manifest evidence. |
 | 63 | Live Release Evidence Retrieval | Completed | GitHub Actions artifact adapter, local manifest fallback, release evidence retrieval report CLI, manifest comparison checks, Release Evidence retrieval panel, CI contract, production-readiness, and release manifest evidence. |
 | 64 | Release Evidence Drilldown API | Completed | Authenticated admin API for release evidence retrieval reports, persisted comparison history, audit events, frontend drilldowns, CI contract, production-readiness, and release manifest evidence. |
-| 65 | Release Evidence Scheduled Refresh | Planned | Optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
+| 65 | Release Evidence Scheduled Refresh | Completed | Optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
+| 66 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 67 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 68 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 69 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 70 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

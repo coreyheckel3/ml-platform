@@ -14,6 +14,16 @@
     {
       "authorization": "principal",
       "method": "GET",
+      "operation_id": "get_release_evidence_refresh_status_api_v1_admin_release_evidence_refresh_status_get",
+      "path": "/api/v1/admin/release-evidence/refresh/status",
+      "reason": "Requires get_current_principal dependency.",
+      "tags": [
+        "administration"
+      ]
+    },
+    {
+      "authorization": "principal",
+      "method": "GET",
       "operation_id": "list_release_evidence_reports_api_v1_admin_release_evidence_reports_get",
       "path": "/api/v1/admin/release-evidence/reports",
       "reason": "Requires get_current_principal dependency.",
@@ -1101,8 +1111,8 @@
   ],
   "schema_version": "forgeml.api_authorization.v1",
   "summary": {
-    "protected_route_count": 100,
+    "protected_route_count": 101,
     "public_route_count": 6,
-    "total_route_count": 106
+    "total_route_count": 107
   }
 }

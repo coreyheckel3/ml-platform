@@ -42,12 +42,13 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         },
         "required_source_assets": list(REQUIRED_SOURCE_ASSETS),
         "required_ui_sections": [
-            "Release Manifest",
-            "Live Evidence Retrieval",
-            "API Evidence Drilldown",
-            "Reviewer Commands",
-            "Quality Gate Coverage",
-            "Demo Screenshot Evidence",
+        "Release Manifest",
+        "Live Evidence Retrieval",
+        "Scheduled Refresh",
+        "API Evidence Drilldown",
+        "Reviewer Commands",
+        "Quality Gate Coverage",
+        "Demo Screenshot Evidence",
         ],
         "required_release_signals": [
             "forgeml-release-manifest",
@@ -55,11 +56,14 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "contracts/ops/release-manifest.v1.json",
             "contracts/ops/release-evidence-retrieval.v1.json",
             "contracts/ops/release-evidence-drilldown-api.v1.json",
+            "contracts/ops/release-evidence-scheduled-refresh.v1.json",
             "contracts/ops/portfolio-readiness.v1.json",
             "release_manifest_verifier_contract",
             "release_evidence_retrieval_contract",
             "release_evidence_drilldown_api_contract",
+            "release_evidence_scheduled_refresh_contract",
             "GitHubActionsReleaseEvidenceGateway",
+            "refresh_release_evidence.py",
             "make production-readiness",
             "make demo-screenshots",
             "09-release-evidence.png",
@@ -72,6 +76,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         "quality_gates": [
             "python scripts/ci/check_release_evidence_ux_contract.py",
             "python scripts/ci/check_release_evidence_drilldown_api_contract.py",
+            "python scripts/ci/check_release_evidence_scheduled_refresh_contract.py",
             "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
             "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
             "frontend/tests/e2e/smoke.spec.ts",
@@ -79,8 +84,8 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         ],
         "summary": {
             "source_asset_count": len(REQUIRED_SOURCE_ASSETS),
-            "ui_section_count": 6,
-            "release_signal_count": 13,
+            "ui_section_count": 7,
+            "release_signal_count": 16,
         },
     }
 
@@ -209,8 +214,12 @@ def validate_release_evidence_ux_definition(
         findings.append("Release evidence page unit test does not cover retrieval gates.")
     if "API Evidence Drilldown" not in page_test_source:
         findings.append("Release evidence page unit test does not cover API drilldown.")
+    if "Scheduled Refresh" not in page_test_source:
+        findings.append("Release evidence page unit test does not cover scheduled refresh.")
     if "listReleaseEvidenceReports" not in api_source:
         findings.append("Release evidence API client does not list drilldown reports.")
+    if "getReleaseEvidenceRefreshStatus" not in api_source:
+        findings.append("Release evidence API client does not load refresh status.")
 
     if contract["schema_version"] != RELEASE_EVIDENCE_UX_CONTRACT_SCHEMA_VERSION:
         findings.append("Release evidence UX contract schema version is inconsistent.")

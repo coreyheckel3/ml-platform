@@ -6,9 +6,11 @@ from fastapi.testclient import TestClient
 from forgeml.main import create_app
 from forgeml.modules.administration.api.routes import get_administration_service
 from forgeml.modules.administration.application.services import (
+    GetReleaseEvidenceRefreshStatusQuery,
     GetReleaseEvidenceReportQuery,
     ListAuditLogQuery,
     ListReleaseEvidenceReportsQuery,
+    ReleaseEvidenceRefreshStatus,
     RetrieveReleaseEvidenceCommand,
 )
 from forgeml.modules.administration.domain.entities import (
@@ -27,6 +29,7 @@ class FakeAdministrationService:
         self.query: ListAuditLogQuery | None = None
         self.release_reports_query: ListReleaseEvidenceReportsQuery | None = None
         self.release_report_query: GetReleaseEvidenceReportQuery | None = None
+        self.refresh_status_query: GetReleaseEvidenceRefreshStatusQuery | None = None
         self.retrieve_command: RetrieveReleaseEvidenceCommand | None = None
 
     def list_audit_log(
@@ -73,6 +76,39 @@ class FakeAdministrationService:
         self.retrieve_command = command
         return self._release_evidence_report()
 
+    def get_release_evidence_refresh_status(
+        self,
+        query: GetReleaseEvidenceRefreshStatusQuery,
+        principal: Principal,
+    ) -> ReleaseEvidenceRefreshStatus:
+        self.refresh_status_query = query
+        report = self._release_evidence_report()
+        return ReleaseEvidenceRefreshStatus(
+            organization_id=self.organization_id,
+            provider="github_actions",
+            repository="coreyheckel3/ml-platform",
+            branch="main",
+            workflow="ci.yml",
+            artifact_name="forgeml-release-manifest",
+            status="fresh",
+            stale=False,
+            stale_after_seconds=query.stale_after_seconds,
+            refresh_interval_seconds=query.refresh_interval_seconds,
+            latest_report=report,
+            last_successful_report=report,
+            latest_report_age_seconds=1_800,
+            last_success_age_seconds=1_800,
+            next_refresh_at=datetime(2026, 8, 17, 13, 30, tzinfo=UTC),
+            checked_at=datetime(2026, 8, 17, 13, 0, tzinfo=UTC),
+            stale_reasons=(),
+            recommended_action="wait_until_next_refresh",
+            operator_command=(
+                "PYTHONPATH=backend/src:. python "
+                "scripts/ops/refresh_release_evidence.py --base-url "
+                "http://127.0.0.1:8001 --once --stale-after-seconds 86400"
+            ),
+        )
+
     def _release_evidence_report(self) -> ReleaseEvidenceReport:
         return ReleaseEvidenceReport(
             id=self.report_id,
@@ -89,8 +125,8 @@ class FakeAdministrationService:
             manifest_git_sha="abc123",
             manifest_git_branch="main",
             ci_run_url="https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-            artifact_count=37,
-            quality_gate_count=26,
+            artifact_count=38,
+            quality_gate_count=27,
             missing_artifacts=(),
             missing_quality_gates=(),
             comparison={"passed": True},
@@ -244,6 +280,44 @@ def test_release_evidence_retrieval_route_returns_created_report() -> None:
     assert response.json() == release_evidence_report_response(fake_service)
 
 
+def test_release_evidence_refresh_status_route_returns_last_success_summary() -> None:
+    fake_service = FakeAdministrationService()
+    app = create_app()
+    app.dependency_overrides[get_administration_service] = lambda: fake_service
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        user_id="user-1",
+        email="admin@example.com",
+        organization_id=str(fake_service.organization_id),
+        permissions=frozenset({"admin:release_evidence:read"}),
+    )
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/v1/admin/release-evidence/refresh/status",
+        params={
+            "stale_after_seconds": 86_400,
+            "refresh_interval_seconds": 3_600,
+        },
+    )
+
+    assert response.status_code == 200
+    assert fake_service.refresh_status_query == GetReleaseEvidenceRefreshStatusQuery(
+        organization_id=fake_service.organization_id,
+        stale_after_seconds=86_400,
+        refresh_interval_seconds=3_600,
+    )
+    payload = response.json()
+    assert payload["schema_version"] == "forgeml.release_evidence_refresh_status.v1"
+    assert payload["status"] == "fresh"
+    assert payload["stale"] is False
+    assert payload["latest_report"] == release_evidence_report_response(fake_service)
+    assert payload["last_successful_report"] == release_evidence_report_response(fake_service)
+    assert payload["last_success_age_seconds"] == 1_800
+    assert payload["next_refresh_at"] == "2026-08-17T13:30:00+00:00"
+    assert payload["recommended_action"] == "wait_until_next_refresh"
+    assert "refresh_release_evidence.py" in payload["operator_command"]
+
+
 def release_evidence_report_response(
     fake_service: FakeAdministrationService,
 ) -> dict[str, object]:
@@ -262,8 +336,8 @@ def release_evidence_report_response(
         "manifest_git_sha": "abc123",
         "manifest_git_branch": "main",
         "ci_run_url": "https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-        "artifact_count": 37,
-        "quality_gate_count": 26,
+        "artifact_count": 38,
+        "quality_gate_count": 27,
         "missing_artifacts": [],
         "missing_quality_gates": [],
         "comparison": {"passed": True},

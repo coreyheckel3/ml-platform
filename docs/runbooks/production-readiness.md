@@ -22,6 +22,7 @@ python scripts/ci/check_release_evidence_workflow.py
 python scripts/ci/check_release_evidence_ux_contract.py
 python scripts/ci/check_release_evidence_retrieval_contract.py
 python scripts/ci/check_release_evidence_drilldown_api_contract.py
+python scripts/ci/check_release_evidence_scheduled_refresh_contract.py
 python scripts/ci/check_operational_audit_ux_contract.py
 python scripts/ci/check_release_manifest_verifier_contract.py
 python scripts/ci/check_demo_readiness_contract.py
@@ -61,6 +62,18 @@ Retrieve the latest successful main-branch release manifest artifact from GitHub
 PYTHONPATH=backend/src:. python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
 ```
 
+Run the scheduled refresh command from cron or an operator shell to retrieve new release evidence only when the platform marks the persisted last-success report stale:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
+```
+
+Generate a cron entry for the same automation:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --print-cron --base-url http://127.0.0.1:8001 --stale-after-seconds 86400
+```
+
 For staging, also run the k6 smoke load profile:
 
 ```bash
@@ -86,6 +99,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Release evidence UX contract result proving `/release-evidence` exposes manifest artifacts, reviewer commands, quality gates, and screenshot evidence
 - Release evidence retrieval contract result proving GitHub Actions artifact lookup, manifest archive extraction, main-branch comparison, and CI URL validation are checked
 - Release evidence drilldown API contract result proving admin retrieval reports, RBAC, audit logging, persistence, and UI drilldown are checked
+- Release evidence scheduled refresh contract result proving stale status, last-success summary, operator automation, and UI indicators are checked
 - Operational audit UX contract result proving `/operational-audit` links live audit events, release evidence annotations, screenshots, and route-level follow-up
 - Demo readiness contract result proving local stack startup, seeded data refresh, screenshot capture, and architecture walkthrough assets are checked
 - CI runtime contract result proving GitHub Actions runtime pins avoid retired action majors

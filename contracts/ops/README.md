@@ -132,6 +132,31 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_release_evidence_drilldown_api_contract.py
 ```
 
+## Release Evidence Scheduled Refresh
+
+`release-evidence-scheduled-refresh.v1.json` records the optional automation
+contract for stale release evidence: admin refresh status, last-success
+summary, stale indicators, one-shot and scheduled CLI behavior, frontend status
+UI, release manifest evidence, and runbook commands.
+
+Regenerate after an intentional scheduled refresh change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_scheduled_refresh_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_scheduled_refresh_contract.py
+```
+
+Run one scheduled refresh cycle through the admin API:
+
+```bash
+PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
+```
+
 ## Operational Audit UX
 
 `operational-audit-ux.v1.json` records the frontend operator audit workspace

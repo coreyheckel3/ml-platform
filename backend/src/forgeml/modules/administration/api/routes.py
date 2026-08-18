@@ -6,14 +6,17 @@ from sqlalchemy.orm import Session
 from forgeml.modules.administration.api.schemas import (
     AuditLogEntryResponse,
     AuditLogListResponse,
+    ReleaseEvidenceRefreshStatusResponse,
     ReleaseEvidenceReportListResponse,
     ReleaseEvidenceReportResponse,
 )
 from forgeml.modules.administration.application.services import (
     AdministrationService,
+    GetReleaseEvidenceRefreshStatusQuery,
     GetReleaseEvidenceReportQuery,
     ListAuditLogQuery,
     ListReleaseEvidenceReportsQuery,
+    ReleaseEvidenceRefreshStatus,
     ReleaseEvidenceRetrievalConfig,
     RetrieveReleaseEvidenceCommand,
 )
@@ -112,6 +115,36 @@ def retrieve_release_evidence_report(
 
 
 @router.get(
+    "/admin/release-evidence/refresh/status",
+    response_model=ReleaseEvidenceRefreshStatusResponse,
+)
+def get_release_evidence_refresh_status(
+    stale_after_seconds: int | None = Query(default=None, ge=1, le=2_592_000),
+    refresh_interval_seconds: int | None = Query(default=None, ge=1, le=604_800),
+    principal: Principal = Depends(get_current_principal),
+    settings: Settings = Depends(get_settings),
+    service: AdministrationService = Depends(get_administration_service),
+) -> ReleaseEvidenceRefreshStatusResponse:
+    status = service.get_release_evidence_refresh_status(
+        GetReleaseEvidenceRefreshStatusQuery(
+            organization_id=UUID(principal.organization_id),
+            stale_after_seconds=(
+                stale_after_seconds
+                if stale_after_seconds is not None
+                else settings.release_evidence_stale_after_seconds
+            ),
+            refresh_interval_seconds=(
+                refresh_interval_seconds
+                if refresh_interval_seconds is not None
+                else settings.release_evidence_refresh_interval_seconds
+            ),
+        ),
+        principal,
+    )
+    return _release_evidence_refresh_status_response(status)
+
+
+@router.get(
     "/admin/release-evidence/reports/{report_id}",
     response_model=ReleaseEvidenceReportResponse,
 )
@@ -171,6 +204,42 @@ def _release_evidence_report_response(
         report=report.report,
         error_message=report.error_message,
         created_at=report.created_at.isoformat(),
+    )
+
+
+def _release_evidence_refresh_status_response(
+    status: ReleaseEvidenceRefreshStatus,
+) -> ReleaseEvidenceRefreshStatusResponse:
+    return ReleaseEvidenceRefreshStatusResponse(
+        organization_id=str(status.organization_id),
+        provider=status.provider,
+        repository=status.repository,
+        branch=status.branch,
+        workflow=status.workflow,
+        artifact_name=status.artifact_name,
+        status=status.status,
+        stale=status.stale,
+        stale_after_seconds=status.stale_after_seconds,
+        refresh_interval_seconds=status.refresh_interval_seconds,
+        latest_report=(
+            _release_evidence_report_response(status.latest_report)
+            if status.latest_report
+            else None
+        ),
+        last_successful_report=(
+            _release_evidence_report_response(status.last_successful_report)
+            if status.last_successful_report
+            else None
+        ),
+        latest_report_age_seconds=status.latest_report_age_seconds,
+        last_success_age_seconds=status.last_success_age_seconds,
+        next_refresh_at=(
+            status.next_refresh_at.isoformat() if status.next_refresh_at else None
+        ),
+        checked_at=status.checked_at.isoformat(),
+        stale_reasons=list(status.stale_reasons),
+        recommended_action=status.recommended_action,
+        operator_command=status.operator_command,
     )
 
 

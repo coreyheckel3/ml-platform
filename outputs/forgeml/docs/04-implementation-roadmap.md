@@ -216,4 +216,9 @@ the remaining product/runtime platform roadmap.
 | 62 | Operational Audit UX v2 | Completed: Operational Audit frontend module, `/operational-audit` route, audit timeline adapter, release evidence annotations, admin audit API integration, screenshots, UX contract, CI wiring, production-readiness, and release manifest evidence. |
 | 63 | Live Release Evidence Retrieval | Completed: GitHub Actions artifact gateway, local manifest fallback, retrieval report CLI, manifest comparison checks, Release Evidence UI status, CI contract, production-readiness, and release manifest evidence. |
 | 64 | Release Evidence Drilldown API | Completed: authenticated admin release evidence retrieval, persisted reports, RBAC, audit events, frontend drilldown, contract gate, production-readiness, and release manifest evidence. |
-| 65 | Release Evidence Scheduled Refresh | Next: add optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
+| 65 | Release Evidence Scheduled Refresh | Completed: optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
+| 66 | Release Evidence Notifications | Next: add webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 67 | Demo Environment Polish | Planned: refine one-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 68 | Portfolio Interview Mode | Planned: curate a reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 69 | Platform Admin Controls | Planned: add organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 70 | End-to-End ML Lifecycle Polish | Planned: tighten example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |

@@ -3,7 +3,9 @@ import {
   AlertTriangle,
   BadgeCheck,
   Box,
+  CalendarClock,
   ClipboardCheck,
+  Clock3,
   ExternalLink,
   FileJson2,
   History,
@@ -17,9 +19,11 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { readStoredSession, subscribeToSessionChanges } from "../../auth/session/sessionStore";
 import {
+  getReleaseEvidenceRefreshStatus,
   getReleaseEvidenceReport,
   listReleaseEvidenceReports,
   retrieveReleaseEvidenceReport,
+  type ReleaseEvidenceRefreshStatus,
   type ReleaseEvidenceReport,
 } from "../api/releaseEvidence";
 import {
@@ -28,6 +32,7 @@ import {
   releaseArtifacts,
   releaseEvidenceSummary,
   reviewerCommands,
+  scheduledReleaseEvidenceRefresh,
   screenshotEvidence,
   type EvidenceGate,
 } from "../data/releaseEvidence";
@@ -58,6 +63,12 @@ export function ReleaseEvidencePage() {
     () => reportsQuery.data?.items ?? [],
     [reportsQuery.data?.items],
   );
+  const refreshStatusQuery = useQuery({
+    queryKey: ["release-evidence-refresh-status", token],
+    queryFn: () => getReleaseEvidenceRefreshStatus(token),
+    enabled: Boolean(token),
+    retry: false,
+  });
   const selectedReportFromList =
     reports.find((report) => report.id === selectedReportId) ?? reports[0] ?? null;
   const detailQuery = useQuery({
@@ -81,6 +92,9 @@ export function ReleaseEvidencePage() {
       );
       void queryClient.invalidateQueries({
         queryKey: ["release-evidence-reports", token],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["release-evidence-refresh-status", token],
       });
     },
   });
@@ -247,6 +261,37 @@ export function ReleaseEvidencePage() {
               </code>
             </div>
           </div>
+        </DataPanel>
+      </div>
+
+      <div className="mt-6">
+        <DataPanel
+          title="Scheduled Refresh"
+          action={
+            refreshStatusQuery.data ? (
+              <StatusPill status={refreshStatusQuery.data.status} />
+            ) : (
+              <span className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-steel">
+                <Clock3 className="h-4 w-4" aria-hidden="true" />
+                status pending
+              </span>
+            )
+          }
+        >
+          {!token ? (
+            <EvidenceStateMessage message="Sign in to load scheduled refresh status." />
+          ) : refreshStatusQuery.error ? (
+            <EvidenceStateMessage
+              tone="danger"
+              message="Scheduled release evidence refresh status failed."
+            />
+          ) : refreshStatusQuery.isFetching && !refreshStatusQuery.data ? (
+            <EvidenceStateMessage message="Loading scheduled refresh status." />
+          ) : refreshStatusQuery.data ? (
+            <ReleaseEvidenceRefreshPanel status={refreshStatusQuery.data} />
+          ) : (
+            <ReleaseEvidenceRefreshFallback />
+          )}
         </DataPanel>
       </div>
 
@@ -469,6 +514,10 @@ type ReleaseEvidenceReportDetailProps = {
   isLoading: boolean;
 };
 
+type ReleaseEvidenceRefreshPanelProps = {
+  status: ReleaseEvidenceRefreshStatus;
+};
+
 function RetrievalFact({ label, value }: RetrievalFactProps) {
   return (
     <div className="rounded border border-slate-200 bg-white p-3">
@@ -595,6 +644,108 @@ function ReleaseEvidenceReportDetail({
   );
 }
 
+function ReleaseEvidenceRefreshPanel({ status }: ReleaseEvidenceRefreshPanelProps) {
+  const latestStatus = status.latest_report?.status ?? "not captured";
+  const lastSuccessCommit = formatShortSha(
+    status.last_successful_report?.manifest_git_sha ?? null,
+  );
+  return (
+    <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <RetrievalFact label="Freshness" value={status.status} />
+        <RetrievalFact label="Latest Report" value={latestStatus} />
+        <RetrievalFact
+          label="Last Success Age"
+          value={formatDuration(status.last_success_age_seconds)}
+        />
+        <RetrievalFact
+          label="Next Refresh"
+          value={status.next_refresh_at ? formatDate(status.next_refresh_at) : "not scheduled"}
+        />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:col-span-2">
+        <div className="rounded border border-slate-200 p-3">
+          <div className="flex items-start gap-3">
+            <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-signal" />
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-ink">Last Success Summary</div>
+              <p className="mt-1 text-sm leading-6 text-steel">
+                Commit {lastSuccessCommit} with {status.last_successful_report?.artifact_count ?? 0} artifacts and{" "}
+                {status.last_successful_report?.quality_gate_count ?? 0} gates.
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 text-xs text-steel sm:grid-cols-2">
+            <span>stale after {formatDuration(status.stale_after_seconds)}</span>
+            <span>refresh every {formatDuration(status.refresh_interval_seconds)}</span>
+          </div>
+        </div>
+
+        <div className="rounded border border-slate-200 p-3">
+          <div className="text-sm font-semibold text-ink">Stale Indicators</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {status.stale_reasons.length === 0 ? (
+              <span className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-signal">
+                no stale indicators
+              </span>
+            ) : (
+              status.stale_reasons.map((reason) => (
+                <code
+                  key={reason}
+                  className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700"
+                >
+                  {reason}
+                </code>
+              ))
+            )}
+          </div>
+          <div className="mt-3 text-xs font-semibold uppercase text-steel">
+            {status.recommended_action}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded border border-slate-200 p-3 xl:col-span-2">
+        <div className="flex items-start gap-3">
+          <SquareTerminal className="mt-0.5 h-4 w-4 shrink-0 text-signal" />
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-ink">Scheduled Command</div>
+            <p className="mt-1 text-sm leading-6 text-steel">
+              Run from cron, a local scheduler, or GitHub Actions on a cadence; the
+              command retrieves only when the API marks evidence stale unless forced.
+            </p>
+          </div>
+        </div>
+        <code className="mt-3 block overflow-x-auto rounded bg-ink px-3 py-2 text-xs text-white">
+          {status.operator_command}
+        </code>
+      </div>
+    </div>
+  );
+}
+
+function ReleaseEvidenceRefreshFallback() {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <RetrievalFact
+        label="Stale After"
+        value={formatDuration(scheduledReleaseEvidenceRefresh.staleAfterSeconds)}
+      />
+      <RetrievalFact
+        label="Refresh Cadence"
+        value={formatDuration(scheduledReleaseEvidenceRefresh.refreshIntervalSeconds)}
+      />
+      <div className="rounded border border-slate-200 p-3 md:col-span-2">
+        <div className="text-sm font-semibold text-ink">Scheduled Command</div>
+        <code className="mt-3 block overflow-x-auto rounded bg-ink px-3 py-2 text-xs text-white">
+          {scheduledReleaseEvidenceRefresh.operatorCommand}
+        </code>
+      </div>
+    </div>
+  );
+}
+
 function EvidenceList({
   title,
   items,
@@ -687,4 +838,22 @@ function formatDate(value: string): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatDuration(seconds: number | null): string {
+  if (seconds === null) {
+    return "not captured";
+  }
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) {
+    return `${hours}h`;
+  }
+  return `${Math.round(hours / 24)}d`;
 }

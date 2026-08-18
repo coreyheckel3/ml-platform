@@ -644,3 +644,29 @@ tenant isolation, permission checks, audit logging, and operational history as
 deployments and model approvals. Persisting reports also gives the portfolio
 demo a credible in-product evidence trail while keeping external provider
 details behind a testable adapter boundary.
+
+## ADR-033: Release Evidence Scheduled Refresh Boundary
+
+Status: Accepted
+
+Decision: Keep release evidence scheduling outside the FastAPI web process and
+expose a platform-owned refresh status API plus a one-shot operator CLI that can
+be invoked by cron, GitHub scheduled workflows, or local runbooks.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Status API plus one-shot CLI | Keeps scheduling portable, testable, and observable while preserving server-side RBAC and audit history | Requires operators to configure an external scheduler |
+| In-process FastAPI scheduler | Simple local demo and no external scheduler dependency | Couples scheduling to web-worker lifecycle and complicates multi-replica behavior |
+| Background worker recurring job | Stronger production lifecycle control | Adds queue scheduling semantics before the release evidence use case needs them |
+
+Recommendation: Add `GET /api/v1/admin/release-evidence/refresh/status`,
+derive stale state from persisted reports, and provide
+`scripts/ops/refresh_release_evidence.py` for one-shot or scheduled execution.
+
+Justification: Release evidence freshness is an operational concern, not a web
+request side effect. Deriving stale state from persisted reports avoids a second
+state store, and an external scheduler keeps the platform credible for local,
+staging, and future production deployments without creating hidden in-process
+timers.
