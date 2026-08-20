@@ -131,7 +131,8 @@ After `make demo-stack` finishes the seed refresh, open
 1. Sign in with the local admin account.
 2. Open Projects and confirm the three example projects are present.
 3. Open Datasets and confirm dataset versions are finalized and validated.
-4. Open Training Runs and confirm seeded runs are succeeded with execution logs.
+4. Open Training Runs and confirm seeded runs show progress, elapsed time,
+   orchestration state, events, and execution logs.
 5. Open Models and confirm model versions are approved.
 6. Open Deployments and confirm healthy revisions are receiving traffic.
 7. Open Inference and run an endpoint probe.

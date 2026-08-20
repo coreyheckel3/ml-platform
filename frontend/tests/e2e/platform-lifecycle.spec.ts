@@ -67,7 +67,7 @@ test("drives the ML lifecycle through the browser with stateful API contracts", 
   await expect(
     page.getByRole("heading", { name: "Training Runs" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Run" }).click();
+  await page.getByRole("button", { name: "Run", exact: true }).click();
   const startRunForm = page.getByRole("form", { name: "Start training run" });
   await startRunForm.getByLabel("Run Name").fill("chargeback-xgb-depth-8");
   await startRunForm.getByLabel("Algorithm").fill("xgboost");
@@ -86,7 +86,9 @@ test("drives the ML lifecycle through the browser with stateful API contracts", 
     .getByRole("heading", { name: "Execution Logs" })
     .scrollIntoViewIfNeeded();
   await expect(
-    page.getByText("Training run was queued for execution."),
+    page
+      .getByLabel("Execution logs")
+      .getByText("Training run was queued for execution."),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Record result" }).click();

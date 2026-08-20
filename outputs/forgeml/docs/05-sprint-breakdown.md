@@ -2277,6 +2277,38 @@ Implemented scope:
 - Backend and frontend tests cover the sync audit path and stale retraining UI
   refresh path.
 
+## Sprint 69: Live Training Run Observability
+
+Theme: make training execution progress inspectable while workers, orchestrators,
+events, and logs are changing.
+
+Acceptance criteria:
+
+- Training Runs refresh in-flight runs automatically while requested, queued, or
+  running work exists.
+- Selected run detail, orchestration state, events, and logs refresh while the
+  selected run is live.
+- Operators can manually refresh selected training run progress from the Run
+  Detail panel.
+- The Training Runs page shows a live progress bar with lifecycle phase,
+  percentage, elapsed time, queue wait, runtime, attempt count, worker state, log
+  count, and latest log signal.
+- Execution Logs indicate whether they are live or a terminal snapshot.
+- Tests cover live progress rendering, log visibility, refresh action, and the
+  existing start/result/cancel workflow.
+
+Implemented scope:
+
+- Added live polling intervals to Training Runs list, selected run detail,
+  orchestration status, events, and logs.
+- Added a Run Detail refresh action that invalidates the selected run, events,
+  logs, orchestration status, project list, and experiment state.
+- Added a `TrainingProgress` component with lifecycle progressbar, elapsed time,
+  queue wait, runtime, attempt/worker metadata, and latest log context.
+- Added a live/snapshot indicator to the Execution Logs panel.
+- Updated frontend regression coverage for progressbar state, live timer, log
+  count, refresh affordance, and end-to-end training UI operations.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2309,11 +2341,12 @@ sequence.
 | 66 | External Training Package Adapter | Completed | Reviewed external ML package execution through the training worker, `conversational-movie-recommender` profile, profile catalog API, Training Runs UI profile panel, artifact/metric import, security guardrail, CI contract, production-readiness, and release manifest evidence. |
 | 67 | External Movie Recommender Serving Adapter | Completed | Routed inference runtime, external recommender HTTP adapter, normalized recommendation prediction logs, health probes, model artifact provenance, `joblib` registry support, deployment/inference UI templates, docs, CI contract, and production-readiness. |
 | 68 | Retraining Lifecycle Reliability | Completed | Linked training status reconciliation, sync audit events, in-flight retraining polling, manual lifecycle refresh, UI linked-status indicators, and regression coverage for queued-to-succeeded sync. |
-| 69 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
-| 70 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
-| 71 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
-| 72 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
-| 73 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 69 | Live Training Run Observability | Completed | In-flight Training Runs polling, selected-run progress refresh, live lifecycle progressbar, elapsed/queue/runtime timing, latest log context, live/snapshot logs indicator, and frontend regression coverage. |
+| 70 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 71 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 72 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 73 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 74 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

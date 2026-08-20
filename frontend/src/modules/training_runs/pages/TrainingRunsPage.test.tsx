@@ -33,10 +33,29 @@ describe("TrainingRunsPage", () => {
       await screen.findByText("Training run was queued."),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText("Training run was queued for execution."),
-    ).toBeInTheDocument();
+      (await screen.findAllByText("Training run was queued for execution.")).length,
+    ).toBeGreaterThan(0);
+    expect(await screen.findByText("Live Progress")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("progressbar", {
+        name: "Training run lifecycle progress",
+      }),
+    ).toHaveAttribute("aria-valuenow", "65");
+    expect(await screen.findByText("live timer")).toBeInTheDocument();
+    expect(await screen.findByText("1 lines")).toBeInTheDocument();
     expect(await screen.findByText("Orchestration Status")).toBeInTheDocument();
     expect(await screen.findByText("adapter: airflow")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Refresh training run progress" }),
+      ).not.toBeDisabled(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Refresh training run progress" }),
+    );
+    expect(
+      await screen.findByText(`Refreshed training run ${initialRunId}.`),
+    ).toBeInTheDocument();
     expect(
       await screen.findByText("Conversational Movie Recommender"),
     ).toBeInTheDocument();
@@ -140,7 +159,7 @@ function mockTrainingWorkflow() {
   let runs = [
     trainingRun({
       id: initialRunId,
-      status: "queued",
+      status: "running",
       metrics: {},
       orchestrator_run_id: "workflow-1",
     }),

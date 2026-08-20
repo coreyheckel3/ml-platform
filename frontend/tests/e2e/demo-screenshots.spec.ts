@@ -52,7 +52,7 @@ test("captures reviewer-ready demo screenshots", async ({ page }, testInfo) => {
 
 async function prepareDemoState(page: Page): Promise<void> {
   await page.getByRole("link", { name: "Training Runs" }).click();
-  await page.getByRole("button", { name: "Run" }).click();
+  await page.getByRole("button", { name: "Run", exact: true }).click();
   const startRunForm = page.getByRole("form", { name: "Start training run" });
   await startRunForm.getByLabel("Run Name").fill("fraud-risk-demo-xgb");
   await startRunForm.getByLabel("Algorithm").fill("xgboost");

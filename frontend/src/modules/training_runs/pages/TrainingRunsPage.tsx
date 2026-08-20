@@ -4,9 +4,12 @@ import {
   CheckCircle,
   CircleStop,
   ClipboardCheck,
+  Clock,
+  Gauge,
   PackageCheck,
   Play,
   Plus,
+  RefreshCw,
   SquareTerminal,
   X,
 } from "lucide-react";
@@ -82,10 +85,16 @@ export function TrainingRunsPage() {
   const [resultErrorMessage, setResultErrorMessage] = useState("");
   const [operationMessage, setOperationMessage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const runsQuery = useQuery({
     queryKey: ["training-runs", projectId],
     queryFn: () => listTrainingRuns(projectId ?? "", token ?? ""),
     enabled: canLoadTrainingRuns,
+    refetchInterval: (query) => {
+      const runs = query.state.data?.items ?? [];
+      return runs.some((run) => isLiveTrainingRun(run.status)) ? 5000 : false;
+    },
+    refetchIntervalInBackground: true,
   });
   const experimentsQuery = useQuery({
     queryKey: ["experiments", projectId],
@@ -129,6 +138,9 @@ export function TrainingRunsPage() {
   );
   const selectedRun =
     trainingRuns.find((run) => run.id === selectedRunId) ?? trainingRuns[0];
+  const selectedRunIsLive = Boolean(
+    selectedRun && isLiveTrainingRun(selectedRun.status),
+  );
   const selectedExperiment =
     experiments.find((experiment) => experiment.id === selectedExperimentId) ??
     experiments[0];
@@ -154,24 +166,38 @@ export function TrainingRunsPage() {
     queryKey: ["training-run", selectedRun?.id],
     queryFn: () => getTrainingRun(selectedRun?.id ?? "", token ?? ""),
     enabled: Boolean(token && selectedRun),
+    refetchInterval: (query) => {
+      const run = query.state.data ?? selectedRun;
+      return run && isLiveTrainingRun(run.status) ? 3000 : false;
+    },
+    refetchIntervalInBackground: true,
   });
   const eventsQuery = useQuery({
     queryKey: ["training-run-events", selectedRun?.id],
     queryFn: () => listTrainingRunEvents(selectedRun?.id ?? "", token ?? ""),
     enabled: Boolean(token && selectedRun),
+    refetchInterval: selectedRunIsLive ? 3000 : false,
+    refetchIntervalInBackground: true,
   });
   const logsQuery = useQuery({
     queryKey: ["training-run-logs", selectedRun?.id],
     queryFn: () => listTrainingRunLogs(selectedRun?.id ?? "", token ?? ""),
     enabled: Boolean(token && selectedRun),
+    refetchInterval: selectedRunIsLive ? 3000 : false,
+    refetchIntervalInBackground: true,
   });
   const orchestrationStatusQuery = useQuery({
     queryKey: ["training-run-orchestration-status", selectedRun?.id],
     queryFn: () =>
       getTrainingRunOrchestrationStatus(selectedRun?.id ?? "", token ?? ""),
     enabled: Boolean(token && selectedRun),
+    refetchInterval: selectedRunIsLive ? 3000 : false,
+    refetchIntervalInBackground: true,
   });
   const selectedRunDetail = selectedRunQuery.data ?? selectedRun;
+  const selectedRunDetailIsLive = Boolean(
+    selectedRunDetail && isLiveTrainingRun(selectedRunDetail.status),
+  );
   const orchestrationStatus = orchestrationStatusQuery.data;
   const events = useMemo(
     () => eventsQuery.data?.items ?? [],
@@ -359,6 +385,14 @@ export function TrainingRunsPage() {
     }
   }, [featureSets, selectedFeatureSetId]);
 
+  useEffect(() => {
+    if (!selectedRunDetailIsLive) {
+      return;
+    }
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(intervalId);
+  }, [selectedRunDetailIsLive, selectedRunDetail?.id]);
+
   function invalidateTrainingState(runId: string) {
     queryClient.invalidateQueries({ queryKey: ["training-runs", projectId] });
     queryClient.invalidateQueries({ queryKey: ["training-run", runId] });
@@ -368,6 +402,15 @@ export function TrainingRunsPage() {
       queryKey: ["training-run-orchestration-status", runId],
     });
     queryClient.invalidateQueries({ queryKey: ["experiments", projectId] });
+  }
+
+  function refreshSelectedRunState() {
+    if (!selectedRunDetail) {
+      return;
+    }
+    setOperationError(null);
+    setOperationMessage(`Refreshed training run ${selectedRunDetail.id.slice(0, 8)}.`);
+    invalidateTrainingState(selectedRunDetail.id);
   }
 
   function closeCreateForm() {
@@ -621,7 +664,26 @@ export function TrainingRunsPage() {
           )}
         </DataPanel>
 
-        <DataPanel title="Run Detail">
+        <DataPanel
+          title="Run Detail"
+          action={
+            <button
+              type="button"
+              aria-label="Refresh training run progress"
+              onClick={refreshSelectedRunState}
+              disabled={!selectedRunDetail || selectedRunQuery.isFetching}
+              className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-3 text-xs font-semibold text-steel transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                className={[
+                  "h-4 w-4",
+                  selectedRunQuery.isFetching ? "animate-spin" : "",
+                ].join(" ")}
+              />
+              Refresh
+            </button>
+          }
+        >
           {!selectedRunDetail ? (
             <StateMessage message="No training run is selected." />
           ) : selectedRunQuery.error ? (
@@ -635,6 +697,9 @@ export function TrainingRunsPage() {
               orchestrationStatus={orchestrationStatus}
               orchestrationStatusLoading={orchestrationStatusQuery.isFetching}
               orchestrationStatusFailed={Boolean(orchestrationStatusQuery.error)}
+              logs={logs}
+              events={events}
+              nowMs={nowMs}
             />
           )}
         </DataPanel>
@@ -733,29 +798,38 @@ export function TrainingRunsPage() {
       </div>
 
       <div className="mt-6">
-        <DataPanel title="Execution Logs">
-          {!selectedRunDetail ? (
-            <StateMessage message="No training run is selected." />
-          ) : logsQuery.error ? (
-            <StateMessage
-              message="Training run log request failed."
-              tone="danger"
-            />
-          ) : logs.length === 0 ? (
-            <StateMessage
-              message={
-                logsQuery.isFetching
-                  ? "Loading training run logs."
-                  : "No execution logs are recorded for this run."
-              }
-            />
-          ) : (
-            <div className="max-h-[420px] space-y-2 overflow-auto rounded border border-slate-200 bg-slate-950 p-3">
-              {logs.map((log) => (
-                <LogRow key={log.id} log={log} />
-              ))}
-            </div>
-          )}
+        <DataPanel
+          title="Execution Logs"
+          action={
+            <span className="rounded bg-field px-2 py-1 text-xs font-medium text-steel">
+              {selectedRunDetailIsLive ? "Live" : "Snapshot"}
+            </span>
+          }
+        >
+          <section aria-label="Execution logs">
+            {!selectedRunDetail ? (
+              <StateMessage message="No training run is selected." />
+            ) : logsQuery.error ? (
+              <StateMessage
+                message="Training run log request failed."
+                tone="danger"
+              />
+            ) : logs.length === 0 ? (
+              <StateMessage
+                message={
+                  logsQuery.isFetching
+                    ? "Loading training run logs."
+                    : "No execution logs are recorded for this run."
+                }
+              />
+            ) : (
+              <div className="max-h-[420px] space-y-2 overflow-auto rounded border border-slate-200 bg-slate-950 p-3">
+                {logs.map((log) => (
+                  <LogRow key={log.id} log={log} />
+                ))}
+              </div>
+            )}
+          </section>
         </DataPanel>
       </div>
     </>
@@ -1151,11 +1225,17 @@ function RunDetail({
   orchestrationStatus,
   orchestrationStatusLoading,
   orchestrationStatusFailed,
+  logs,
+  events,
+  nowMs,
 }: {
   run: TrainingRun;
   orchestrationStatus: TrainingOrchestrationStatus | undefined;
   orchestrationStatusLoading: boolean;
   orchestrationStatusFailed: boolean;
+  logs: TrainingRunLog[];
+  events: TrainingRunEvent[];
+  nowMs: number;
 }) {
   return (
     <div className="grid gap-4">
@@ -1166,6 +1246,7 @@ function RunDetail({
         </div>
         <span className={statusClassName(run.status)}>{run.status}</span>
       </div>
+      <TrainingProgress run={run} logs={logs} events={events} nowMs={nowMs} />
       <div className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-3">
         <SignalTile
           icon={<Activity className="h-4 w-4" />}
@@ -1273,6 +1354,81 @@ function RunDetail({
   );
 }
 
+function TrainingProgress({
+  run,
+  logs,
+  events,
+  nowMs,
+}: {
+  run: TrainingRun;
+  logs: TrainingRunLog[];
+  events: TrainingRunEvent[];
+  nowMs: number;
+}) {
+  const progress = trainingProgress(run.status);
+  const latestLog = latestTrainingLog(logs);
+  return (
+    <section
+      aria-label="Training run progress"
+      className="rounded border border-slate-200 p-3"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Gauge className="h-4 w-4 text-signal" />
+            Live Progress
+          </div>
+          <div className="mt-1 text-xs text-steel">
+            {progress.phase} / {progress.percent}%
+          </div>
+        </div>
+        <span className={statusClassName(run.status)}>{run.status}</span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded bg-slate-100">
+        <div
+          role="progressbar"
+          aria-label="Training run lifecycle progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress.percent}
+          className="h-full rounded bg-signal transition-all"
+          style={{ width: `${progress.percent}%` }}
+        />
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SignalTile
+          icon={<Clock className="h-4 w-4" />}
+          label="Elapsed"
+          value={formatDurationBetween(run.queued_at, run.completed_at, nowMs)}
+          detail={isLiveTrainingRun(run.status) ? "live timer" : "total time"}
+        />
+        <SignalTile
+          icon={<Activity className="h-4 w-4" />}
+          label="Queue Wait"
+          value={formatDurationBetween(
+            run.queued_at,
+            run.started_at ?? run.completed_at,
+            nowMs,
+          )}
+          detail={run.worker_id ?? "worker pending"}
+        />
+        <SignalTile
+          icon={<Play className="h-4 w-4" />}
+          label="Runtime"
+          value={formatDurationBetween(run.started_at, run.completed_at, nowMs)}
+          detail={`${run.attempt_count}/${run.max_attempts} attempts`}
+        />
+        <SignalTile
+          icon={<SquareTerminal className="h-4 w-4" />}
+          label="Logs"
+          value={`${logs.length} lines`}
+          detail={latestLog ? latestLog.message : `${events.length} events`}
+        />
+      </div>
+    </section>
+  );
+}
+
 function EventRow({ event }: { event: TrainingRunEvent }) {
   return (
     <div className="rounded border border-slate-200 p-3 text-sm">
@@ -1372,6 +1528,32 @@ function canCancelStatus(status: string): boolean {
   return status === "requested" || status === "queued" || status === "running";
 }
 
+function isLiveTrainingRun(status: string): boolean {
+  return status === "requested" || status === "queued" || status === "running";
+}
+
+function trainingProgress(status: string): { phase: string; percent: number } {
+  if (status === "requested") {
+    return { phase: "requested", percent: 10 };
+  }
+  if (status === "queued") {
+    return { phase: "queued", percent: 25 };
+  }
+  if (status === "running") {
+    return { phase: "running", percent: 65 };
+  }
+  if (status === "succeeded") {
+    return { phase: "complete", percent: 100 };
+  }
+  if (status === "failed" || status === "dead_lettered") {
+    return { phase: "failed", percent: 100 };
+  }
+  if (status === "canceled") {
+    return { phase: "canceled", percent: 100 };
+  }
+  return { phase: status, percent: 0 };
+}
+
 function statusClassName(status: string): string {
   if (status === "succeeded") {
     return "rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-signal";
@@ -1393,6 +1575,51 @@ function lifecycleDetail(run: TrainingRun): string {
     return `started ${formatTimestamp(run.started_at)}`;
   }
   return `queued ${formatTimestamp(run.queued_at)}`;
+}
+
+function latestTrainingLog(logs: TrainingRunLog[]): TrainingRunLog | null {
+  return logs.length > 0 ? logs[logs.length - 1] : null;
+}
+
+function formatDurationBetween(
+  start: string | null,
+  end: string | null,
+  nowMs: number,
+): string {
+  const startMs = timestampMs(start);
+  if (startMs === null) {
+    return "none";
+  }
+  const endMs = timestampMs(end) ?? nowMs;
+  return formatDurationMs(Math.max(endMs - startMs, 0));
+}
+
+function timestampMs(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatDurationMs(value: number): string {
+  const totalSeconds = Math.floor(value / 1000);
+  if (totalSeconds < 60) {
+    return `${totalSeconds}s`;
+  }
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (totalMinutes < 60) {
+    return `${totalMinutes}m ${seconds.toString().padStart(2, "0")}s`;
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours < 24) {
+    return `${hours}h ${minutes.toString().padStart(2, "0")}m`;
+  }
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return `${days}d ${remainingHours.toString().padStart(2, "0")}h`;
 }
 
 function formatTimestamp(value: string | null): string {
