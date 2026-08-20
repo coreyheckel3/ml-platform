@@ -176,13 +176,13 @@ class RetrainingService:
     def list_runs(self, project_id: UUID, principal: Principal) -> list[RetrainingRun]:
         self._require(principal, "retraining_runs:read")
         return [
-            self._sync_training_status(run)
+            self._sync_training_status(run, principal)
             for run in self._repository.list_runs(UUID(principal.organization_id), project_id)
         ]
 
     def get_run(self, run_id: UUID, principal: Principal) -> RetrainingRun:
         self._require(principal, "retraining_runs:read")
-        return self._sync_training_status(self._get_scoped_run(run_id, principal))
+        return self._sync_training_status(self._get_scoped_run(run_id, principal), principal)
 
     def approve_run(self, run_id: UUID, principal: Principal) -> RetrainingRun:
         self._require(principal, "retraining_runs:approve")
@@ -599,7 +599,11 @@ class RetrainingService:
             metadata=event_metadata,
         )
 
-    def _sync_training_status(self, run: RetrainingRun) -> RetrainingRun:
+    def _sync_training_status(
+        self,
+        run: RetrainingRun,
+        principal: Principal,
+    ) -> RetrainingRun:
         if run.training_run_id is None:
             return run
         training_status = self._repository.get_training_run_status(run.training_run_id)
@@ -617,7 +621,18 @@ class RetrainingService:
                 "previous_retraining_status": run.status.value,
             },
         )
-        return self._repository.update_run(updated)
+        saved = self._repository.update_run(updated)
+        self._record_run_audit(
+            saved,
+            principal,
+            action="retraining_runs.sync",
+            metadata={
+                "training_status": training_status,
+                "previous_retraining_status": run.status.value,
+                "synced_retraining_status": saved.status.value,
+            },
+        )
+        return saved
 
     def _get_scoped_policy(self, policy_id: UUID, principal: Principal) -> RetrainingPolicy:
         policy = self._repository.get_policy(policy_id)

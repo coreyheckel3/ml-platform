@@ -97,6 +97,11 @@ export function RetrainingPage() {
     queryKey: ["retraining-runs", projectId],
     queryFn: () => listRetrainingRuns(projectId ?? "", token ?? ""),
     enabled: canLoadRetraining,
+    refetchInterval: (query) => {
+      const runs = query.state.data?.items ?? [];
+      return runs.some(isLiveRetrainingRun) ? 5000 : false;
+    },
+    refetchIntervalInBackground: true,
   });
   const deploymentsQuery = useQuery({
     queryKey: ["deployments", projectId],
@@ -398,6 +403,15 @@ export function RetrainingPage() {
   function invalidateRunState() {
     queryClient.invalidateQueries({ queryKey: ["retraining-runs", projectId] });
     queryClient.invalidateQueries({ queryKey: ["training-runs", projectId] });
+    queryClient.invalidateQueries({ queryKey: ["experiments", projectId] });
+  }
+
+  function refreshRunState() {
+    setOperationError(null);
+    setOperationMessage("Retraining lifecycle refreshed.");
+    void runsQuery.refetch();
+    void queryClient.invalidateQueries({ queryKey: ["training-runs", projectId] });
+    void queryClient.invalidateQueries({ queryKey: ["experiments", projectId] });
   }
 
   function closeCreateForm() {
@@ -711,7 +725,26 @@ export function RetrainingPage() {
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <DataPanel title="Retraining Runs">
+        <DataPanel
+          title="Retraining Runs"
+          action={
+            <button
+              type="button"
+              aria-label="Refresh retraining lifecycle"
+              onClick={refreshRunState}
+              disabled={!canLoadRetraining || runsQuery.isFetching}
+              className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-white px-3 text-xs font-semibold text-steel transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                className={[
+                  "h-4 w-4",
+                  runsQuery.isFetching ? "animate-spin" : "",
+                ].join(" ")}
+              />
+              Sync
+            </button>
+          }
+        >
           {!canLoadRetraining ? (
             <StateMessage message="No project context is selected." />
           ) : runsQuery.error ? (
@@ -1413,8 +1446,11 @@ function RunRow({
         <span className={runStatusClassName(run.status)}>{run.status}</span>
       </td>
       <td>{formatSignal(run)}</td>
-      <td className="max-w-[200px] truncate">
-        {run.training_run_id ?? "not launched"}
+      <td className="max-w-[220px]">
+        <div className="truncate">{run.training_run_id ?? "not launched"}</div>
+        <div className="text-xs text-steel">
+          training: {linkedTrainingStatus(run)}
+        </div>
       </td>
       <td>
         <div className="flex items-center gap-2">
@@ -1476,7 +1512,7 @@ function RunDetail({
         </div>
         <span className={runStatusClassName(run.status)}>{run.status}</span>
       </div>
-      <div className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-3">
+      <div className="grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-4">
         <SignalTile
           icon={<RefreshCw className="h-4 w-4" />}
           label="Trigger"
@@ -1492,6 +1528,12 @@ function RunDetail({
               : "not launched"
           }
           detail={String(run.training_config.algorithm ?? "algorithm")}
+        />
+        <SignalTile
+          icon={<CircleCheck className="h-4 w-4" />}
+          label="Linked Status"
+          value={linkedTrainingStatus(run)}
+          detail={linkedTrainingDetail(run)}
         />
         <SignalTile
           icon={<CheckCircle className="h-4 w-4" />}
@@ -1656,6 +1698,37 @@ function formatSignal(run: RetrainingRun): string {
     return typeof severity === "string" ? severity : "alert event";
   }
   return "manual";
+}
+
+function linkedTrainingStatus(run: RetrainingRun): string {
+  const trainingStatus = run.decision_metadata.training_status;
+  if (typeof trainingStatus === "string" && trainingStatus.trim()) {
+    return trainingStatus;
+  }
+  if (!run.training_run_id) {
+    return "not launched";
+  }
+  return run.status;
+}
+
+function linkedTrainingDetail(run: RetrainingRun): string {
+  const previousStatus = run.decision_metadata.previous_retraining_status;
+  if (typeof previousStatus === "string" && previousStatus.trim()) {
+    return `synced from ${previousStatus}`;
+  }
+  const orchestratorRunId = run.decision_metadata.orchestrator_run_id;
+  if (typeof orchestratorRunId === "string" && orchestratorRunId.trim()) {
+    return orchestratorRunId;
+  }
+  return run.training_run_id ? "training run linked" : "approval gate";
+}
+
+function isLiveRetrainingRun(run: RetrainingRun): boolean {
+  return (
+    run.status === "pending_approval" ||
+    run.status === "queued" ||
+    run.status === "running"
+  );
 }
 
 function runVerb(status: string): string {

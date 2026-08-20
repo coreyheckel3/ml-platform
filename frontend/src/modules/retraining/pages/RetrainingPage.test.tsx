@@ -9,7 +9,7 @@ type FetchCall = [string, RequestInit | undefined];
 const policyId = "policy-2";
 const initialRunId = "run-1";
 const triggeredRunId = "run-2";
-const syncedRunId = "run-3";
+const lifecycleRunId = "run-4";
 
 describe("RetrainingPage", () => {
   afterEach(() => {
@@ -34,7 +34,14 @@ describe("RetrainingPage", () => {
     expect(
       (await screen.findAllByText("Fraud Drift Retraining")).length,
     ).toBeGreaterThan(0);
-    expect(await screen.findByText("succeeded")).toBeInTheDocument();
+    expect(await screen.findByText("training: queued")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Refresh retraining lifecycle" }),
+    );
+    expect(
+      await screen.findByText("Retraining lifecycle refreshed."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("training: succeeded")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Policy" }));
     await waitFor(() =>
       expect(
@@ -161,6 +168,7 @@ describe("RetrainingPage", () => {
 
 function mockRetrainingWorkflow() {
   let policies = [retrainingPolicy("policy-1", "Fraud Drift Retraining")];
+  let retrainingRunFetches = 0;
   let runs = [
     retrainingRun({
       id: initialRunId,
@@ -169,10 +177,14 @@ function mockRetrainingWorkflow() {
       training_run_id: null,
     }),
     retrainingRun({
-      id: syncedRunId,
+      id: lifecycleRunId,
       policy_id: "policy-1",
-      status: "succeeded",
-      training_run_id: "training-run-3",
+      status: "queued",
+      training_run_id: "training-run-4",
+      decision_metadata: {
+        reason: "Training run was queued.",
+        training_status: "queued",
+      },
     }),
   ];
   const fetchMock = vi.fn(
@@ -191,6 +203,24 @@ function mockRetrainingWorkflow() {
         method === "GET" &&
         path === "/api/v1/projects/project-1/retraining-runs"
       ) {
+        retrainingRunFetches += 1;
+        if (retrainingRunFetches > 1) {
+          runs = runs.map((run) =>
+            run.id === lifecycleRunId
+              ? retrainingRun({
+                  id: lifecycleRunId,
+                  policy_id: "policy-1",
+                  status: "succeeded",
+                  training_run_id: "training-run-4",
+                  decision_metadata: {
+                    reason: "Training run was queued.",
+                    training_status: "succeeded",
+                    previous_retraining_status: "queued",
+                  },
+                })
+              : run,
+          );
+        }
         return jsonResponse({ items: runs, next_cursor: null });
       }
 
@@ -401,6 +431,7 @@ function retrainingRun({
   policy_id,
   status,
   training_run_id,
+  decision_metadata,
   approved_by = null,
   rejected_by = null,
 }: {
@@ -408,6 +439,7 @@ function retrainingRun({
   policy_id: string;
   status: string;
   training_run_id: string | null;
+  decision_metadata?: Record<string, unknown>;
   approved_by?: string | null;
   rejected_by?: string | null;
 }): Record<string, unknown> {
@@ -429,9 +461,10 @@ function retrainingRun({
       model_type: "xgboost",
       objective_metric_name: "auc",
     },
-    decision_metadata: {
+    decision_metadata: decision_metadata ?? {
       reason: "Retraining run is waiting for approval.",
       drift_score: 0.42,
+      training_status: training_run_id ? status : undefined,
     },
     requested_by: "user-1",
     approved_by,

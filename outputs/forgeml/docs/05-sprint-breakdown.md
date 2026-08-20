@@ -2242,6 +2242,41 @@ Implemented scope:
   health probes, fallback behavior, repository reference metadata, policy
   validation, `joblib` inference, and UI payload/config templates.
 
+## Sprint 68: Retraining Lifecycle Reliability
+
+Theme: make retraining status trustworthy after a linked training worker updates
+the underlying training run.
+
+Acceptance criteria:
+
+- Retraining runs reconcile their status from the linked training run when the
+  project run list or run detail is read.
+- Status reconciliation records an auditable `retraining_runs.sync` event only
+  when the retraining lifecycle actually changes.
+- The Retraining page refreshes in-flight runs automatically while queued,
+  running, or pending approval work exists.
+- Operators can manually refresh retraining lifecycle state without navigating
+  away from the page.
+- Retraining tables and detail panels show both retraining run status and the
+  linked training run status.
+- Training Runs, Experiments, and Retraining views are invalidated together
+  after retraining lifecycle operations.
+- Tests prove queued retraining runs can refresh to succeeded once the linked
+  training run completes.
+
+Implemented scope:
+
+- `RetrainingService` now emits `retraining_runs.sync` audit events when linked
+  training status changes a retraining run to running, succeeded, failed, or
+  canceled.
+- `RetrainingPage` polls in-flight runs every five seconds, exposes a `Sync`
+  control, and invalidates Training Runs and Experiments alongside Retraining.
+- Retraining run rows show linked training status under the training run id.
+- Retraining run detail adds a Linked Status signal derived from
+  `decision_metadata.training_status`.
+- Backend and frontend tests cover the sync audit path and stale retraining UI
+  refresh path.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2273,11 +2308,12 @@ sequence.
 | 65 | Release Evidence Scheduled Refresh | Completed | Optional scheduled refresh command, stale evidence indicators, last-success summary, and operator runbook automation. |
 | 66 | External Training Package Adapter | Completed | Reviewed external ML package execution through the training worker, `conversational-movie-recommender` profile, profile catalog API, Training Runs UI profile panel, artifact/metric import, security guardrail, CI contract, production-readiness, and release manifest evidence. |
 | 67 | External Movie Recommender Serving Adapter | Completed | Routed inference runtime, external recommender HTTP adapter, normalized recommendation prediction logs, health probes, model artifact provenance, `joblib` registry support, deployment/inference UI templates, docs, CI contract, and production-readiness. |
-| 68 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
-| 69 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
-| 70 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
-| 71 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
-| 72 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 68 | Retraining Lifecycle Reliability | Completed | Linked training status reconciliation, sync audit events, in-flight retraining polling, manual lifecycle refresh, UI linked-status indicators, and regression coverage for queued-to-succeeded sync. |
+| 69 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 70 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 71 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 72 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 73 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

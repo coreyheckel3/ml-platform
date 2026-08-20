@@ -273,6 +273,13 @@ def test_retraining_service_queues_drift_triggered_training_run() -> None:
     assert synced_run.status == RetrainingRunStatus.SUCCEEDED
     assert synced_run.decision_metadata["training_status"] == "succeeded"
     assert synced_run.decision_metadata["previous_retraining_status"] == "queued"
+    assert [event.action for event in audit_log.events] == [
+        "retraining_runs.trigger",
+        "retraining_runs.sync",
+    ]
+    assert audit_log.events[-1].metadata["training_status"] == "succeeded"
+    assert audit_log.events[-1].metadata["previous_retraining_status"] == "queued"
+    assert audit_log.events[-1].metadata["synced_retraining_status"] == "succeeded"
 
     repository.training_statuses[evaluation.run.training_run_id] = "dead_lettered"
     failed_runs = service.list_runs(project_id, actor)
@@ -280,6 +287,14 @@ def test_retraining_service_queues_drift_triggered_training_run() -> None:
 
     assert failed_run.status == RetrainingRunStatus.FAILED
     assert failed_run.decision_metadata["training_status"] == "dead_lettered"
+    assert [event.action for event in audit_log.events] == [
+        "retraining_runs.trigger",
+        "retraining_runs.sync",
+        "retraining_runs.sync",
+    ]
+    assert audit_log.events[-1].metadata["training_status"] == "dead_lettered"
+    assert audit_log.events[-1].metadata["previous_retraining_status"] == "succeeded"
+    assert audit_log.events[-1].metadata["synced_retraining_status"] == "failed"
 
 
 def test_retraining_service_holds_run_for_approval_then_launches() -> None:

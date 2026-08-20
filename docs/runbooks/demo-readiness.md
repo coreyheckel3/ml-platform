@@ -139,6 +139,14 @@ After `make demo-stack` finishes the seed refresh, open
 9. Open Alerts and confirm evaluated alert events are visible.
 10. Open Retraining and confirm policy evaluations point back to the triggering drift or alert signal.
 
+## Retraining Lifecycle Check
+
+Manual retraining creates a queued training run. It will stay queued until a
+training worker claims it. After the worker completes, the Retraining page polls
+in-flight runs and the `Sync` control refreshes the linked training status. A
+succeeded linked training run should change the retraining run from `queued` to
+`succeeded` and emit a `retraining_runs.sync` event in Operational Audit.
+
 ## Troubleshooting
 
 If Docker is not running, start Docker Desktop and rerun `make demo-stack`.
