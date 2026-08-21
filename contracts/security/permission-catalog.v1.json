@@ -9,7 +9,7 @@
       "code": "admin:audit_log:read",
       "description": "Read organization audit log events.",
       "enforced_at": [
-        "backend/src/forgeml/modules/administration/application/services.py:122"
+        "backend/src/forgeml/modules/administration/application/services.py:135"
       ],
       "module": "administration"
     },
@@ -18,7 +18,7 @@
       "code": "admin:release_evidence:read",
       "description": "Read organization release evidence retrieval reports.",
       "enforced_at": [
-        "backend/src/forgeml/modules/administration/application/services.py:306"
+        "backend/src/forgeml/modules/administration/application/services.py:321"
       ],
       "module": "administration"
     },
@@ -27,7 +27,7 @@
       "code": "admin:release_evidence:retrieve",
       "description": "Retrieve and persist release evidence from the configured provider.",
       "enforced_at": [
-        "backend/src/forgeml/modules/administration/application/services.py:168"
+        "backend/src/forgeml/modules/administration/application/services.py:181"
       ],
       "module": "administration"
     },

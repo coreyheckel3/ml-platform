@@ -49,6 +49,16 @@ class ReleaseEvidenceReportListResponse(BaseModel):
     next_cursor: str | None = None
 
 
+class ReleaseEvidenceNotificationPolicyResponse(BaseModel):
+    enabled: bool
+    channel_type: str
+    target: str
+    failure_statuses: list[str] = Field(default_factory=list)
+    escalation_window_seconds: int
+    escalation_command: str
+    delivery_audit_actions: list[str] = Field(default_factory=list)
+
+
 class ReleaseEvidenceRefreshStatusResponse(BaseModel):
     schema_version: str = "forgeml.release_evidence_refresh_status.v1"
     organization_id: str
@@ -70,3 +80,4 @@ class ReleaseEvidenceRefreshStatusResponse(BaseModel):
     stale_reasons: list[str] = Field(default_factory=list)
     recommended_action: str
     operator_command: str
+    notification_policy: ReleaseEvidenceNotificationPolicyResponse

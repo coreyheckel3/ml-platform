@@ -49,6 +49,9 @@ try:
     from scripts.ci.check_release_evidence_drilldown_api_contract import (
         check_release_evidence_drilldown_api_contract as verify_drilldown_api_contract,
     )
+    from scripts.ci.check_release_evidence_notifications_contract import (
+        check_release_evidence_notifications_contract as verify_notifications_contract,
+    )
     from scripts.ci.check_release_evidence_retrieval_contract import (
         check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
     )
@@ -112,6 +115,9 @@ except ModuleNotFoundError:
     )
     from check_release_evidence_drilldown_api_contract import (  # type: ignore[no-redef]
         check_release_evidence_drilldown_api_contract as verify_drilldown_api_contract,
+    )
+    from check_release_evidence_notifications_contract import (  # type: ignore[no-redef]
+        check_release_evidence_notifications_contract as verify_notifications_contract,
     )
     from check_release_evidence_retrieval_contract import (  # type: ignore[no-redef]
         check_release_evidence_retrieval_contract as verify_release_evidence_retrieval_contract,
@@ -280,6 +286,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-evidence-retrieval.v1.json",
     "contracts/ops/release-evidence-drilldown-api.v1.json",
     "contracts/ops/release-evidence-scheduled-refresh.v1.json",
+    "contracts/ops/release-evidence-notifications.v1.json",
     "contracts/ops/operational-audit-ux.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
@@ -303,17 +310,21 @@ REQUIRED_FILES = (
     "backend/tests/integration/administration/test_audit_log_repository.py",
     "backend/src/forgeml/platform/release_evidence/__init__.py",
     "backend/src/forgeml/platform/release_evidence/retrieval.py",
+    "backend/src/forgeml/platform/notifications/__init__.py",
+    "backend/src/forgeml/platform/notifications/delivery.py",
     "scripts/ops/retrieve_release_evidence.py",
     "scripts/ops/refresh_release_evidence.py",
     "scripts/ci/check_release_evidence_retrieval_contract.py",
     "scripts/ci/check_release_evidence_drilldown_api_contract.py",
     "scripts/ci/check_release_evidence_scheduled_refresh_contract.py",
+    "scripts/ci/check_release_evidence_notifications_contract.py",
     "backend/tests/unit/platform/test_release_evidence_retrieval.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_cli.py",
     "backend/tests/unit/ops/test_release_evidence_refresh.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_contract.py",
     "backend/tests/unit/ops/test_release_evidence_drilldown_api_contract.py",
     "backend/tests/unit/ops/test_release_evidence_scheduled_refresh_contract.py",
+    "backend/tests/unit/ops/test_release_evidence_notifications_contract.py",
     "frontend/src/modules/operational_audit/data/releaseEvidenceAuditEvents.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.test.ts",
@@ -395,6 +406,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_evidence_retrieval_contract(repo_root),
         check_release_evidence_drilldown_api_contract(repo_root),
         check_release_evidence_scheduled_refresh_contract(repo_root),
+        check_release_evidence_notifications_contract(repo_root),
         check_operational_audit_ux_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
@@ -2312,6 +2324,111 @@ def check_release_evidence_scheduled_refresh_contract(repo_root: Path) -> Readin
                 f"has_frontend_surface={has_frontend_surface}, "
                 f"has_release_manifest_artifact={has_release_manifest_artifact}, "
                 f"has_contract_docs={has_contract_docs}"
+            )
+        ),
+    )
+
+
+def check_release_evidence_notifications_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contracts_source = (repo_root / "contracts/ops/README.md").read_text(encoding="utf-8")
+    manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract_path = repo_root / "contracts/ops/release-evidence-notifications.v1.json"
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    delivery_source = (
+        repo_root / "backend/src/forgeml/platform/notifications/delivery.py"
+    ).read_text(encoding="utf-8")
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = (
+        repo_root / "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    schema_source = (
+        repo_root / "backend/src/forgeml/modules/administration/api/schemas.py"
+    ).read_text(encoding="utf-8")
+    page_source = (
+        repo_root / "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    runbook_source = (repo_root / "docs/runbooks/production-readiness.md").read_text(
+        encoding="utf-8"
+    )
+    audit_actions = set(contract.get("audit", {}).get("actions", []))
+    required_actions = {
+        "release_evidence.notification_delivered",
+        "release_evidence.notification_failed",
+        "release_evidence.notification_skipped",
+    }
+    has_ci_gate = (
+        "python scripts/ci/check_release_evidence_notifications_contract.py" in ci_source
+    )
+    contract_current, contract_detail = verify_notifications_contract(
+        contract_path,
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_adapter_boundary = (
+        "ReleaseEvidenceNotificationGateway" in delivery_source
+        and "WebhookReleaseEvidenceNotificationGateway" in delivery_source
+        and "NoopReleaseEvidenceNotificationGateway" in delivery_source
+    )
+    has_service_delivery = (
+        "_notify_failed_release_evidence" in service_source
+        and all(action in service_source for action in required_actions)
+    )
+    has_api_policy = (
+        "_release_evidence_notification_policy_from_settings" in route_source
+        and "ReleaseEvidenceNotificationPolicyResponse" in schema_source
+        and "notification_policy" in schema_source
+    )
+    has_frontend_surface = (
+        "Notification Routing" in page_source
+        and "Delivery Audit Records" in page_source
+        and "Escalation Command" in page_source
+    )
+    has_release_manifest_artifact = (
+        "release_evidence_notifications_contract" in manifest_source
+        and "contracts/ops/release-evidence-notifications.v1.json" in manifest_source
+    )
+    has_contract_docs = "release-evidence-notifications.v1.json" in contracts_source
+    has_runbook = (
+        "FORGEML_RELEASE_EVIDENCE_NOTIFICATION_WEBHOOK_URL" in runbook_source
+        and "release_evidence.notification_failed" in runbook_source
+    )
+    has_audit_actions = required_actions.issubset(audit_actions)
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_adapter_boundary
+        and has_service_delivery
+        and has_api_policy
+        and has_frontend_surface
+        and has_release_manifest_artifact
+        and has_contract_docs
+        and has_runbook
+        and has_audit_actions
+    )
+    return ReadinessCheck(
+        name="release evidence notifications contract",
+        passed=passed,
+        detail=(
+            "release evidence failure notifications, delivery audit records, "
+            "webhook adapter, UI policy, docs, manifest artifact, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_adapter_boundary={has_adapter_boundary}, "
+                f"has_service_delivery={has_service_delivery}, "
+                f"has_api_policy={has_api_policy}, "
+                f"has_frontend_surface={has_frontend_surface}, "
+                f"has_release_manifest_artifact={has_release_manifest_artifact}, "
+                f"has_contract_docs={has_contract_docs}, "
+                f"has_runbook={has_runbook}, "
+                f"has_audit_actions={has_audit_actions}"
             )
         ),
     )

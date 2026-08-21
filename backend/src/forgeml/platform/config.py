@@ -153,6 +153,28 @@ class Settings(BaseSettings):
         ge=1,
         alias="FORGEML_RELEASE_EVIDENCE_REFRESH_INTERVAL_SECONDS",
     )
+    release_evidence_notifications_enabled: bool = Field(
+        default=False,
+        alias="FORGEML_RELEASE_EVIDENCE_NOTIFICATIONS_ENABLED",
+    )
+    release_evidence_notification_channel: str = Field(
+        default="noop",
+        alias="FORGEML_RELEASE_EVIDENCE_NOTIFICATION_CHANNEL",
+    )
+    release_evidence_notification_webhook_url: str | None = Field(
+        default=None,
+        alias="FORGEML_RELEASE_EVIDENCE_NOTIFICATION_WEBHOOK_URL",
+    )
+    release_evidence_notification_timeout_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        alias="FORGEML_RELEASE_EVIDENCE_NOTIFICATION_TIMEOUT_SECONDS",
+    )
+    release_evidence_notification_escalation_window_seconds: int = Field(
+        default=1_800,
+        ge=1,
+        alias="FORGEML_RELEASE_EVIDENCE_NOTIFICATION_ESCALATION_WINDOW_SECONDS",
+    )
     jwt_secret: str = Field(
         default="change-me-for-local-development",
         alias="FORGEML_JWT_SECRET",

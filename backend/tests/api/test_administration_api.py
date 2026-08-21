@@ -18,6 +18,7 @@ from forgeml.modules.administration.domain.entities import (
     ReleaseEvidenceReport,
 )
 from forgeml.platform.api.dependencies import get_current_principal
+from forgeml.platform.notifications import ReleaseEvidenceNotificationPolicy
 from forgeml.platform.security.rbac import Principal
 
 
@@ -107,6 +108,23 @@ class FakeAdministrationService:
                 "scripts/ops/refresh_release_evidence.py --base-url "
                 "http://127.0.0.1:8001 --once --stale-after-seconds 86400"
             ),
+            notification_policy=ReleaseEvidenceNotificationPolicy(
+                enabled=True,
+                channel_type="webhook",
+                target="https://hooks.example.com/...",
+                failure_statuses=("failed",),
+                escalation_window_seconds=1_800,
+                escalation_command=(
+                    "PYTHONPATH=backend/src:. python "
+                    "scripts/ops/refresh_release_evidence.py --base-url "
+                    "http://127.0.0.1:8001 --once --force"
+                ),
+                delivery_audit_actions=(
+                    "release_evidence.notification_delivered",
+                    "release_evidence.notification_failed",
+                    "release_evidence.notification_skipped",
+                ),
+            ),
         )
 
     def _release_evidence_report(self) -> ReleaseEvidenceReport:
@@ -125,8 +143,8 @@ class FakeAdministrationService:
             manifest_git_sha="abc123",
             manifest_git_branch="main",
             ci_run_url="https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-            artifact_count=39,
-            quality_gate_count=28,
+            artifact_count=40,
+            quality_gate_count=29,
             missing_artifacts=(),
             missing_quality_gates=(),
             comparison={"passed": True},
@@ -316,6 +334,23 @@ def test_release_evidence_refresh_status_route_returns_last_success_summary() ->
     assert payload["next_refresh_at"] == "2026-08-17T13:30:00+00:00"
     assert payload["recommended_action"] == "wait_until_next_refresh"
     assert "refresh_release_evidence.py" in payload["operator_command"]
+    assert payload["notification_policy"] == {
+        "enabled": True,
+        "channel_type": "webhook",
+        "target": "https://hooks.example.com/...",
+        "failure_statuses": ["failed"],
+        "escalation_window_seconds": 1_800,
+        "escalation_command": (
+            "PYTHONPATH=backend/src:. python "
+            "scripts/ops/refresh_release_evidence.py --base-url "
+            "http://127.0.0.1:8001 --once --force"
+        ),
+        "delivery_audit_actions": [
+            "release_evidence.notification_delivered",
+            "release_evidence.notification_failed",
+            "release_evidence.notification_skipped",
+        ],
+    }
 
 
 def release_evidence_report_response(
@@ -336,8 +371,8 @@ def release_evidence_report_response(
         "manifest_git_sha": "abc123",
         "manifest_git_branch": "main",
         "ci_run_url": "https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-        "artifact_count": 39,
-        "quality_gate_count": 28,
+        "artifact_count": 40,
+        "quality_gate_count": 29,
         "missing_artifacts": [],
         "missing_quality_gates": [],
         "comparison": {"passed": True},

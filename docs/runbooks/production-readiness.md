@@ -24,6 +24,7 @@ python scripts/ci/check_release_evidence_ux_contract.py
 python scripts/ci/check_release_evidence_retrieval_contract.py
 python scripts/ci/check_release_evidence_drilldown_api_contract.py
 python scripts/ci/check_release_evidence_scheduled_refresh_contract.py
+python scripts/ci/check_release_evidence_notifications_contract.py
 python scripts/ci/check_operational_audit_ux_contract.py
 python scripts/ci/check_release_manifest_verifier_contract.py
 python scripts/ci/check_demo_readiness_contract.py
@@ -75,6 +76,23 @@ Generate a cron entry for the same automation:
 PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --print-cron --base-url http://127.0.0.1:8001 --stale-after-seconds 86400
 ```
 
+Configure release evidence failure notifications before enabling a staging or
+production scheduler:
+
+```bash
+export FORGEML_RELEASE_EVIDENCE_NOTIFICATIONS_ENABLED=true
+export FORGEML_RELEASE_EVIDENCE_NOTIFICATION_CHANNEL=webhook
+export FORGEML_RELEASE_EVIDENCE_NOTIFICATION_WEBHOOK_URL=https://hooks.example.com/forgeml-release-evidence
+export FORGEML_RELEASE_EVIDENCE_NOTIFICATION_ESCALATION_WINDOW_SECONDS=1800
+```
+
+Failed release evidence writes one delivery audit record with action
+`release_evidence.notification_delivered`,
+`release_evidence.notification_failed`, or
+`release_evidence.notification_skipped`. If delivery fails, run the
+notification policy escalation command from the Release Evidence page and
+review the newest `release_evidence.retrieve_failed` report before promotion.
+
 For staging, also run the k6 smoke load profile:
 
 ```bash
@@ -102,6 +120,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Release evidence retrieval contract result proving GitHub Actions artifact lookup, manifest archive extraction, main-branch comparison, and CI URL validation are checked
 - Release evidence drilldown API contract result proving admin retrieval reports, RBAC, audit logging, persistence, and UI drilldown are checked
 - Release evidence scheduled refresh contract result proving stale status, last-success summary, operator automation, and UI indicators are checked
+- Release evidence notifications contract result proving failed evidence alerts, webhook delivery, delivery audit records, and escalation docs are checked
 - Operational audit UX contract result proving `/operational-audit` links live audit events, release evidence annotations, screenshots, and route-level follow-up
 - Demo readiness contract result proving local stack startup, seeded data refresh, screenshot capture, and architecture walkthrough assets are checked
 - CI runtime contract result proving GitHub Actions runtime pins avoid retired action majors

@@ -76,6 +76,8 @@ The project favors verifiable engineering behavior over static claims:
 - GitHub Actions publishes release evidence on main-branch pushes.
 - Live release evidence retrieval can fetch the latest main-branch manifest
   artifact from GitHub Actions and compare it with checked-in contracts.
+- Release evidence notification policy exposes audit-only or webhook delivery,
+  redacted targets, failure statuses, and delivery audit records.
 
 ## Suggested Walkthrough Narrative
 
@@ -100,6 +102,7 @@ PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_ux_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_retrieval_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_drilldown_api_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_scheduled_refresh_contract.py
+PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_notifications_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_operational_audit_ux_contract.py
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ci/check_external_training_package_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/production_readiness.py

@@ -85,6 +85,8 @@ jobs:
         run: python scripts/ci/check_release_evidence_drilldown_api_contract.py
       - name: Check release evidence scheduled refresh contract
         run: python scripts/ci/check_release_evidence_scheduled_refresh_contract.py
+      - name: Check release evidence notifications contract
+        run: python scripts/ci/check_release_evidence_notifications_contract.py
       - name: Check operational audit UX contract
         run: python scripts/ci/check_operational_audit_ux_contract.py
       - name: Check release manifest verifier contract

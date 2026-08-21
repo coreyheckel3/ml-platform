@@ -221,8 +221,9 @@ the remaining product/runtime platform roadmap.
 | 67 | External Movie Recommender Serving Adapter | Completed: routed inference runtime, external recommender HTTP adapter, normalized recommendation logs, health probes, `joblib` registry support, UI templates, docs, CI contract, and production-readiness. |
 | 68 | Retraining Lifecycle Reliability | Completed: linked training status reconciliation, sync audit events, in-flight polling, manual lifecycle refresh, UI linked-status indicators, and queued-to-succeeded regression coverage. |
 | 69 | Live Training Run Observability | Completed: in-flight Training Runs polling, selected-run progress refresh, live lifecycle progressbar, elapsed/queue/runtime timing, latest log context, live/snapshot logs indicator, and frontend regression coverage. |
-| 70 | Release Evidence Notifications | Planned: add webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 70 | Release Evidence Notifications | Completed: webhook-style release evidence notification adapter boundary, audit-only default mode, failed evidence alert payloads, delivery audit records, frontend routing policy, CI contract, and escalation docs. |
 | 71 | Demo Environment Polish | Planned: refine one-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
 | 72 | Portfolio Interview Mode | Planned: curate a reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
 | 73 | Platform Admin Controls | Planned: add organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
 | 74 | End-to-End ML Lifecycle Polish | Planned: tighten example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 75 | Evaluation and Model Comparison UX | Planned: add richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |

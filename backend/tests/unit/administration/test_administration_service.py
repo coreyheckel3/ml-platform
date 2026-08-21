@@ -22,6 +22,11 @@ from forgeml.modules.administration.repositories.interfaces import (
     ReleaseEvidenceReportFilters,
 )
 from forgeml.platform.domain.errors import PermissionDeniedError, ResourceNotFoundError
+from forgeml.platform.notifications import (
+    NotificationDeliveryResult,
+    ReleaseEvidenceNotification,
+    ReleaseEvidenceNotificationPolicy,
+)
 from forgeml.platform.release_evidence import (
     RELEASE_EVIDENCE_REQUIRED_ARTIFACTS,
     RELEASE_EVIDENCE_REQUIRED_QUALITY_GATES,
@@ -139,6 +144,32 @@ class FakeReleaseEvidenceGateway:
         run: ReleaseEvidenceRun,
     ) -> dict[str, object]:
         return self.manifest
+
+
+class FakeReleaseEvidenceNotificationGateway:
+    def __init__(
+        self,
+        *,
+        status: str = "delivered",
+        error_message: str | None = None,
+    ) -> None:
+        self.status = status
+        self.error_message = error_message
+        self.notifications: list[ReleaseEvidenceNotification] = []
+
+    def send(
+        self,
+        notification: ReleaseEvidenceNotification,
+    ) -> NotificationDeliveryResult:
+        self.notifications.append(notification)
+        return NotificationDeliveryResult(
+            channel_type="webhook",
+            target="https://hooks.example.com/...",
+            status=self.status,
+            response_status=202 if self.status == "delivered" else None,
+            error_message=self.error_message,
+            delivered_at=datetime(2026, 8, 17, 18, 5, tzinfo=UTC),
+        )
 
 
 def test_administration_service_lists_org_scoped_audit_log_with_filters() -> None:
@@ -339,6 +370,76 @@ def test_administration_service_persists_release_evidence_retrieval_errors() -> 
     assert audit_log.recorded_events[0].metadata["error_message"] == report.error_message
 
 
+def test_administration_service_notifies_on_failed_release_evidence() -> None:
+    organization_id = uuid4()
+    missing_gate = "release_evidence_drilldown_api_contract"
+    manifest = release_manifest(
+        quality_gates=tuple(
+            gate
+            for gate in RELEASE_EVIDENCE_REQUIRED_QUALITY_GATES
+            if gate != missing_gate
+        ),
+    )
+    audit_log = FakeAuditLogRepository()
+    notifications = FakeReleaseEvidenceNotificationGateway()
+    service = AdministrationService(
+        audit_log=audit_log,
+        release_evidence_reports=FakeReleaseEvidenceReportRepository(),
+        release_evidence_gateway=FakeReleaseEvidenceGateway(manifest=manifest),
+        release_evidence_config=release_evidence_config(),
+        release_evidence_notifications=notifications,
+        release_evidence_notification_policy=release_evidence_notification_policy(),
+    )
+
+    report = service.retrieve_release_evidence(
+        RetrieveReleaseEvidenceCommand(organization_id=organization_id),
+        principal(organization_id, {"admin:release_evidence:retrieve"}),
+    )
+
+    assert report.status == "failed"
+    assert len(notifications.notifications) == 1
+    notification = notifications.notifications[0]
+    assert notification.status == "failed"
+    assert notification.severity == "critical"
+    assert notification.metadata["missing_quality_gates"] == [missing_gate]
+    assert [event.action for event in audit_log.recorded_events] == [
+        "release_evidence.retrieve_failed",
+        "release_evidence.notification_delivered",
+    ]
+    assert audit_log.recorded_events[-1].metadata["delivery_status"] == "delivered"
+    assert audit_log.recorded_events[-1].metadata["channel_type"] == "webhook"
+
+
+def test_administration_service_audits_notification_delivery_failure() -> None:
+    organization_id = uuid4()
+    audit_log = FakeAuditLogRepository()
+    notifications = FakeReleaseEvidenceNotificationGateway(
+        status="failed",
+        error_message="webhook timed out",
+    )
+    service = AdministrationService(
+        audit_log=audit_log,
+        release_evidence_reports=FakeReleaseEvidenceReportRepository(),
+        release_evidence_gateway=FakeReleaseEvidenceGateway(
+            error_message="No successful ci.yml runs found on main."
+        ),
+        release_evidence_config=release_evidence_config(),
+        release_evidence_notifications=notifications,
+        release_evidence_notification_policy=release_evidence_notification_policy(),
+    )
+
+    report = service.retrieve_release_evidence(
+        RetrieveReleaseEvidenceCommand(organization_id=organization_id),
+        principal(organization_id, {"admin:release_evidence:retrieve"}),
+    )
+
+    assert report.status == "failed"
+    assert len(notifications.notifications) == 1
+    assert audit_log.recorded_events[-1].action == "release_evidence.notification_failed"
+    assert audit_log.recorded_events[-1].resource_type == "release_evidence_notification"
+    assert audit_log.recorded_events[-1].metadata["error_message"] == "webhook timed out"
+
+
 def test_administration_service_returns_fresh_release_evidence_refresh_status() -> None:
     organization_id = uuid4()
     now = datetime(2026, 8, 17, 18, 0, tzinfo=UTC)
@@ -371,6 +472,10 @@ def test_administration_service_returns_fresh_release_evidence_refresh_status() 
     assert status.stale_reasons == ()
     assert status.recommended_action == "wait_until_next_refresh"
     assert "refresh_release_evidence.py" in status.operator_command
+    assert status.notification_policy.channel_type == "noop"
+    assert "release_evidence.notification_failed" in (
+        status.notification_policy.delivery_audit_actions
+    )
 
 
 def test_administration_service_marks_release_evidence_refresh_status_stale() -> None:
@@ -482,6 +587,26 @@ def release_evidence_config() -> ReleaseEvidenceRetrievalConfig:
         branch="main",
         workflow="ci.yml",
         artifact_name="forgeml-release-manifest",
+    )
+
+
+def release_evidence_notification_policy() -> ReleaseEvidenceNotificationPolicy:
+    return ReleaseEvidenceNotificationPolicy(
+        enabled=True,
+        channel_type="webhook",
+        target="https://hooks.example.com/...",
+        failure_statuses=("failed",),
+        escalation_window_seconds=1_800,
+        escalation_command=(
+            "PYTHONPATH=backend/src:. python "
+            "scripts/ops/refresh_release_evidence.py --base-url "
+            "http://127.0.0.1:8001 --once --force"
+        ),
+        delivery_audit_actions=(
+            "release_evidence.notification_delivered",
+            "release_evidence.notification_failed",
+            "release_evidence.notification_skipped",
+        ),
     )
 
 

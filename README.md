@@ -29,7 +29,7 @@ Implemented foundation:
 - External training package adapter with an allowlisted `conversational-movie-recommender` profile, worker-side CLI execution, metric import, artifact checksums, profile catalog API, and Training Runs UI launch path.
 - Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
 - Portfolio review kit with reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, Release Evidence and Operational Audit app surfaces, and CI-checked portfolio readiness contract.
-- Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
+- Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, release evidence notification contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, release evidence reports, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
 - React/Vite frontend shell with a first-party browser router, route-level code splitting, SaaS-style navigation, core pages, login and session management, project context operations, account and security settings, audit operations console, dataset ingestion operations, feature store operations, experiment operations, training run operations, registry promotion workbench, model approval actions, deployment release console, inference endpoint operations, monitoring operations drilldowns, alert operations workflows, drift operations workflows, and retraining operations workflows.
@@ -112,6 +112,12 @@ Refresh release evidence when the platform marks the last successful report stal
 
 ```bash
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
+```
+
+Verify release evidence notification routing:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_notifications_contract.py
 ```
 
 Verify the checked database migration contract:

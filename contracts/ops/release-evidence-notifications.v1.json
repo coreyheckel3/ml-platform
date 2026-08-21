@@ -1,0 +1,107 @@
+{
+  "adapters": {
+    "default_mode": "audit_only",
+    "implementations": [
+      "NoopReleaseEvidenceNotificationGateway",
+      "WebhookReleaseEvidenceNotificationGateway"
+    ],
+    "protocol": "ReleaseEvidenceNotificationGateway"
+  },
+  "api": {
+    "endpoint": "/api/v1/admin/release-evidence/refresh/status",
+    "permission": "admin:release_evidence:read",
+    "response_field": "notification_policy",
+    "response_model": "ReleaseEvidenceRefreshStatusResponse"
+  },
+  "audit": {
+    "actions": [
+      "release_evidence.notification_delivered",
+      "release_evidence.notification_failed",
+      "release_evidence.notification_skipped"
+    ],
+    "delivery_statuses": [
+      "delivered",
+      "failed",
+      "skipped"
+    ],
+    "resource_type": "release_evidence_notification"
+  },
+  "configuration": {
+    "allowed_channels": [
+      "noop",
+      "webhook"
+    ],
+    "default_enabled": false,
+    "env_vars": [
+      "FORGEML_RELEASE_EVIDENCE_NOTIFICATIONS_ENABLED",
+      "FORGEML_RELEASE_EVIDENCE_NOTIFICATION_CHANNEL",
+      "FORGEML_RELEASE_EVIDENCE_NOTIFICATION_WEBHOOK_URL",
+      "FORGEML_RELEASE_EVIDENCE_NOTIFICATION_TIMEOUT_SECONDS",
+      "FORGEML_RELEASE_EVIDENCE_NOTIFICATION_ESCALATION_WINDOW_SECONDS"
+    ]
+  },
+  "generated_from": [
+    "forgeml.platform.notifications",
+    "forgeml.modules.administration",
+    "frontend.modules.release_evidence"
+  ],
+  "notification_payload": {
+    "schema_version": "forgeml.release_evidence_notification.v1",
+    "secret_handling": "webhook targets are redacted before API/UI/audit exposure",
+    "severity": "critical",
+    "trigger_statuses": [
+      "failed"
+    ]
+  },
+  "quality_gates": [
+    "python scripts/ci/check_release_evidence_notifications_contract.py",
+    "backend/tests/api/test_administration_api.py",
+    "backend/tests/unit/administration/test_administration_service.py",
+    "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx"
+  ],
+  "release_manifest": {
+    "artifact_name": "release_evidence_notifications_contract",
+    "quality_gate_name": "release_evidence_notifications_contract"
+  },
+  "required_source_assets": [
+    "backend/src/forgeml/platform/notifications/__init__.py",
+    "backend/src/forgeml/platform/notifications/delivery.py",
+    "backend/src/forgeml/platform/config.py",
+    "backend/src/forgeml/modules/administration/application/services.py",
+    "backend/src/forgeml/modules/administration/api/routes.py",
+    "backend/src/forgeml/modules/administration/api/schemas.py",
+    "backend/src/forgeml/platform/release_evidence/retrieval.py",
+    "backend/tests/api/test_administration_api.py",
+    "backend/tests/unit/administration/test_administration_service.py",
+    "backend/tests/unit/ops/test_release_evidence_notifications_contract.py",
+    "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
+    "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
+    "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
+    "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
+    "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
+    "scripts/ops/build_release_manifest.py",
+    "scripts/ci/production_readiness.py",
+    "contracts/openapi/forgeml.v1.openapi.json",
+    "contracts/ops/README.md",
+    "docs/runbooks/production-readiness.md",
+    "docs/portfolio/evidence-map.md",
+    "docs/portfolio/reviewer-guide.md",
+    "README.md"
+  ],
+  "schema_version": "forgeml.release_evidence_notifications_contract.v1",
+  "summary": {
+    "audit_action_count": 3,
+    "config_var_count": 5,
+    "source_asset_count": 23
+  },
+  "ui": {
+    "route": "/release-evidence",
+    "section": "Notification Routing",
+    "signals": [
+      "Delivery Audit Records",
+      "Escalation Command",
+      "webhook active",
+      "audit only"
+    ]
+  }
+}

@@ -1288,11 +1288,13 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
         "external_training_package_contract",
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
+        "release_evidence_notifications_contract",
       ],
       quality_gate_names: [
         "external_training_package_contract",
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
+        "release_evidence_notifications_contract",
       ],
       ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
     },
@@ -1349,6 +1351,20 @@ function releaseEvidenceRefreshStatus(reports: Entity[]): Entity {
     recommended_action: status === "fresh" ? "wait_until_next_refresh" : "retrieve_now",
     operator_command:
       "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400",
+    notification_policy: {
+      enabled: false,
+      channel_type: "noop",
+      target: "audit-log only",
+      failure_statuses: ["failed"],
+      escalation_window_seconds: 1_800,
+      escalation_command:
+        "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --force",
+      delivery_audit_actions: [
+        "release_evidence.notification_delivered",
+        "release_evidence.notification_failed",
+        "release_evidence.notification_skipped",
+      ],
+    },
   };
 }
 

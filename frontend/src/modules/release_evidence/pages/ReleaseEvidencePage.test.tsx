@@ -26,12 +26,13 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByRole("heading", { name: "Release Evidence" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("39")).toBeInTheDocument();
-    expect(screen.getByText("28")).toBeInTheDocument();
+    expect(screen.getByText("40")).toBeInTheDocument();
+    expect(screen.getByText("29")).toBeInTheDocument();
     expect(screen.getAllByText("forgeml-release-manifest").length).toBeGreaterThan(1);
     expect(screen.getByText("Release Manifest")).toBeInTheDocument();
     expect(screen.getByText("Live Evidence Retrieval")).toBeInTheDocument();
     expect(screen.getByText("Scheduled Refresh")).toBeInTheDocument();
+    expect(screen.getByText("Notification Routing")).toBeInTheDocument();
     expect(screen.getByText("API Evidence Drilldown")).toBeInTheDocument();
     expect(screen.getByText("GitHubActionsReleaseEvidenceGateway")).toBeInTheDocument();
     expect(screen.getByText("Comparison Signals")).toBeInTheDocument();
@@ -45,6 +46,9 @@ describe("ReleaseEvidencePage", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getAllByText("Release Evidence Scheduled Refresh Contract").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Release Evidence Notifications Contract").length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText("Security Hardening Contract").length).toBeGreaterThan(0);
     expect(
@@ -73,6 +77,7 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByText("release_evidence_scheduled_refresh_contract"),
     ).toBeInTheDocument();
+    expect(screen.getByText("release_evidence_notifications_contract")).toBeInTheDocument();
     expect(screen.getByText("Demo Screenshot Evidence")).toBeInTheDocument();
     expect(screen.getByText("09-release-evidence.png")).toBeInTheDocument();
     expect(screen.getByText("10-operational-audit.png")).toBeInTheDocument();
@@ -122,7 +127,11 @@ describe("ReleaseEvidencePage", () => {
     renderReleaseEvidencePage();
 
     expect(await screen.findByText("Last Success Summary")).toBeInTheDocument();
+    expect(await screen.findByText("Delivery Audit Records")).toBeInTheDocument();
     expect(await screen.findByText("release_evidence.retrieve")).toBeInTheDocument();
+    expect(screen.getByText("release_evidence.notification_delivered")).toBeInTheDocument();
+    expect(screen.getByText("release_evidence.notification_failed")).toBeInTheDocument();
+    expect(screen.getByText("https://hooks.example.com/...")).toBeInTheDocument();
     expect(screen.getByText("1 loaded")).toBeInTheDocument();
     expect(screen.getByText("abc123def456")).toBeInTheDocument();
 
@@ -243,6 +252,20 @@ function releaseEvidenceRefreshStatus(
     recommended_action: "wait_until_next_refresh",
     operator_command:
       "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400",
+    notification_policy: {
+      enabled: true,
+      channel_type: "webhook",
+      target: "https://hooks.example.com/...",
+      failure_statuses: ["failed"],
+      escalation_window_seconds: 1_800,
+      escalation_command:
+        "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --force",
+      delivery_audit_actions: [
+        "release_evidence.notification_delivered",
+        "release_evidence.notification_failed",
+        "release_evidence.notification_skipped",
+      ],
+    },
     ...overrides,
   };
 }

@@ -2309,6 +2309,53 @@ Implemented scope:
 - Updated frontend regression coverage for progressbar state, live timer, log
   count, refresh affordance, and end-to-end training UI operations.
 
+## Sprint 70: Release Evidence Notifications
+
+Theme: notify operators when release evidence retrieval fails without coupling
+ForgeML to a vendor-specific alerting service.
+
+Acceptance criteria:
+
+- Failed release evidence retrieval emits a structured notification payload with
+  report id, status, source repository, branch, workflow, missing artifacts,
+  missing quality gates, error context, and escalation metadata.
+- Notification delivery is behind an adapter boundary with noop/audit-only
+  behavior by default and a webhook adapter for staging or production.
+- Webhook targets are redacted before they are exposed through API responses,
+  UI state, or audit metadata.
+- Delivery outcomes are recorded as audit events for delivered, failed, and
+  skipped notifications.
+- The Release Evidence page shows notification routing policy, failure statuses,
+  delivery audit actions, and the escalation command.
+- CI and production-readiness validate a release evidence notifications
+  contract, and release manifests require that contract as an artifact and
+  quality gate.
+- Tests cover service notification behavior, delivery failure audit behavior,
+  API policy serialization, frontend UI visibility, contract drift, and
+  production-readiness wiring.
+
+Implemented scope:
+
+- Added `forgeml.platform.notifications` with `ReleaseEvidenceNotification`,
+  `ReleaseEvidenceNotificationGateway`, noop gateway, webhook gateway, delivery
+  result, and policy dataclasses.
+- Extended `AdministrationService.retrieve_release_evidence` to notify on failed
+  reports after persistence and retrieval audit logging.
+- Added delivery audit events:
+  `release_evidence.notification_delivered`,
+  `release_evidence.notification_failed`, and
+  `release_evidence.notification_skipped`.
+- Added runtime settings for release evidence notification enablement, channel,
+  webhook URL, timeout, and escalation window.
+- Extended the refresh status API with a redacted `notification_policy` response
+  and updated OpenAPI.
+- Added a Release Evidence “Notification Routing” panel with channel, target,
+  failure statuses, escalation window, delivery audit records, and escalation
+  command.
+- Added `contracts/ops/release-evidence-notifications.v1.json`, a contract
+  checker, CI wiring, production-readiness wiring, release manifest coverage,
+  runbook guidance, and portfolio evidence mapping.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2342,11 +2389,12 @@ sequence.
 | 67 | External Movie Recommender Serving Adapter | Completed | Routed inference runtime, external recommender HTTP adapter, normalized recommendation prediction logs, health probes, model artifact provenance, `joblib` registry support, deployment/inference UI templates, docs, CI contract, and production-readiness. |
 | 68 | Retraining Lifecycle Reliability | Completed | Linked training status reconciliation, sync audit events, in-flight retraining polling, manual lifecycle refresh, UI linked-status indicators, and regression coverage for queued-to-succeeded sync. |
 | 69 | Live Training Run Observability | Completed | In-flight Training Runs polling, selected-run progress refresh, live lifecycle progressbar, elapsed/queue/runtime timing, latest log context, live/snapshot logs indicator, and frontend regression coverage. |
-| 70 | Release Evidence Notifications | Planned | Webhook-style notification adapters, failed evidence alerts, delivery audit records, and operator escalation docs. |
+| 70 | Release Evidence Notifications | Completed | Webhook-style notification adapter boundary, audit-only default mode, failed evidence alert payloads, delivery audit records, frontend routing policy, CI contract, and escalation docs. |
 | 71 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
 | 72 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
 | 73 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
 | 74 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 75 | Evaluation and Model Comparison UX | Planned | Richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

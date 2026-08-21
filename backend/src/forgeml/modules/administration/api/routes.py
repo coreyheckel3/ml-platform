@@ -1,3 +1,4 @@
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from forgeml.modules.administration.api.schemas import (
     AuditLogEntryResponse,
     AuditLogListResponse,
+    ReleaseEvidenceNotificationPolicyResponse,
     ReleaseEvidenceRefreshStatusResponse,
     ReleaseEvidenceReportListResponse,
     ReleaseEvidenceReportResponse,
@@ -31,6 +33,12 @@ from forgeml.modules.administration.infrastructure.sqlalchemy_repositories impor
 from forgeml.platform.api.dependencies import get_current_principal, get_db_session
 from forgeml.platform.config import Settings, get_settings
 from forgeml.platform.domain.errors import DomainValidationError
+from forgeml.platform.notifications import (
+    NoopReleaseEvidenceNotificationGateway,
+    ReleaseEvidenceNotificationGateway,
+    ReleaseEvidenceNotificationPolicy,
+    WebhookReleaseEvidenceNotificationGateway,
+)
 from forgeml.platform.release_evidence import (
     GitHubActionsReleaseEvidenceGateway,
     LocalReleaseEvidenceGateway,
@@ -50,6 +58,12 @@ def get_administration_service(
         release_evidence_reports=SqlAlchemyReleaseEvidenceReportRepository(session),
         release_evidence_gateway=_release_evidence_gateway_from_settings(settings),
         release_evidence_config=_release_evidence_config_from_settings(settings),
+        release_evidence_notifications=_release_evidence_notification_gateway_from_settings(
+            settings
+        ),
+        release_evidence_notification_policy=(
+            _release_evidence_notification_policy_from_settings(settings)
+        ),
     )
 
 
@@ -240,6 +254,9 @@ def _release_evidence_refresh_status_response(
         stale_reasons=list(status.stale_reasons),
         recommended_action=status.recommended_action,
         operator_command=status.operator_command,
+        notification_policy=_release_evidence_notification_policy_response(
+            status.notification_policy
+        ),
     )
 
 
@@ -278,3 +295,83 @@ def _release_evidence_config_from_settings(
         workflow=settings.release_evidence_github_workflow,
         artifact_name=settings.release_evidence_github_artifact_name,
     )
+
+
+def _release_evidence_notification_gateway_from_settings(
+    settings: Settings,
+) -> ReleaseEvidenceNotificationGateway:
+    policy = _release_evidence_notification_policy_from_settings(settings)
+    if policy.enabled and policy.channel_type == "webhook":
+        webhook_url = settings.release_evidence_notification_webhook_url
+        if webhook_url:
+            return WebhookReleaseEvidenceNotificationGateway(
+                webhook_url=webhook_url,
+                target=policy.target,
+                timeout_seconds=settings.release_evidence_notification_timeout_seconds,
+            )
+    return NoopReleaseEvidenceNotificationGateway(
+        channel_type=policy.channel_type,
+        target=policy.target,
+        reason="release evidence notifications are disabled or not configured",
+    )
+
+
+def _release_evidence_notification_policy_from_settings(
+    settings: Settings,
+) -> ReleaseEvidenceNotificationPolicy:
+    channel_type = settings.release_evidence_notification_channel.strip().lower()
+    if channel_type not in {"noop", "webhook"}:
+        raise DomainValidationError(
+            "Release evidence notification channel must be noop or webhook."
+        )
+    webhook_url = settings.release_evidence_notification_webhook_url
+    enabled = (
+        settings.release_evidence_notifications_enabled
+        and channel_type == "webhook"
+        and bool(webhook_url)
+    )
+    target = (
+        _redacted_webhook_target(webhook_url)
+        if channel_type == "webhook" and webhook_url
+        else "audit-log only"
+    )
+    return ReleaseEvidenceNotificationPolicy(
+        enabled=enabled,
+        channel_type=channel_type,
+        target=target,
+        failure_statuses=("failed",),
+        escalation_window_seconds=(
+            settings.release_evidence_notification_escalation_window_seconds
+        ),
+        escalation_command=(
+            "PYTHONPATH=backend/src:. python "
+            "scripts/ops/refresh_release_evidence.py --base-url "
+            "http://127.0.0.1:8001 --once --force"
+        ),
+        delivery_audit_actions=(
+            "release_evidence.notification_delivered",
+            "release_evidence.notification_failed",
+            "release_evidence.notification_skipped",
+        ),
+    )
+
+
+def _release_evidence_notification_policy_response(
+    policy: ReleaseEvidenceNotificationPolicy,
+) -> ReleaseEvidenceNotificationPolicyResponse:
+    return ReleaseEvidenceNotificationPolicyResponse(
+        enabled=policy.enabled,
+        channel_type=policy.channel_type,
+        target=policy.target,
+        failure_statuses=list(policy.failure_statuses),
+        escalation_window_seconds=policy.escalation_window_seconds,
+        escalation_command=policy.escalation_command,
+        delivery_audit_actions=list(policy.delivery_audit_actions),
+    )
+
+
+def _redacted_webhook_target(webhook_url: str) -> str:
+    parsed = urlsplit(webhook_url)
+    if not parsed.scheme or not parsed.netloc:
+        return "configured webhook"
+    return f"{parsed.scheme}://{parsed.netloc}/..."

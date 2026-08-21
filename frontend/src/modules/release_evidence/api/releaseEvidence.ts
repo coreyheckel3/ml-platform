@@ -52,6 +52,17 @@ export type ReleaseEvidenceRefreshStatus = {
   stale_reasons: string[];
   recommended_action: string;
   operator_command: string;
+  notification_policy: ReleaseEvidenceNotificationPolicy;
+};
+
+export type ReleaseEvidenceNotificationPolicy = {
+  enabled: boolean;
+  channel_type: string;
+  target: string;
+  failure_statuses: string[];
+  escalation_window_seconds: number;
+  escalation_command: string;
+  delivery_audit_actions: string[];
 };
 
 export type ReleaseEvidenceReportFilters = {

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   BadgeCheck,
+  BellRing,
   Box,
   CalendarClock,
   ClipboardCheck,
@@ -264,7 +265,7 @@ export function ReleaseEvidencePage() {
         </DataPanel>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <DataPanel
           title="Scheduled Refresh"
           action={
@@ -291,6 +292,48 @@ export function ReleaseEvidencePage() {
             <ReleaseEvidenceRefreshPanel status={refreshStatusQuery.data} />
           ) : (
             <ReleaseEvidenceRefreshFallback />
+          )}
+        </DataPanel>
+
+        <DataPanel
+          title="Notification Routing"
+          action={
+            refreshStatusQuery.data ? (
+              <span
+                className={`inline-flex h-8 items-center gap-2 rounded border px-3 text-xs font-semibold ${
+                  refreshStatusQuery.data.notification_policy.enabled
+                    ? "border-emerald-200 bg-emerald-50 text-signal"
+                    : "border-slate-200 bg-slate-50 text-steel"
+                }`}
+              >
+                <BellRing className="h-4 w-4" aria-hidden="true" />
+                {refreshStatusQuery.data.notification_policy.enabled
+                  ? "webhook active"
+                  : "audit only"}
+              </span>
+            ) : (
+              <span className="inline-flex h-8 items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-steel">
+                <BellRing className="h-4 w-4" aria-hidden="true" />
+                policy pending
+              </span>
+            )
+          }
+        >
+          {!token ? (
+            <EvidenceStateMessage message="Sign in to load notification routing." />
+          ) : refreshStatusQuery.error ? (
+            <EvidenceStateMessage
+              tone="danger"
+              message="Release evidence notification policy failed."
+            />
+          ) : refreshStatusQuery.isFetching && !refreshStatusQuery.data ? (
+            <EvidenceStateMessage message="Loading notification routing." />
+          ) : refreshStatusQuery.data ? (
+            <ReleaseEvidenceNotificationPanel
+              policy={refreshStatusQuery.data.notification_policy}
+            />
+          ) : (
+            <ReleaseEvidenceNotificationFallback />
           )}
         </DataPanel>
       </div>
@@ -742,6 +785,68 @@ function ReleaseEvidenceRefreshFallback() {
           {scheduledReleaseEvidenceRefresh.operatorCommand}
         </code>
       </div>
+    </div>
+  );
+}
+
+function ReleaseEvidenceNotificationPanel({
+  policy,
+}: {
+  policy: ReleaseEvidenceRefreshStatus["notification_policy"];
+}) {
+  return (
+    <div className="grid gap-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <RetrievalFact label="Channel" value={policy.channel_type} />
+        <RetrievalFact label="Target" value={policy.target} />
+        <RetrievalFact
+          label="Failure Statuses"
+          value={policy.failure_statuses.join(", ") || "none"}
+        />
+        <RetrievalFact
+          label="Escalation Window"
+          value={formatDuration(policy.escalation_window_seconds)}
+        />
+      </div>
+
+      <div className="rounded border border-slate-200 p-3">
+        <div className="text-sm font-semibold text-ink">Delivery Audit Records</div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {policy.delivery_audit_actions.map((action) => (
+            <code
+              key={action}
+              className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-steel"
+            >
+              {action}
+            </code>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded border border-slate-200 p-3">
+        <div className="flex items-start gap-3">
+          <SquareTerminal className="mt-0.5 h-4 w-4 shrink-0 text-signal" />
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-ink">Escalation Command</div>
+            <p className="mt-1 text-sm leading-6 text-steel">
+              Run when notification delivery records show failed release evidence.
+            </p>
+          </div>
+        </div>
+        <code className="mt-3 block overflow-x-auto rounded bg-ink px-3 py-2 text-xs text-white">
+          {policy.escalation_command}
+        </code>
+      </div>
+    </div>
+  );
+}
+
+function ReleaseEvidenceNotificationFallback() {
+  return (
+    <div className="grid gap-3">
+      <RetrievalFact label="Channel" value="noop" />
+      <RetrievalFact label="Target" value="audit-log only" />
+      <EvidenceStateMessage message="Failed release evidence creates audit records even when webhook delivery is disabled." />
     </div>
   );
 }

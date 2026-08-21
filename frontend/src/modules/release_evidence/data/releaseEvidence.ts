@@ -42,8 +42,8 @@ export type ScheduledReleaseEvidenceRefresh = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 39,
-  qualityGateCount: 28,
+  artifactCount: 40,
+  qualityGateCount: 29,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -114,6 +114,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     path: "contracts/ops/release-evidence-scheduled-refresh.v1.json",
     signal:
       "Verifies stale evidence summaries, scheduled refresh automation, operator commands, and UI status indicators.",
+  },
+  {
+    name: "Release Evidence Notifications Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/release-evidence-notifications.v1.json",
+    signal:
+      "Verifies failed evidence alerts, webhook adapter boundaries, release_evidence.notification_failed delivery audit records, and escalation docs.",
   },
   {
     name: "Portfolio Readiness Contract",
@@ -192,6 +199,12 @@ export const qualityGates: EvidenceGate[] = [
     owner: "Operations",
     signal:
       "Stale evidence status, last-success summaries, scheduler CLI behavior, and UI indicators stay enforced in CI.",
+  },
+  {
+    name: "release_evidence_notifications_contract",
+    owner: "Operations",
+    signal:
+      "Failure notification policy, webhook adapter behavior, delivery audit records, and escalation docs stay enforced in CI.",
   },
 ];
 

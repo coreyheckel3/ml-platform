@@ -623,6 +623,49 @@ def test_release_evidence_scheduled_refresh_contract_gate_is_enforced() -> None:
     assert "run_release_evidence_refresh_once" in refresh_cli
 
 
+def test_release_evidence_notifications_contract_gate_is_enforced() -> None:
+    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    runbook = Path("docs/runbooks/production-readiness.md").read_text(encoding="utf-8")
+    contract = json.loads(
+        Path("contracts/ops/release-evidence-notifications.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    service_source = Path(
+        "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = Path(
+        "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    delivery_source = Path("backend/src/forgeml/platform/notifications/delivery.py").read_text(
+        encoding="utf-8"
+    )
+    release_page = Path(
+        "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx"
+    ).read_text(encoding="utf-8")
+    release_data = Path(
+        "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+
+    assert (
+        "python scripts/ci/check_release_evidence_notifications_contract.py"
+        in workflow
+    )
+    assert "FORGEML_RELEASE_EVIDENCE_NOTIFICATION_WEBHOOK_URL" in runbook
+    assert (
+        contract["schema_version"]
+        == "forgeml.release_evidence_notifications_contract.v1"
+    )
+    assert contract["api"]["response_field"] == "notification_policy"
+    assert "release_evidence.notification_failed" in contract["audit"]["actions"]
+    assert "WebhookReleaseEvidenceNotificationGateway" in delivery_source
+    assert "_notify_failed_release_evidence" in service_source
+    assert "_release_evidence_notification_policy_from_settings" in route_source
+    assert "Notification Routing" in release_page
+    assert "Delivery Audit Records" in release_page
+    assert "release_evidence_notifications_contract" in release_data
+
+
 def test_operational_audit_ux_contract_gate_is_enforced() -> None:
     workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
     contract = json.loads(

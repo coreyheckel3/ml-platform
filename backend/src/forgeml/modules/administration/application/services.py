@@ -20,6 +20,14 @@ from forgeml.platform.domain.errors import (
     PermissionDeniedError,
     ResourceNotFoundError,
 )
+from forgeml.platform.notifications import (
+    RELEASE_EVIDENCE_NOTIFICATION_SCHEMA_VERSION,
+    NoopReleaseEvidenceNotificationGateway,
+    NotificationDeliveryResult,
+    ReleaseEvidenceNotification,
+    ReleaseEvidenceNotificationGateway,
+    ReleaseEvidenceNotificationPolicy,
+)
 from forgeml.platform.release_evidence import (
     RELEASE_EVIDENCE_REQUIRED_ARTIFACTS,
     RELEASE_EVIDENCE_REQUIRED_QUALITY_GATES,
@@ -98,6 +106,7 @@ class ReleaseEvidenceRefreshStatus:
     stale_reasons: tuple[str, ...]
     recommended_action: str
     operator_command: str
+    notification_policy: ReleaseEvidenceNotificationPolicy
 
 
 class AdministrationService:
@@ -108,11 +117,15 @@ class AdministrationService:
         release_evidence_reports: ReleaseEvidenceReportRepository | None = None,
         release_evidence_gateway: ReleaseEvidenceGateway | None = None,
         release_evidence_config: ReleaseEvidenceRetrievalConfig | None = None,
+        release_evidence_notifications: ReleaseEvidenceNotificationGateway | None = None,
+        release_evidence_notification_policy: ReleaseEvidenceNotificationPolicy | None = None,
     ) -> None:
         self._audit_log = audit_log
         self._release_evidence_reports = release_evidence_reports
         self._release_evidence_gateway = release_evidence_gateway
         self._release_evidence_config = release_evidence_config
+        self._release_evidence_notifications = release_evidence_notifications
+        self._release_evidence_notification_policy = release_evidence_notification_policy
 
     def list_audit_log(
         self,
@@ -216,6 +229,7 @@ class AdministrationService:
                 },
             )
         )
+        self._notify_failed_release_evidence(saved, principal)
         return saved
 
     def get_release_evidence_refresh_status(
@@ -296,6 +310,7 @@ class AdministrationService:
             stale_reasons=stale_reasons,
             recommended_action=recommended_action,
             operator_command=_refresh_operator_command(stale_after_seconds),
+            notification_policy=self._notification_policy(),
         )
 
     def _require_release_evidence_read(
@@ -328,6 +343,69 @@ class AdministrationService:
         if self._release_evidence_config is None:
             raise DomainValidationError("Release evidence retrieval is not configured.")
         return self._release_evidence_config
+
+    def _notification_policy(self) -> ReleaseEvidenceNotificationPolicy:
+        if self._release_evidence_notification_policy is None:
+            return default_release_evidence_notification_policy()
+        return self._release_evidence_notification_policy
+
+    def _notification_gateway(self) -> ReleaseEvidenceNotificationGateway:
+        if self._release_evidence_notifications is None:
+            return NoopReleaseEvidenceNotificationGateway()
+        return self._release_evidence_notifications
+
+    def _notify_failed_release_evidence(
+        self,
+        report: ReleaseEvidenceReport,
+        principal: Principal,
+    ) -> None:
+        policy = self._notification_policy()
+        if report.status not in policy.failure_statuses:
+            return
+
+        notification = _release_evidence_notification_for_report(
+            report=report,
+            policy=policy,
+        )
+        gateway = self._notification_gateway()
+        try:
+            delivery = gateway.send(notification)
+        except RuntimeError as exc:
+            delivery = NotificationDeliveryResult(
+                channel_type=policy.channel_type,
+                target=policy.target,
+                status="failed",
+                response_status=None,
+                error_message=str(exc),
+                delivered_at=datetime.now(UTC),
+            )
+        self._audit_log.record(
+            AuditLogEvent(
+                organization_id=report.organization_id,
+                actor_type="system",
+                actor_id="release-evidence-notifier",
+                action=f"release_evidence.notification_{delivery.status}",
+                resource_type="release_evidence_notification",
+                resource_id=f"{report.id}:{delivery.channel_type}",
+                metadata={
+                    "requested_by_user_id": principal.user_id,
+                    "report_id": str(report.id),
+                    "report_status": report.status,
+                    "notification_schema_version": (
+                        RELEASE_EVIDENCE_NOTIFICATION_SCHEMA_VERSION
+                    ),
+                    "channel_type": delivery.channel_type,
+                    "target": delivery.target,
+                    "delivery_status": delivery.status,
+                    "response_status": delivery.response_status,
+                    "error_message": delivery.error_message,
+                    "severity": notification.severity,
+                    "escalation_window_seconds": policy.escalation_window_seconds,
+                    "operator_command": policy.escalation_command,
+                    "delivered_at": delivery.delivered_at.isoformat(),
+                },
+            )
+        )
 
 
 def _clean_filter(value: str | None) -> str | None:
@@ -394,6 +472,62 @@ def _refresh_operator_command(stale_after_seconds: int) -> str:
         "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py "
         "--base-url http://127.0.0.1:8001 --once "
         f"--stale-after-seconds {stale_after_seconds}"
+    )
+
+
+def default_release_evidence_notification_policy() -> ReleaseEvidenceNotificationPolicy:
+    return ReleaseEvidenceNotificationPolicy(
+        enabled=False,
+        channel_type="noop",
+        target="audit-log only",
+        failure_statuses=("failed",),
+        escalation_window_seconds=1_800,
+        escalation_command=_refresh_operator_command(86_400),
+        delivery_audit_actions=(
+            "release_evidence.notification_delivered",
+            "release_evidence.notification_failed",
+            "release_evidence.notification_skipped",
+        ),
+    )
+
+
+def _release_evidence_notification_for_report(
+    *,
+    report: ReleaseEvidenceReport,
+    policy: ReleaseEvidenceNotificationPolicy,
+) -> ReleaseEvidenceNotification:
+    missing_artifacts = list(report.missing_artifacts)
+    missing_quality_gates = list(report.missing_quality_gates)
+    return ReleaseEvidenceNotification(
+        organization_id=str(report.organization_id),
+        report_id=str(report.id),
+        status=report.status,
+        severity="critical",
+        title="ForgeML release evidence needs attention",
+        message=(
+            "Release evidence retrieval failed or did not satisfy the release "
+            "manifest contract. Investigate the latest report before promoting "
+            "a release."
+        ),
+        source={
+            "provider": report.provider,
+            "repository": report.repository,
+            "branch": report.branch,
+            "workflow": report.workflow,
+            "artifact_name": report.artifact_name,
+        },
+        report_url=report.ci_run_url or report.run_url,
+        action_url=policy.escalation_command,
+        metadata={
+            "manifest_git_sha": report.manifest_git_sha,
+            "manifest_git_branch": report.manifest_git_branch,
+            "missing_artifact_count": len(missing_artifacts),
+            "missing_quality_gate_count": len(missing_quality_gates),
+            "missing_artifacts": missing_artifacts,
+            "missing_quality_gates": missing_quality_gates,
+            "error_message": report.error_message,
+            "escalation_window_seconds": policy.escalation_window_seconds,
+        },
     )
 
 

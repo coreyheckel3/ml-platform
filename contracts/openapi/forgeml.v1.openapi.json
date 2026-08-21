@@ -4451,6 +4451,53 @@
         "title": "RegisteredModelResponse",
         "type": "object"
       },
+      "ReleaseEvidenceNotificationPolicyResponse": {
+        "properties": {
+          "channel_type": {
+            "title": "Channel Type",
+            "type": "string"
+          },
+          "delivery_audit_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Delivery Audit Actions",
+            "type": "array"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "escalation_command": {
+            "title": "Escalation Command",
+            "type": "string"
+          },
+          "escalation_window_seconds": {
+            "title": "Escalation Window Seconds",
+            "type": "integer"
+          },
+          "failure_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Failure Statuses",
+            "type": "array"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "channel_type",
+          "target",
+          "escalation_window_seconds",
+          "escalation_command"
+        ],
+        "title": "ReleaseEvidenceNotificationPolicyResponse",
+        "type": "object"
+      },
       "ReleaseEvidenceRefreshStatusResponse": {
         "properties": {
           "artifact_name": {
@@ -4531,6 +4578,9 @@
               }
             ],
             "title": "Next Refresh At"
+          },
+          "notification_policy": {
+            "$ref": "#/components/schemas/ReleaseEvidenceNotificationPolicyResponse"
           },
           "operator_command": {
             "title": "Operator Command",
@@ -4617,7 +4667,8 @@
           "next_refresh_at",
           "checked_at",
           "recommended_action",
-          "operator_command"
+          "operator_command",
+          "notification_policy"
         ],
         "title": "ReleaseEvidenceRefreshStatusResponse",
         "type": "object"

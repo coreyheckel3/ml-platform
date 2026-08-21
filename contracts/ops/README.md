@@ -157,6 +157,30 @@ Run one scheduled refresh cycle through the admin API:
 PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
 ```
 
+## Release Evidence Notifications
+
+`release-evidence-notifications.v1.json` records the failure notification
+contract for release evidence: notification payload schema, noop and webhook
+adapter boundaries, redacted targets, admin API policy exposure, delivery audit
+actions, frontend routing UI, release manifest evidence, and escalation docs.
+
+Regenerate after an intentional notification contract change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_notifications_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_release_evidence_notifications_contract.py
+```
+
+When enabled with `FORGEML_RELEASE_EVIDENCE_NOTIFICATION_WEBHOOK_URL`, failed
+release evidence writes `release_evidence.notification_delivered`,
+`release_evidence.notification_failed`, or
+`release_evidence.notification_skipped` audit events.
+
 ## Operational Audit UX
 
 `operational-audit-ux.v1.json` records the frontend operator audit workspace
