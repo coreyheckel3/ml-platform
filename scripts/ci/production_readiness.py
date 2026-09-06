@@ -291,6 +291,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
+    "frontend/tests/e2e/demo-walkthrough.spec.ts",
     "frontend/tests/e2e/demo-screenshots.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
     "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
@@ -334,6 +335,7 @@ REQUIRED_FILES = (
     "scripts/ops/build_release_manifest.py",
     "scripts/ops/verify_release_manifest.py",
     "scripts/dev/demo_stack.py",
+    "scripts/dev/demo_reset.py",
     "scripts/dev/refresh_demo_data.py",
     "scripts/ci/check_release_smoke_contract.py",
     "scripts/ci/check_release_manifest_contract.py",
@@ -356,6 +358,7 @@ REQUIRED_FILES = (
     "backend/tests/unit/ops/test_ci_runtime_contract.py",
     "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
     "backend/tests/unit/dev/test_demo_stack.py",
+    "backend/tests/unit/dev/test_demo_reset.py",
     "backend/tests/unit/dev/test_refresh_demo_data.py",
     "docs/runbooks/demo-readiness.md",
     "docs/architecture-walkthrough.md",
@@ -2613,15 +2616,21 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
     runbook_source = (repo_root / "docs/runbooks/demo-readiness.md").read_text(
         encoding="utf-8"
     )
-    walkthrough_source = (repo_root / "docs/architecture-walkthrough.md").read_text(
+    architecture_source = (repo_root / "docs/architecture-walkthrough.md").read_text(
         encoding="utf-8"
     )
     demo_stack_source = (repo_root / "scripts/dev/demo_stack.py").read_text(
         encoding="utf-8"
     )
+    demo_reset_source = (repo_root / "scripts/dev/demo_reset.py").read_text(
+        encoding="utf-8"
+    )
     refresh_source = (repo_root / "scripts/dev/refresh_demo_data.py").read_text(
         encoding="utf-8"
     )
+    browser_walkthrough_source = (
+        repo_root / "frontend/tests/e2e/demo-walkthrough.spec.ts"
+    ).read_text(encoding="utf-8")
     screenshots_source = (
         repo_root / "frontend/tests/e2e/demo-screenshots.spec.ts"
     ).read_text(encoding="utf-8")
@@ -2639,9 +2648,13 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
     )
     has_capabilities = {
         "one_command_local_stack",
+        "fresh_demo_reset",
         "seeded_data_refresh",
+        "release_evidence_seed_refresh",
+        "browser_walkthrough_script",
         "frontend_screenshot_capture",
         "manual_review_runbook",
+        "reviewer_reset_flow",
         "architecture_walkthrough",
     }.issubset(capabilities)
     has_seeded_surfaces = {
@@ -2655,22 +2668,42 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "alerts",
         "drift_detection",
         "retraining",
+        "release_evidence",
+        "operational_audit",
     }.issubset(seeded_surfaces)
     has_quality_gates = {
         "backend/tests/unit/dev/test_demo_stack.py",
+        "backend/tests/unit/dev/test_demo_reset.py",
         "backend/tests/unit/dev/test_refresh_demo_data.py",
+        "frontend/tests/e2e/demo-walkthrough.spec.ts",
         "frontend/tests/e2e/demo-screenshots.spec.ts",
     }.issubset(quality_gates)
-    has_live_command = "make demo-stack" in runbook_source
-    has_walkthrough = "modular monolith" in walkthrough_source.lower()
+    has_live_command = (
+        "make demo-stack" in runbook_source
+        and "make demo-stack-fresh" in runbook_source
+    )
+    has_walkthrough = "modular monolith" in architecture_source.lower()
     has_stack_runner = (
         "build_demo_plan" in demo_stack_source
         and "wait_for_http" in demo_stack_source
         and "VITE_FORGEML_API_PROXY_TARGET" in demo_stack_source
+        and "build_release_evidence_refresh_command" in demo_stack_source
+        and "--fresh" in demo_stack_source
+    )
+    has_reset_runner = (
+        "DEMO_RESET_SCHEMA_VERSION" in demo_reset_source
+        and "build_demo_reset_plan" in demo_reset_source
+        and "safe_reset_targets" in demo_reset_source
+        and "reset_demo_environment" in demo_reset_source
     )
     has_refresh_runner = (
         "DEMO_DATA_REFRESH_SCHEMA_VERSION" in refresh_source
         and "refresh_demo_data" in refresh_source
+    )
+    has_browser_walkthrough = (
+        "walks reviewer through demo readiness paths" in browser_walkthrough_source
+        and "demoWalkthroughSteps" in browser_walkthrough_source
+        and "installForgeMLApiMock" in browser_walkthrough_source
     )
     has_screenshot_capture = "page.screenshot" in screenshots_source
     passed = (
@@ -2682,14 +2715,18 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         and has_live_command
         and has_walkthrough
         and has_stack_runner
+        and has_reset_runner
         and has_refresh_runner
+        and has_browser_walkthrough
         and has_screenshot_capture
     )
     return ReadinessCheck(
         name="demo readiness contract",
         passed=passed,
         detail=(
-            "demo stack, seeded refresh, screenshots, runbook, and walkthrough are configured"
+            "fresh demo reset, seeded refresh, release evidence, browser "
+            "walkthrough, screenshots, runbook, and architecture walkthrough "
+            "are configured"
             if passed
             else (
                 f"has_ci_gate={has_ci_gate}, "
@@ -2701,7 +2738,9 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_live_command={has_live_command}, "
                 f"has_walkthrough={has_walkthrough}, "
                 f"has_stack_runner={has_stack_runner}, "
+                f"has_reset_runner={has_reset_runner}, "
                 f"has_refresh_runner={has_refresh_runner}, "
+                f"has_browser_walkthrough={has_browser_walkthrough}, "
                 f"has_screenshot_capture={has_screenshot_capture}"
             )
         ),

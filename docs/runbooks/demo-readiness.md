@@ -26,6 +26,16 @@ Password: forgeml-local-admin
 The managed process writes `.forgeml/demo/demo-stack-summary.json` and keeps the
 API and frontend running until the terminal receives `Ctrl+C`.
 
+For a clean reviewer run, use the fresh stack command:
+
+```bash
+make demo-stack-fresh
+```
+
+Fresh mode first clears repo-scoped demo outputs, regenerates
+`dist/release/forgeml-release-manifest.json`, refreshes release evidence through
+the admin API, and then starts the same managed API and frontend processes.
+
 ## Preflight Plan
 
 Print the exact command plan without starting services:
@@ -36,6 +46,23 @@ make demo-stack-plan
 
 Use this when a reviewer needs to inspect ports, artifact paths, or the API proxy
 target before starting the stack.
+
+## Reviewer Reset
+
+Clear local demo outputs without touching Docker volumes or database rows:
+
+```bash
+make demo-reset
+```
+
+The reset command writes `.forgeml/demo/demo-reset-report.json` and removes only
+repo-scoped demo output paths such as `.forgeml/demo`,
+`dist/release/forgeml-release-manifest.json`, and `test-results`.
+Preview the reset plan without removing files:
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/dev/demo_reset.py --plan --dry-run
+```
 
 ## Seeded Data Refresh
 
@@ -57,6 +84,18 @@ Each seeded project includes project metadata, dataset versions, feature-store
 metadata, experiments, succeeded training runs, registered models, approved model
 versions, deployments, inference endpoints, monitoring snapshots, alert
 evaluation, drift reports, and retraining policy evaluation.
+
+## Seeded Release Evidence Refresh
+
+The full demo stack also refreshes release evidence against the running backend.
+It writes `.forgeml/demo/release-evidence-refresh.json` after generating the
+local release manifest at `dist/release/forgeml-release-manifest.json`.
+
+Run the same release evidence refresh manually when the API is already running:
+
+```bash
+PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --email admin@forgeml.dev --password forgeml-local-admin --once --force --output .forgeml/demo/release-evidence-refresh.json
+```
 
 ## External Movie Recommender Training
 
@@ -110,13 +149,19 @@ parsed query, adapter trace, model version, model format, and model artifact URI
 
 ## Screenshot Capture
 
+Walk the browser through the reviewer path without capturing screenshots:
+
+```bash
+make demo-walkthrough
+```
+
 Generate reviewer-ready screenshots against deterministic browser API mocks:
 
 ```bash
 make demo-screenshots
 ```
 
-Playwright writes the screenshots under `frontend/test-results`. The captured
+Playwright writes transient screenshots under `test-results`. The captured
 screens cover Dashboard, Projects, Example Projects, Training Runs, Models,
 Deployments, Inference, and Monitoring.
 

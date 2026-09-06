@@ -2356,6 +2356,45 @@ Implemented scope:
   checker, CI wiring, production-readiness wiring, release manifest coverage,
   runbook guidance, and portfolio evidence mapping.
 
+## Sprint 71: Demo Environment Polish
+
+Theme: make the live ForgeML demo repeatable, resettable, and reviewer-friendly
+without relying on manual cleanup or hidden browser state.
+
+Acceptance criteria:
+
+- A clean demo run can clear repo-scoped generated outputs before rebuilding
+  local demo state.
+- Fresh demo startup generates a local release manifest and refreshes release
+  evidence through the admin API after the backend is ready.
+- Demo reset does not remove Docker volumes or database rows.
+- A deterministic browser walkthrough validates the reviewer path without
+  requiring screenshot capture.
+- Make targets expose reset, fresh stack, browser walkthrough, seeded refresh,
+  and screenshot flows.
+- Demo readiness, production-readiness, and portfolio contracts validate the new
+  reset and walkthrough assets.
+- Runbooks and reviewer docs explain the fresh demo path and generated evidence
+  files.
+
+Implemented scope:
+
+- Added `scripts/dev/demo_reset.py` with a versioned reset report, safe target
+  planning, dry-run support, repo-root containment checks, and explicit reset
+  target execution.
+- Extended `scripts/dev/demo_stack.py` with `--fresh`,
+  `build_demo_reset_command`, `build_release_manifest_command`, and
+  `build_release_evidence_refresh_command`.
+- Added demo stack summary fields for reset output, local release manifest
+  output, release evidence refresh output, seeded evidence readiness, and the
+  Release Evidence and Operational Audit review routes.
+- Added `make demo-reset`, `make demo-stack-fresh`, and `make demo-walkthrough`.
+- Added `frontend/tests/e2e/demo-walkthrough.spec.ts` to validate the full
+  reviewer browser path with stateful API mocks.
+- Extended demo readiness and portfolio readiness contracts, production
+  readiness checks, unit tests, runbooks, screenshot catalog, evidence map, and
+  reviewer guide coverage for Sprint 71.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2390,7 +2429,7 @@ sequence.
 | 68 | Retraining Lifecycle Reliability | Completed | Linked training status reconciliation, sync audit events, in-flight retraining polling, manual lifecycle refresh, UI linked-status indicators, and regression coverage for queued-to-succeeded sync. |
 | 69 | Live Training Run Observability | Completed | In-flight Training Runs polling, selected-run progress refresh, live lifecycle progressbar, elapsed/queue/runtime timing, latest log context, live/snapshot logs indicator, and frontend regression coverage. |
 | 70 | Release Evidence Notifications | Completed | Webhook-style notification adapter boundary, audit-only default mode, failed evidence alert payloads, delivery audit records, frontend routing policy, CI contract, and escalation docs. |
-| 71 | Demo Environment Polish | Planned | One-command fresh demos, browser walkthrough scripts, seeded evidence refresh, and reviewer reset flows. |
+| 71 | Demo Environment Polish | Completed | Fresh demo reset, local release manifest generation, seeded release evidence refresh, deterministic browser walkthrough, Make targets, docs, contracts, and CI-ready validation. |
 | 72 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
 | 73 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
 | 74 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |

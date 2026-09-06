@@ -28,7 +28,7 @@ training script.
 | Release evidence notifications | `backend/src/forgeml/platform/notifications`, `frontend/src/modules/release_evidence`, `contracts/ops/release-evidence-notifications.v1.json` |
 | Operational audit UX | `frontend/src/modules/operational_audit`, `contracts/ops/operational-audit-ux.v1.json`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Browser lifecycle coverage | `frontend/tests/e2e/platform-lifecycle.spec.ts`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
-| Reviewer-ready demo path | `docs/runbooks/demo-readiness.md`, `scripts/dev/demo_stack.py`, `scripts/dev/refresh_demo_data.py`, `contracts/ops/demo-readiness.v1.json` |
+| Reviewer-ready demo path | `docs/runbooks/demo-readiness.md`, `scripts/dev/demo_stack.py`, `scripts/dev/demo_reset.py`, `scripts/dev/refresh_demo_data.py`, `frontend/tests/e2e/demo-walkthrough.spec.ts`, `contracts/ops/demo-readiness.v1.json` |
 | Portfolio assets under contract | `docs/portfolio`, `contracts/ops/portfolio-readiness.v1.json`, `scripts/ci/check_portfolio_readiness_contract.py` |
 
 ## CI Evidence

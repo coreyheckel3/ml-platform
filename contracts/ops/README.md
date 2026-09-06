@@ -228,8 +228,9 @@ PYTHONPATH=. python scripts/ops/verify_release_manifest.py --manifest /tmp/forge
 ## Demo Readiness
 
 `demo-readiness.v1.json` records the local demo contract: one-command stack
-startup, seeded data refresh, deterministic screenshot capture, manual review
-runbook coverage, and architecture walkthrough coverage.
+startup, fresh reset, seeded data refresh, release evidence refresh, browser
+walkthrough validation, deterministic screenshot capture, manual review runbook
+coverage, and architecture walkthrough coverage.
 
 Regenerate after an intentional demo-surface change:
 
@@ -247,6 +248,24 @@ Run the local demo stack:
 
 ```bash
 PYTHONPATH=. python scripts/dev/demo_stack.py
+```
+
+Run a clean local demo stack:
+
+```bash
+PYTHONPATH=. python scripts/dev/demo_stack.py --fresh
+```
+
+Preview reset targets:
+
+```bash
+PYTHONPATH=. python scripts/dev/demo_reset.py --plan --dry-run
+```
+
+Validate the deterministic browser walkthrough:
+
+```bash
+npm --prefix frontend exec playwright test demo-walkthrough.spec.ts --project chromium
 ```
 
 ## CI Runtime

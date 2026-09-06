@@ -17,18 +17,26 @@ def build_demo_readiness_contract() -> dict[str, Any]:
         "schema_version": DEMO_READINESS_CONTRACT_SCHEMA_VERSION,
         "generated_from": [
             "scripts.dev.demo_stack",
+            "scripts.dev.demo_reset",
             "scripts.dev.refresh_demo_data",
             "scripts.examples.bootstrap_examples",
+            "frontend.tests.e2e.demo-walkthrough",
             "frontend.tests.e2e.demo-screenshots",
             "docs.runbooks.demo-readiness",
             "docs.architecture-walkthrough",
         ],
         "operator_commands": [
             "PYTHONPATH=. python scripts/dev/demo_stack.py",
+            "PYTHONPATH=. python scripts/dev/demo_stack.py --fresh",
             "PYTHONPATH=. python scripts/dev/demo_stack.py --dry-run",
+            "PYTHONPATH=. python scripts/dev/demo_reset.py --dry-run",
             (
                 "PYTHONPATH=. python scripts/dev/refresh_demo_data.py "
                 "--base-url http://127.0.0.1:8001"
+            ),
+            (
+                "npm --prefix frontend exec playwright test "
+                "demo-walkthrough.spec.ts --project chromium"
             ),
             (
                 "npm --prefix frontend exec playwright test "
@@ -37,11 +45,15 @@ def build_demo_readiness_contract() -> dict[str, Any]:
         ],
         "demo_capabilities": [
             "one_command_local_stack",
+            "fresh_demo_reset",
             "admin_account_seed",
             "seeded_data_refresh",
+            "release_evidence_seed_refresh",
             "example_project_bootstrap",
+            "browser_walkthrough_script",
             "frontend_screenshot_capture",
             "manual_review_runbook",
+            "reviewer_reset_flow",
             "architecture_walkthrough",
         ],
         "seeded_surfaces": [
@@ -57,6 +69,8 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "alerts",
             "drift_detection",
             "retraining",
+            "release_evidence",
+            "operational_audit",
         ],
         "demo_projects": [
             "movie-recommendation",
@@ -66,8 +80,10 @@ def build_demo_readiness_contract() -> dict[str, Any]:
         "quality_gates": [
             "python scripts/ci/check_demo_readiness_contract.py",
             "backend/tests/unit/dev/test_demo_stack.py",
+            "backend/tests/unit/dev/test_demo_reset.py",
             "backend/tests/unit/dev/test_refresh_demo_data.py",
             "backend/tests/unit/ops/test_demo_readiness_contract.py",
+            "frontend/tests/e2e/demo-walkthrough.spec.ts",
             "frontend/tests/e2e/demo-screenshots.spec.ts",
         ],
     }
@@ -115,8 +131,10 @@ def check_demo_readiness_contract(
 def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str, ...]:
     required_files = [
         "scripts/dev/demo_stack.py",
+        "scripts/dev/demo_reset.py",
         "scripts/dev/refresh_demo_data.py",
         "scripts/examples/bootstrap_examples.py",
+        "frontend/tests/e2e/demo-walkthrough.spec.ts",
         "frontend/tests/e2e/demo-screenshots.spec.ts",
         "docs/runbooks/demo-readiness.md",
         "docs/architecture-walkthrough.md",
@@ -138,29 +156,58 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
     required_fragments = (
         ("DEMO_STACK_SCHEMA_VERSION", sources["scripts/dev/demo_stack.py"]),
         ("build_demo_plan", sources["scripts/dev/demo_stack.py"]),
+        ("build_demo_reset_command", sources["scripts/dev/demo_stack.py"]),
+        ("build_release_manifest_command", sources["scripts/dev/demo_stack.py"]),
+        (
+            "build_release_evidence_refresh_command",
+            sources["scripts/dev/demo_stack.py"],
+        ),
         ("build_demo_data_refresh_command", sources["scripts/dev/demo_stack.py"]),
         ("wait_for_http", sources["scripts/dev/demo_stack.py"]),
         ("VITE_FORGEML_API_PROXY_TARGET", sources["scripts/dev/demo_stack.py"]),
+        ("--fresh", sources["scripts/dev/demo_stack.py"]),
+        ("release-evidence-refresh.json", sources["scripts/dev/demo_stack.py"]),
+        ("DEMO_RESET_SCHEMA_VERSION", sources["scripts/dev/demo_reset.py"]),
+        ("build_demo_reset_plan", sources["scripts/dev/demo_reset.py"]),
+        ("safe_reset_targets", sources["scripts/dev/demo_reset.py"]),
+        ("reset_demo_environment", sources["scripts/dev/demo_reset.py"]),
         ("DEMO_DATA_REFRESH_SCHEMA_VERSION", sources["scripts/dev/refresh_demo_data.py"]),
         ("refresh_demo_data", sources["scripts/dev/refresh_demo_data.py"]),
         ("forgeml.example_bootstrap_summary.v1", sources["scripts/examples/bootstrap_examples.py"]),
         ("--summary-output", sources["scripts/examples/bootstrap_examples.py"]),
         ("--artifact-root", sources["scripts/examples/bootstrap_examples.py"]),
         (
+            "walks reviewer through demo readiness paths",
+            sources["frontend/tests/e2e/demo-walkthrough.spec.ts"],
+        ),
+        ("demoWalkthroughSteps", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
+        ("installForgeMLApiMock", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
+        (
             "captures reviewer-ready demo screenshots",
             sources["frontend/tests/e2e/demo-screenshots.spec.ts"],
         ),
         ("page.screenshot", sources["frontend/tests/e2e/demo-screenshots.spec.ts"]),
         ("demo-stack", sources["Makefile"]),
+        ("demo-stack-fresh", sources["Makefile"]),
+        ("demo-reset", sources["Makefile"]),
         ("demo-refresh", sources["Makefile"]),
+        ("demo-walkthrough", sources["Makefile"]),
         ("demo-screenshots", sources["Makefile"]),
         ("scripts/dev/demo_stack.py", sources["README.md"]),
+        ("make demo-stack-fresh", sources["README.md"]),
         ("make demo-stack", sources["docs/runbooks/demo-readiness.md"]),
+        ("make demo-reset", sources["docs/runbooks/demo-readiness.md"]),
+        ("make demo-walkthrough", sources["docs/runbooks/demo-readiness.md"]),
+        ("release evidence refresh", sources["docs/runbooks/demo-readiness.md"].lower()),
         ("admin@forgeml.dev", sources["docs/runbooks/demo-readiness.md"]),
         ("modular monolith", sources["docs/architecture-walkthrough.md"].lower()),
         ("one_command_local_stack", contract_source),
+        ("fresh_demo_reset", contract_source),
         ("seeded_data_refresh", contract_source),
+        ("release_evidence_seed_refresh", contract_source),
+        ("browser_walkthrough_script", contract_source),
         ("frontend_screenshot_capture", contract_source),
+        ("reviewer_reset_flow", contract_source),
         ("architecture_walkthrough", contract_source),
     )
     missing_fragments = sorted(

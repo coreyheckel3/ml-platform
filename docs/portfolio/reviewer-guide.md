@@ -28,6 +28,13 @@ For a live product walkthrough, run:
 make demo-stack
 ```
 
+For a clean local run that clears prior demo outputs and reseeds release
+evidence, run:
+
+```bash
+make demo-stack-fresh
+```
+
 Use `admin@forgeml.dev` and `forgeml-local-admin` to sign in locally.
 
 ## What To Look For
@@ -78,6 +85,8 @@ The project favors verifiable engineering behavior over static claims:
   artifact from GitHub Actions and compare it with checked-in contracts.
 - Release evidence notification policy exposes audit-only or webhook delivery,
   redacted targets, failure statuses, and delivery audit records.
+- Demo readiness includes repo-scoped reset, fresh stack startup, browser
+  walkthrough validation, deterministic screenshots, and seeded release evidence.
 
 ## Suggested Walkthrough Narrative
 
@@ -98,6 +107,8 @@ The project favors verifiable engineering behavior over static claims:
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/ci/check_portfolio_readiness_contract.py
+PYTHONPATH=. .venv/bin/python scripts/ci/check_demo_readiness_contract.py
+PYTHONPATH=. .venv/bin/python scripts/dev/demo_reset.py --plan --dry-run
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_ux_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_retrieval_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_drilldown_api_contract.py
@@ -110,4 +121,6 @@ PYTHONPATH=. .venv/bin/python scripts/ops/build_release_manifest.py --output /tm
 PYTHONPATH=. .venv/bin/python scripts/ops/verify_release_manifest.py --manifest /tmp/forgeml-release-manifest.json
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
+make demo-walkthrough
+npm --prefix frontend exec playwright test demo-walkthrough.spec.ts --project chromium
 ```

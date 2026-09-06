@@ -49,9 +49,17 @@ def test_demo_readiness_contract_shape() -> None:
 
     assert parsed["schema_version"] == "forgeml.demo_readiness_contract.v1"
     assert "one_command_local_stack" in parsed["demo_capabilities"]
+    assert "fresh_demo_reset" in parsed["demo_capabilities"]
     assert "seeded_data_refresh" in parsed["demo_capabilities"]
+    assert "release_evidence_seed_refresh" in parsed["demo_capabilities"]
+    assert "browser_walkthrough_script" in parsed["demo_capabilities"]
     assert "frontend_screenshot_capture" in parsed["demo_capabilities"]
+    assert "reviewer_reset_flow" in parsed["demo_capabilities"]
     assert "architecture_walkthrough" in parsed["demo_capabilities"]
     assert "training_runs" in parsed["seeded_surfaces"]
+    assert "release_evidence" in parsed["seeded_surfaces"]
+    assert "operational_audit" in parsed["seeded_surfaces"]
     assert "fraud-detection" in parsed["demo_projects"]
     assert "python scripts/ci/check_demo_readiness_contract.py" in parsed["quality_gates"]
+    assert "backend/tests/unit/dev/test_demo_reset.py" in parsed["quality_gates"]
+    assert "frontend/tests/e2e/demo-walkthrough.spec.ts" in parsed["quality_gates"]

@@ -49,8 +49,15 @@ make demo-stack
 
 The demo command runs `scripts/dev/demo_stack.py`, starts local services, applies
 migrations, seeds `admin@forgeml.dev`, refreshes the three example ML projects,
-and starts the web console. See [the demo readiness runbook](docs/runbooks/demo-readiness.md)
-and [the architecture walkthrough](docs/architecture-walkthrough.md) for the
+refreshes local release evidence, and starts the web console. For a clean
+reviewer run, use:
+
+```bash
+make demo-stack-fresh
+```
+
+See [the demo readiness runbook](docs/runbooks/demo-readiness.md) and
+[the architecture walkthrough](docs/architecture-walkthrough.md) for the
 reviewer path.
 
 Install backend dependencies:
@@ -183,6 +190,18 @@ Refresh demo seed data against a running API:
 
 ```bash
 make demo-refresh
+```
+
+Reset repo-scoped demo outputs before a fresh walkthrough:
+
+```bash
+make demo-reset
+```
+
+Walk the deterministic browser demo path:
+
+```bash
+make demo-walkthrough
 ```
 
 Capture deterministic demo screenshots:

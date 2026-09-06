@@ -82,6 +82,8 @@ def test_portfolio_readiness_contract_shape() -> None:
     assert "docs/portfolio/screenshot-catalog.md" in asset_paths
     assert "mlops_release_governance" in parsed["portfolio_claims"]
     assert "browser_verified_demo" in parsed["portfolio_claims"]
+    assert "make demo-stack-fresh" in parsed["operator_commands"]
+    assert "make demo-walkthrough" in parsed["operator_commands"]
     assert "python scripts/ci/check_portfolio_readiness_contract.py" in parsed[
         "quality_gates"
     ]

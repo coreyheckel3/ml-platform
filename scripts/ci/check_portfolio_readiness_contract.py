@@ -51,6 +51,8 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
                 "required_fragments": [
                     "ForgeML is an end-to-end ML platform control plane",
                     "make demo-stack",
+                    "make demo-stack-fresh",
+                    "make demo-walkthrough",
                     "make production-readiness",
                     "release-governance loop",
                 ],
@@ -93,6 +95,7 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
                 "path": "docs/portfolio/screenshot-catalog.md",
                 "required_fragments": [
                     "make demo-screenshots",
+                    "make demo-walkthrough",
                     "01-dashboard.png",
                     "04-training-runs.png",
                     "08-monitoring.png",
@@ -111,6 +114,8 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
         "operator_commands": [
             "PYTHONPATH=. python scripts/ci/check_portfolio_readiness_contract.py",
             "make demo-stack",
+            "make demo-stack-fresh",
+            "make demo-walkthrough",
             "make demo-screenshots",
             "make production-readiness",
         ],

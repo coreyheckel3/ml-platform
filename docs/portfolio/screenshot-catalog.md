@@ -6,8 +6,14 @@ Deterministic reviewer screenshots are captured by:
 make demo-screenshots
 ```
 
-The Playwright flow uses stateful API mocks and writes screenshots under
-`frontend/test-results`. The catalog below maps each screenshot to the platform
+The same browser path can be validated without screenshots by running:
+
+```bash
+make demo-walkthrough
+```
+
+The Playwright flow uses stateful API mocks and writes transient screenshots under
+`test-results`. The catalog below maps each screenshot to the platform
 capability it demonstrates.
 
 | Screenshot | Route | Reviewer Signal |
@@ -36,4 +42,6 @@ The screenshot flow must:
 
 The flow is validated in CI as part of `npm --prefix frontend run e2e` and is
 referenced by the portfolio readiness, release evidence UX, and operational
-audit UX contracts.
+audit UX contracts. Before a fresh capture, `make demo-reset` clears prior
+browser outputs and `make demo-stack-fresh` rebuilds local demo state and release
+evidence from the repo.

@@ -19,6 +19,9 @@ DEFAULT_FRONTEND_URL = "http://127.0.0.1:5173"
 DEFAULT_ARTIFACT_ROOT = Path(".forgeml/demo/artifacts")
 DEFAULT_SUMMARY_OUTPUT = Path(".forgeml/demo/demo-stack-summary.json")
 DEFAULT_DATA_REFRESH_OUTPUT = Path(".forgeml/demo/demo-data-refresh.json")
+DEFAULT_DEMO_RESET_OUTPUT = Path(".forgeml/demo/demo-reset-report.json")
+DEFAULT_RELEASE_MANIFEST_OUTPUT = Path("dist/release/forgeml-release-manifest.json")
+DEFAULT_RELEASE_EVIDENCE_OUTPUT = Path(".forgeml/demo/release-evidence-refresh.json")
 
 
 @dataclass(frozen=True)
@@ -37,8 +40,13 @@ class DemoStackConfig:
     artifact_root: Path
     summary_output: Path
     data_refresh_output: Path
+    demo_reset_output: Path
+    release_manifest_output: Path
+    release_evidence_output: Path
+    fresh: bool
     skip_docker: bool
     skip_examples: bool
+    skip_release_evidence: bool
     no_frontend: bool
     exit_after_bootstrap: bool
     api_timeout_seconds: float
@@ -50,20 +58,29 @@ class DemoStackError(RuntimeError):
 
 
 def build_demo_plan(config: DemoStackConfig) -> dict[str, Any]:
-    commands = [
-        *build_bootstrap_commands(config),
-        build_api_command(config),
-    ]
+    commands: list[DemoCommand] = []
+    if config.fresh:
+        commands.append(build_demo_reset_command(config))
+    commands.extend(build_bootstrap_commands(config))
+    if not config.skip_release_evidence:
+        commands.append(build_release_manifest_command(config))
+    commands.append(build_api_command(config))
     if not config.skip_examples:
         commands.append(build_demo_data_refresh_command(config))
+    if not config.skip_release_evidence:
+        commands.append(build_release_evidence_refresh_command(config))
     if not config.no_frontend:
         commands.append(build_frontend_command(config))
     return {
         "schema_version": DEMO_STACK_SCHEMA_VERSION,
         "api_url": config.api_url,
         "frontend_url": config.frontend_url,
+        "fresh": config.fresh,
         "summary_output": config.summary_output.as_posix(),
         "artifact_root": config.artifact_root.as_posix(),
+        "demo_reset_output": config.demo_reset_output.as_posix(),
+        "release_manifest_output": config.release_manifest_output.as_posix(),
+        "release_evidence_output": config.release_evidence_output.as_posix(),
         "commands": [serialize_command(command) for command in commands],
         "credentials": {
             "email": "admin@forgeml.dev",
@@ -75,6 +92,26 @@ def build_demo_plan(config: DemoStackConfig) -> dict[str, Any]:
             "fraud-detection",
         ],
     }
+
+
+def build_demo_reset_command(config: DemoStackConfig) -> DemoCommand:
+    return DemoCommand(
+        code="demo_reset",
+        description="Clear repo-scoped demo outputs before reseeding a fresh walkthrough.",
+        command=(
+            ".venv/bin/python",
+            "scripts/dev/demo_reset.py",
+            "--state-dir",
+            ".forgeml/demo",
+            "--release-manifest-output",
+            config.release_manifest_output.as_posix(),
+            "--screenshot-dir",
+            "test-results",
+            "--output",
+            config.demo_reset_output.as_posix(),
+        ),
+        environment={"PYTHONPATH": "."},
+    )
 
 
 def build_bootstrap_commands(config: DemoStackConfig) -> list[DemoCommand]:
@@ -119,6 +156,20 @@ def build_bootstrap_commands(config: DemoStackConfig) -> list[DemoCommand]:
     return commands
 
 
+def build_release_manifest_command(config: DemoStackConfig) -> DemoCommand:
+    return DemoCommand(
+        code="release_manifest",
+        description="Generate local release manifest evidence for the demo workspace.",
+        command=(
+            ".venv/bin/python",
+            "scripts/ops/build_release_manifest.py",
+            "--output",
+            config.release_manifest_output.as_posix(),
+        ),
+        environment={"PYTHONPATH": "."},
+    )
+
+
 def build_api_command(config: DemoStackConfig) -> DemoCommand:
     parsed = urlparse(config.api_url)
     return DemoCommand(
@@ -153,6 +204,28 @@ def build_demo_data_refresh_command(config: DemoStackConfig) -> DemoCommand:
             config.artifact_root.as_posix(),
             "--output",
             config.data_refresh_output.as_posix(),
+        ),
+        environment={"PYTHONPATH": "backend/src:."},
+    )
+
+
+def build_release_evidence_refresh_command(config: DemoStackConfig) -> DemoCommand:
+    return DemoCommand(
+        code="release_evidence_refresh",
+        description="Seed release evidence refresh status through the admin API.",
+        command=(
+            ".venv/bin/python",
+            "scripts/ops/refresh_release_evidence.py",
+            "--base-url",
+            config.api_url,
+            "--email",
+            "admin@forgeml.dev",
+            "--password",
+            "forgeml-local-admin",
+            "--once",
+            "--force",
+            "--output",
+            config.release_evidence_output.as_posix(),
         ),
         environment={"PYTHONPATH": "backend/src:."},
     )
@@ -197,8 +270,13 @@ def port_from_url(url: str) -> int:
 
 
 def run_demo_stack(config: DemoStackConfig) -> dict[str, Any]:
+    if config.fresh:
+        run_command(build_demo_reset_command(config), config.repo_root)
     for command in build_bootstrap_commands(config):
         run_command(command, config.repo_root)
+
+    if not config.skip_release_evidence:
+        run_command(build_release_manifest_command(config), config.repo_root)
 
     api_process = start_process(build_api_command(config), config.repo_root)
     managed_processes = [api_process]
@@ -206,6 +284,8 @@ def run_demo_stack(config: DemoStackConfig) -> dict[str, Any]:
         wait_for_http(f"{config.api_url.rstrip('/')}/health/ready", config.api_timeout_seconds)
         if not config.skip_examples:
             run_command(build_demo_data_refresh_command(config), config.repo_root)
+        if not config.skip_release_evidence:
+            run_command(build_release_evidence_refresh_command(config), config.repo_root)
 
         frontend_ready = False
         if not config.no_frontend:
@@ -291,9 +371,14 @@ def build_demo_summary(
         "schema_version": DEMO_STACK_SCHEMA_VERSION,
         "api_url": config.api_url,
         "frontend_url": config.frontend_url,
+        "fresh": config.fresh,
         "api_ready": api_ready,
         "frontend_ready": frontend_ready,
         "data_refresh_output": config.data_refresh_output.as_posix(),
+        "demo_reset_output": config.demo_reset_output.as_posix(),
+        "release_manifest_output": config.release_manifest_output.as_posix(),
+        "release_evidence_output": config.release_evidence_output.as_posix(),
+        "seeded_evidence_ready": not config.skip_release_evidence,
         "artifact_root": config.artifact_root.as_posix(),
         "credentials": {
             "email": "admin@forgeml.dev",
@@ -310,6 +395,8 @@ def build_demo_summary(
             "/alerts",
             "/drift",
             "/retraining",
+            "/release-evidence",
+            "/operational-audit",
         ],
     }
 
@@ -356,8 +443,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--summary-output", type=Path, default=DEFAULT_SUMMARY_OUTPUT)
     parser.add_argument("--data-refresh-output", type=Path, default=DEFAULT_DATA_REFRESH_OUTPUT)
+    parser.add_argument("--demo-reset-output", type=Path, default=DEFAULT_DEMO_RESET_OUTPUT)
+    parser.add_argument(
+        "--release-manifest-output",
+        type=Path,
+        default=DEFAULT_RELEASE_MANIFEST_OUTPUT,
+    )
+    parser.add_argument(
+        "--release-evidence-output",
+        type=Path,
+        default=DEFAULT_RELEASE_EVIDENCE_OUTPUT,
+    )
+    parser.add_argument("--fresh", action="store_true")
     parser.add_argument("--skip-docker", action="store_true")
     parser.add_argument("--skip-examples", action="store_true")
+    parser.add_argument("--skip-release-evidence", action="store_true")
     parser.add_argument("--no-frontend", action="store_true")
     parser.add_argument("--exit-after-bootstrap", action="store_true")
     parser.add_argument("--api-timeout-seconds", type=float, default=90.0)
@@ -378,8 +478,13 @@ def config_from_args(args: argparse.Namespace) -> DemoStackConfig:
         artifact_root=args.artifact_root,
         summary_output=args.summary_output,
         data_refresh_output=args.data_refresh_output,
+        demo_reset_output=args.demo_reset_output,
+        release_manifest_output=args.release_manifest_output,
+        release_evidence_output=args.release_evidence_output,
+        fresh=args.fresh,
         skip_docker=args.skip_docker,
         skip_examples=args.skip_examples,
+        skip_release_evidence=args.skip_release_evidence,
         no_frontend=args.no_frontend,
         exit_after_bootstrap=args.exit_after_bootstrap,
         api_timeout_seconds=args.api_timeout_seconds,
