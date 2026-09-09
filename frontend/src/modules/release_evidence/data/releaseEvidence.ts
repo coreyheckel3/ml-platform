@@ -42,8 +42,8 @@ export type ScheduledReleaseEvidenceRefresh = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 41,
-  qualityGateCount: 30,
+  artifactCount: 43,
+  qualityGateCount: 31,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -93,6 +93,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     kind: "Operations contract",
     path: "contracts/ops/operational-audit-ux.v1.json",
     signal: "Verifies the operator audit timeline, route linkage, screenshots, and CI gate.",
+  },
+  {
+    name: "Platform Admin Controls Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/platform-admin-controls.v1.json",
+    signal:
+      "Verifies organization users, RBAC presets, runtime posture, safe admin workflows, and route coverage.",
   },
   {
     name: "Release Evidence Retrieval Contract",
@@ -190,6 +197,12 @@ export const qualityGates: EvidenceGate[] = [
     signal: "Operational audit route and timeline coverage stay enforced in CI.",
   },
   {
+    name: "platform_admin_controls_contract",
+    owner: "Operations",
+    signal:
+      "Admin Controls route, RBAC visibility, runtime posture, safe workflows, and docs stay enforced in CI.",
+  },
+  {
     name: "release_evidence_retrieval_contract",
     owner: "Operations",
     signal:
@@ -258,6 +271,12 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
     route: "/portfolio",
     signal:
       "Reviewer dashboard, architecture walkthrough, evidence explanations, validation paths, and interview prompts.",
+  },
+  {
+    fileName: "12-admin-controls.png",
+    route: "/admin",
+    signal:
+      "Organization users, RBAC presets, runtime posture, safe workflows, and operator commands.",
   },
 ];
 

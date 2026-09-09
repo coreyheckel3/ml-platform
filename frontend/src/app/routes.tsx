@@ -2,6 +2,14 @@ import { lazy, type ReactNode } from "react";
 
 import { Navigate } from "../shared/routing/router";
 
+const loadAdminControlsPage = () =>
+  import("../modules/admin_controls/pages/AdminControlsPage");
+const AdminControlsPage = lazy(() =>
+  loadAdminControlsPage().then(({ AdminControlsPage }) => ({
+    default: AdminControlsPage,
+  })),
+);
+
 const loadAlertsPage = () => import("../modules/alerts/pages/AlertsPage");
 const AlertsPage = lazy(() =>
   loadAlertsPage().then(({ AlertsPage }) => ({ default: AlertsPage })),
@@ -204,6 +212,11 @@ export const appRoutes: readonly AppRoute[] = [
     path: "/operational-audit",
     element: <OperationalAuditPage />,
     preload: loadOperationalAuditPage,
+  },
+  {
+    path: "/admin",
+    element: <AdminControlsPage />,
+    preload: loadAdminControlsPage,
   },
   { path: "/settings", element: <SettingsPage />, preload: loadSettingsPage },
   { path: "*", element: <Navigate to="/" replace /> },

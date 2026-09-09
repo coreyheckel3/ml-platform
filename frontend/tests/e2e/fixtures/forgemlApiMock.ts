@@ -155,6 +155,7 @@ async function handleApiRoute(
         "model_versions:review",
         "deployments:rollback",
         "inference:predict",
+        "admin:controls:read",
         "admin:audit_log:read",
         "admin:release_evidence:read",
         "admin:release_evidence:retrieve",
@@ -173,6 +174,10 @@ async function handleApiRoute(
 
   if (method === "POST" && path === "/api/v1/auth/logout") {
     return fulfillJson(route, { revoked: true });
+  }
+
+  if (method === "GET" && path === "/api/v1/admin/controls") {
+    return fulfillJson(route, adminControlsResponse(state));
   }
 
   if (method === "GET" && path === "/api/v1/training-runner-profiles") {
@@ -1271,8 +1276,8 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     manifest_git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
     manifest_git_branch: "main",
     ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
-    artifact_count: 39,
-    quality_gate_count: 28,
+    artifact_count: 43,
+    quality_gate_count: 31,
     missing_artifacts: [],
     missing_quality_gates: [],
     comparison: {
@@ -1289,12 +1294,14 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
         "release_evidence_notifications_contract",
+        "platform_admin_controls_contract",
       ],
       quality_gate_names: [
         "external_training_package_contract",
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
         "release_evidence_notifications_contract",
+        "platform_admin_controls_contract",
       ],
       ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
     },
@@ -1365,6 +1372,205 @@ function releaseEvidenceRefreshStatus(reports: Entity[]): Entity {
         "release_evidence.notification_skipped",
       ],
     },
+  };
+}
+
+function adminControlsResponse(state: ForgeMLApiMockState): Entity {
+  const reportCount = state.releaseEvidenceReports.length;
+  const auditEventCount = state.auditLog.length;
+  const projectCount = state.projects.length;
+  const permissions = [
+    "admin:controls:read",
+    "admin:audit_log:read",
+    "admin:release_evidence:read",
+    "admin:release_evidence:retrieve",
+    "projects:create",
+    "projects:read",
+    "datasets:read",
+    "training_runs:create",
+    "training_runs:read",
+    "training_runs:write",
+    "model_versions:review",
+    "deployments:rollback",
+    "inference:predict",
+    "monitoring:read",
+  ];
+  return {
+    schema_version: "forgeml.platform_admin_controls.v1",
+    organization: {
+      id: organizationId,
+      name: "ForgeML Demo Org",
+      slug: "forgeml-demo-org",
+      status: "active",
+      created_at: "2026-08-17T12:00:00Z",
+    },
+    users: [
+      {
+        id: userId,
+        email: "admin@forgeml.dev",
+        display_name: "Platform Admin",
+        status: "active",
+        permissions,
+        permission_count: permissions.length,
+        role_codes: ["security_auditor"],
+        last_login_at: "2026-08-17T16:00:00Z",
+        created_at: "2026-08-13T17:30:00Z",
+        updated_at: "2026-08-17T16:00:00Z",
+      },
+      {
+        id: "user-ml-engineer-e2e",
+        email: "ml-engineer@forgeml.dev",
+        display_name: "ML Engineer",
+        status: "active",
+        permissions: ["projects:read", "datasets:read", "training_runs:read"],
+        permission_count: 3,
+        role_codes: ["ml_viewer"],
+        last_login_at: "2026-08-16T13:20:00Z",
+        created_at: "2026-08-13T17:40:00Z",
+        updated_at: "2026-08-16T13:20:00Z",
+      },
+    ],
+    role_presets: [
+      {
+        code: "ml_viewer",
+        name: "ML Viewer",
+        description: "Read-only access to project and model lifecycle surfaces.",
+        permissions: ["projects:read", "datasets:read", "training_runs:read"],
+        permission_count: 3,
+        assigned_user_count: 1,
+        granted_to_current_principal: true,
+      },
+      {
+        code: "security_auditor",
+        name: "Security Auditor",
+        description: "Read admin audit, release evidence, and admin control surfaces.",
+        permissions: [
+          "admin:controls:read",
+          "admin:audit_log:read",
+          "admin:release_evidence:read",
+        ],
+        permission_count: 3,
+        assigned_user_count: 1,
+        granted_to_current_principal: true,
+      },
+      {
+        code: "platform_admin",
+        name: "Platform Admin",
+        description: "Full organization administration and operational release control.",
+        permissions: ["*"],
+        permission_count: 1,
+        assigned_user_count: 0,
+        granted_to_current_principal: false,
+      },
+    ],
+    permission_groups: [
+      {
+        module: "administration",
+        permission_count: 4,
+        granted_count: 4,
+        permissions: [
+          permission("admin:controls:read", "administration", "read", true),
+          permission("admin:audit_log:read", "administration", "read", true),
+          permission("admin:release_evidence:read", "administration", "read", true),
+          permission("admin:release_evidence:retrieve", "administration", "execute", true),
+        ],
+      },
+      {
+        module: "training",
+        permission_count: 4,
+        granted_count: 3,
+        permissions: [
+          permission("training_runs:create", "training", "create", true),
+          permission("training_runs:read", "training", "read", true),
+          permission("training_runs:write", "training", "write", true),
+          permission("training_runs:cancel", "training", "write", false),
+        ],
+      },
+      {
+        module: "deployments",
+        permission_count: 3,
+        granted_count: 1,
+        permissions: [
+          permission("deployments:create", "deployments", "create", false),
+          permission("deployments:read", "deployments", "read", false),
+          permission("deployments:rollback", "deployments", "write", true),
+        ],
+      },
+    ],
+    environment: {
+      environment: "local",
+      production_like: false,
+      docs_enabled: true,
+      rate_limit_enabled: true,
+      request_logging_enabled: true,
+      structured_logging_enabled: true,
+      readiness_checks_enabled: true,
+      external_training_profiles_enabled: true,
+      release_evidence_provider: "github_actions",
+      release_evidence_repository: "coreyheckel3/ml-platform",
+      release_evidence_branch: "main",
+      release_evidence_workflow: "ci.yml",
+      release_evidence_artifact_name: "forgeml-release-manifest",
+      object_storage_configured: true,
+      redis_configured: true,
+      mlflow_tracking_configured: true,
+      airflow_orchestration_enabled: false,
+      cors_origin_count: 1,
+      access_token_ttl_seconds: 900,
+      refresh_token_ttl_seconds: 2_592_000,
+      jwt_issuer: "forgeml",
+    },
+    safeguards: [
+      {
+        label: "Tenant isolation",
+        status: "enforced",
+        detail: "Admin controls are scoped to the caller organization ID from JWT claims.",
+        evidence: "backend/tests/integration/security/test_tenant_isolation.py",
+      },
+      {
+        label: "RBAC mutations",
+        status: "read-only",
+        detail: "Role changes require a dedicated audited workflow before write APIs are exposed.",
+        evidence: "contracts/security/permission-catalog.v1.json",
+      },
+      {
+        label: "Release governance",
+        status: "visible",
+        detail: "Release evidence refresh state, reports, and audit actions remain linked.",
+        evidence: "contracts/ops/release-evidence-drilldown-api.v1.json",
+      },
+    ],
+    operator_commands: [
+      "make production-readiness",
+      "PYTHONPATH=. python scripts/ci/check_platform_admin_controls_contract.py",
+      "PYTHONPATH=. python scripts/ci/check_permission_catalog.py",
+    ],
+    stats: {
+      total_users: 2,
+      active_users: 2,
+      disabled_users: 0,
+      project_count: projectCount,
+      audit_event_count: auditEventCount,
+      release_evidence_report_count: reportCount,
+      role_preset_count: 3,
+      permission_count: 11,
+      permission_group_count: 3,
+    },
+  };
+}
+
+function permission(
+  code: string,
+  module: string,
+  action: string,
+  granted: boolean,
+): Entity {
+  return {
+    code,
+    module,
+    action,
+    description: `${formatLabel(code)} permission.`,
+    granted_to_current_principal: granted,
   };
 }
 
@@ -1807,6 +2013,14 @@ function slugify(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function formatLabel(value: string): string {
+  return value
+    .split(/[_:.-]/g)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function stringValue(value: unknown, fallback: string): string {

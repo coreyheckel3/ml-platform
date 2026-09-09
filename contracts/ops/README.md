@@ -200,6 +200,25 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_operational_audit_ux_contract.py
 ```
 
+## Platform Admin Controls
+
+`platform-admin-controls.v1.json` records the admin control-plane contract:
+`/admin` routing, `GET /api/v1/admin/controls`, `admin:controls:read`,
+organization-scoped users, RBAC presets, environment visibility, safe admin
+workflows, deterministic screenshots, and release evidence wiring.
+
+Regenerate after an intentional admin controls product-surface change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_platform_admin_controls_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_platform_admin_controls_contract.py
+```
+
 ## Release Manifest Verification
 
 `release-manifest-verification.v1.json` records the required verifier behavior for

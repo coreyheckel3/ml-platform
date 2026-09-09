@@ -4,7 +4,9 @@ from uuid import UUID, uuid4
 import pytest
 
 from forgeml.modules.administration.application.services import (
+    AdminControlsRuntimeConfig,
     AdministrationService,
+    GetPlatformAdminControlsQuery,
     GetReleaseEvidenceRefreshStatusQuery,
     GetReleaseEvidenceReportQuery,
     ListAuditLogQuery,
@@ -13,6 +15,9 @@ from forgeml.modules.administration.application.services import (
     RetrieveReleaseEvidenceCommand,
 )
 from forgeml.modules.administration.domain.entities import (
+    AdminControlPlaneSnapshot,
+    AdminOrganizationProfile,
+    AdminUserAccessProfile,
     AuditLogEntry,
     AuditLogEvent,
     ReleaseEvidenceReport,
@@ -169,6 +174,133 @@ class FakeReleaseEvidenceNotificationGateway:
             response_status=202 if self.status == "delivered" else None,
             error_message=self.error_message,
             delivered_at=datetime(2026, 8, 17, 18, 5, tzinfo=UTC),
+        )
+
+
+class FakeAdminControlPlaneRepository:
+    def __init__(
+        self,
+        organization: AdminOrganizationProfile | None,
+        users: tuple[AdminUserAccessProfile, ...],
+    ) -> None:
+        self.organization = organization
+        self.users = users
+        self.organization_id: UUID | None = None
+
+    def load_snapshot(self, organization_id: UUID) -> AdminControlPlaneSnapshot:
+        self.organization_id = organization_id
+        return AdminControlPlaneSnapshot(
+            organization=self.organization,
+            users=self.users,
+            project_count=3,
+            audit_event_count=7,
+            release_evidence_report_count=2,
+        )
+
+
+def test_administration_service_returns_platform_admin_controls_summary() -> None:
+    organization_id = uuid4()
+    repository = FakeAdminControlPlaneRepository(
+        organization=admin_organization(organization_id),
+        users=(
+            admin_user(organization_id, "admin@forgeml.dev", ("*",)),
+            admin_user(
+                organization_id,
+                "auditor@forgeml.dev",
+                (
+                    "admin:audit_log:read",
+                    "admin:controls:read",
+                    "admin:release_evidence:read",
+                    "projects:read",
+                ),
+            ),
+        ),
+    )
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        admin_controls=repository,
+        admin_controls_runtime_config=admin_runtime_config(),
+    )
+
+    controls = service.get_platform_admin_controls(
+        GetPlatformAdminControlsQuery(organization_id=organization_id),
+        principal(organization_id, {"admin:controls:read"}),
+    )
+
+    assert repository.organization_id == organization_id
+    assert controls.organization.slug == "forgeml-local"
+    assert controls.stats.total_users == 2
+    assert controls.stats.active_users == 2
+    assert controls.stats.project_count == 3
+    assert controls.stats.audit_event_count == 7
+    assert controls.stats.release_evidence_report_count == 2
+    assert controls.environment.environment == "local"
+    assert controls.environment.production_like is False
+    assert "make production-readiness" in controls.operator_commands
+    assert any(safeguard.label == "RBAC mutations" for safeguard in controls.safeguards)
+
+    role_counts = {role.code: role.assigned_user_count for role in controls.role_presets}
+    assert role_counts["platform_admin"] == 1
+    assert role_counts["security_auditor"] == 1
+
+    administration_group = next(
+        group for group in controls.permission_groups if group.module == "administration"
+    )
+    assert any(
+        permission.code == "admin:controls:read"
+        and permission.granted_to_current_principal
+        for permission in administration_group.permissions
+    )
+
+
+def test_administration_service_requires_admin_controls_permission() -> None:
+    organization_id = uuid4()
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        admin_controls=FakeAdminControlPlaneRepository(
+            admin_organization(organization_id),
+            (),
+        ),
+        admin_controls_runtime_config=admin_runtime_config(),
+    )
+
+    with pytest.raises(PermissionDeniedError):
+        service.get_platform_admin_controls(
+            GetPlatformAdminControlsQuery(organization_id=organization_id),
+            principal(organization_id, {"admin:audit_log:read"}),
+        )
+
+
+def test_administration_service_rejects_cross_org_admin_controls_reads() -> None:
+    organization_id = uuid4()
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        admin_controls=FakeAdminControlPlaneRepository(
+            admin_organization(organization_id),
+            (),
+        ),
+        admin_controls_runtime_config=admin_runtime_config(),
+    )
+
+    with pytest.raises(PermissionDeniedError):
+        service.get_platform_admin_controls(
+            GetPlatformAdminControlsQuery(organization_id=uuid4()),
+            principal(organization_id, {"admin:controls:read"}),
+        )
+
+
+def test_administration_service_raises_for_missing_admin_controls_organization() -> None:
+    organization_id = uuid4()
+    service = AdministrationService(
+        audit_log=FakeAuditLogRepository(),
+        admin_controls=FakeAdminControlPlaneRepository(None, ()),
+        admin_controls_runtime_config=admin_runtime_config(),
+    )
+
+    with pytest.raises(ResourceNotFoundError):
+        service.get_platform_admin_controls(
+            GetPlatformAdminControlsQuery(organization_id=organization_id),
+            principal(organization_id, {"admin:controls:read"}),
         )
 
 
@@ -577,6 +709,58 @@ def principal(organization_id: UUID, permissions: set[str]) -> Principal:
         email="admin@example.com",
         organization_id=str(organization_id),
         permissions=frozenset(permissions),
+    )
+
+
+def admin_organization(organization_id: UUID) -> AdminOrganizationProfile:
+    return AdminOrganizationProfile(
+        id=organization_id,
+        name="ForgeML Local",
+        slug="forgeml-local",
+        status="active",
+        created_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+    )
+
+
+def admin_user(
+    organization_id: UUID,
+    email: str,
+    permissions: tuple[str, ...],
+) -> AdminUserAccessProfile:
+    return AdminUserAccessProfile(
+        id=uuid4(),
+        email=email,
+        display_name=email.split("@", maxsplit=1)[0].replace(".", " ").title(),
+        status="active",
+        permissions=permissions,
+        last_login_at=datetime(2026, 8, 17, 13, 0, tzinfo=UTC),
+        created_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+        updated_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+    )
+
+
+def admin_runtime_config() -> AdminControlsRuntimeConfig:
+    return AdminControlsRuntimeConfig(
+        environment="local",
+        docs_enabled=True,
+        rate_limit_enabled=True,
+        request_logging_enabled=True,
+        structured_logging_enabled=True,
+        readiness_checks_enabled=False,
+        external_training_profiles_enabled=True,
+        release_evidence_provider="local_manifest",
+        release_evidence_repository="coreyheckel3/ml-platform",
+        release_evidence_branch="main",
+        release_evidence_workflow="ci.yml",
+        release_evidence_artifact_name="forgeml-release-manifest",
+        object_storage_endpoint="http://localhost:9000",
+        redis_url="redis://localhost:6379/0",
+        mlflow_tracking_uri="http://localhost:5000",
+        airflow_orchestration_enabled=False,
+        cors_origin_count=1,
+        access_token_ttl_seconds=900,
+        refresh_token_ttl_seconds=2_592_000,
+        jwt_issuer="forgeml",
     )
 
 

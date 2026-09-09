@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Rocket,
   Settings,
+  ShieldCheck,
   Workflow
 } from "lucide-react";
 
@@ -37,5 +38,6 @@ export const navigationItems = [
   { label: "Alerts", path: "/alerts", icon: AlertTriangle },
   { label: "Release Evidence", path: "/release-evidence", icon: FileCheck2 },
   { label: "Operational Audit", path: "/operational-audit", icon: ClipboardList },
+  { label: "Admin", path: "/admin", icon: ShieldCheck },
   { label: "Settings", path: "/settings", icon: Settings }
 ] as const;

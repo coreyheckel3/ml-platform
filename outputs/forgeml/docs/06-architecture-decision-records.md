@@ -698,3 +698,30 @@ packages while keeping governance, lineage, and security centralized. A named
 profile boundary lets ForgeML execute real external ML code today and later map
 the same contract to container jobs, Airflow DAGs, or remote compute without
 changing the training-run API.
+
+## ADR-035: Platform Admin Control Plane
+
+Status: Accepted
+
+Decision: Add platform admin controls as a read-only administration module
+surface before exposing mutable role or user-management workflows.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Read-only admin control plane | Gives operators immediate tenant, RBAC, runtime, and safeguard visibility while keeping mutation risk low | Requires a later sprint for audited role updates |
+| Full user and role mutation UI | Closer to a complete commercial admin console | Needs conflict handling, audit events, rollback behavior, and broader permission tests before it is safe |
+| Keep admin visibility inside Settings | Minimal navigation change | Hides operator workflows inside account settings and makes reviewer discovery harder |
+
+Recommendation: Expose `/admin` and `GET /api/v1/admin/controls` for
+organization-scoped users, role presets, permission groups, environment posture,
+safeguards, and operator commands. Protect the endpoint with
+`admin:controls:read` and enforce the feature through a CI contract.
+
+Justification: Administration is a high-trust platform workflow. A read-only
+control plane gives ML platform operators and reviewers the context they need
+without introducing unsafe mutation paths. The modular monolith boundary still
+keeps domain read models, repository interfaces, SQLAlchemy implementations,
+application service orchestration, API schemas, and frontend surfaces ready for
+a later audited mutation workflow.

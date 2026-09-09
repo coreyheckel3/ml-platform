@@ -2428,6 +2428,44 @@ Implemented scope:
   readiness, and production-readiness checks so the new reviewer surface is
   treated as release evidence.
 
+## Sprint 73: Platform Admin Controls
+
+Theme: add a dedicated platform administration surface that lets operators
+inspect tenant-scoped users, RBAC presets, runtime posture, safe admin
+workflows, and verification commands before mutable admin workflows are added.
+
+Acceptance criteria:
+
+- The backend exposes an authenticated `GET /api/v1/admin/controls` endpoint
+  protected by `admin:controls:read`.
+- Administration keeps clean architecture boundaries across domain read models,
+  repository interface, SQLAlchemy implementation, application service, API
+  route, and response schemas.
+- The frontend exposes `/admin` through navigation with sections for
+  Organization Overview, User Access, RBAC Matrix, Permission Catalog,
+  Environment Visibility, and Safe Admin Workflows.
+- CI verifies the admin route, RBAC permission, docs, browser coverage, release
+  evidence data, and screenshot catalog through a dedicated contract.
+- Admin workflows remain read-only until a later audited mutation sprint.
+
+Implemented scope:
+
+- Added `PlatformAdminControls` domain entities, `AdminControlPlaneRepository`,
+  SQLAlchemy snapshot loading, application service composition, Pydantic
+  responses, and the `/api/v1/admin/controls` route.
+- Added `admin:controls:read` to the permission catalog and security auditor
+  preset.
+- Added `frontend/src/modules/admin_controls` with typed API client,
+  `AdminControlsPage`, page tests, navigation, route loading, e2e mock data,
+  demo walkthrough coverage, and screenshot capture for
+  `12-admin-controls.png`.
+- Added `docs/runbooks/admin-controls.md` and updated production readiness,
+  demo readiness, evidence map, screenshot catalog, README, release evidence,
+  release manifest, and ops contract documentation.
+- Added `scripts/ci/check_platform_admin_controls_contract.py`, checked-in
+  contract generation, Make target, CI wiring, production-readiness coverage,
+  and unit contract tests.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2464,7 +2502,7 @@ sequence.
 | 70 | Release Evidence Notifications | Completed | Webhook-style notification adapter boundary, audit-only default mode, failed evidence alert payloads, delivery audit records, frontend routing policy, CI contract, and escalation docs. |
 | 71 | Demo Environment Polish | Completed | Fresh demo reset, local release manifest generation, seeded release evidence refresh, deterministic browser walkthrough, Make targets, docs, contracts, and CI-ready validation. |
 | 72 | Portfolio Interview Mode | Completed | Reviewer dashboard, architecture walkthrough page, evidence explanations, interview-ready validation paths, product route, docs, CI contract, release evidence, and screenshot coverage. |
-| 73 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
+| 73 | Platform Admin Controls | Completed | Organization-scoped admin read model, user access visibility, RBAC presets, runtime posture, safe admin workflows, `/admin` UI, docs, CI contract, release evidence, and screenshot coverage. |
 | 74 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 | 75 | Evaluation and Model Comparison UX | Planned | Richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |
 

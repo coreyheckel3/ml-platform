@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from forgeml.main import create_app
 from forgeml.modules.administration.api.routes import get_administration_service
 from forgeml.modules.administration.application.services import (
+    GetPlatformAdminControlsQuery,
     GetReleaseEvidenceRefreshStatusQuery,
     GetReleaseEvidenceReportQuery,
     ListAuditLogQuery,
@@ -14,7 +15,16 @@ from forgeml.modules.administration.application.services import (
     RetrieveReleaseEvidenceCommand,
 )
 from forgeml.modules.administration.domain.entities import (
+    AdminControlPlaneStats,
+    AdminEnvironmentSummary,
+    AdminOrganizationProfile,
+    AdminPermissionGroupSummary,
+    AdminPermissionSummary,
+    AdminRolePresetSummary,
+    AdminSafeguardSummary,
+    AdminUserAccessProfile,
     AuditLogEntry,
+    PlatformAdminControls,
     ReleaseEvidenceReport,
 )
 from forgeml.platform.api.dependencies import get_current_principal
@@ -32,6 +42,105 @@ class FakeAdministrationService:
         self.release_report_query: GetReleaseEvidenceReportQuery | None = None
         self.refresh_status_query: GetReleaseEvidenceRefreshStatusQuery | None = None
         self.retrieve_command: RetrieveReleaseEvidenceCommand | None = None
+        self.admin_controls_query: GetPlatformAdminControlsQuery | None = None
+
+    def get_platform_admin_controls(
+        self,
+        query: GetPlatformAdminControlsQuery,
+        principal: Principal,
+    ) -> PlatformAdminControls:
+        self.admin_controls_query = query
+        return PlatformAdminControls(
+            organization=AdminOrganizationProfile(
+                id=self.organization_id,
+                name="ForgeML Local",
+                slug="forgeml-local",
+                status="active",
+                created_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+            ),
+            users=(
+                AdminUserAccessProfile(
+                    id=uuid4(),
+                    email="admin@forgeml.dev",
+                    display_name="Platform Admin",
+                    status="active",
+                    permissions=("*",),
+                    last_login_at=datetime(2026, 8, 17, 12, 30, tzinfo=UTC),
+                    created_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+                    updated_at=datetime(2026, 8, 17, 12, 0, tzinfo=UTC),
+                ),
+            ),
+            role_presets=(
+                AdminRolePresetSummary(
+                    code="platform_admin",
+                    name="Platform Admin",
+                    description="Full ForgeML platform administration across all modules.",
+                    permissions=("*",),
+                    permission_count=1,
+                    assigned_user_count=1,
+                    granted_to_current_principal=True,
+                ),
+            ),
+            permission_groups=(
+                AdminPermissionGroupSummary(
+                    module="administration",
+                    permission_count=1,
+                    granted_count=1,
+                    permissions=(
+                        AdminPermissionSummary(
+                            code="admin:controls:read",
+                            module="administration",
+                            action="read",
+                            description="Read organization controls.",
+                            granted_to_current_principal=True,
+                        ),
+                    ),
+                ),
+            ),
+            environment=AdminEnvironmentSummary(
+                environment="local",
+                production_like=False,
+                docs_enabled=True,
+                rate_limit_enabled=True,
+                request_logging_enabled=True,
+                structured_logging_enabled=True,
+                readiness_checks_enabled=False,
+                external_training_profiles_enabled=True,
+                release_evidence_provider="local_manifest",
+                release_evidence_repository="coreyheckel3/ml-platform",
+                release_evidence_branch="main",
+                release_evidence_workflow="ci.yml",
+                release_evidence_artifact_name="forgeml-release-manifest",
+                object_storage_configured=True,
+                redis_configured=True,
+                mlflow_tracking_configured=True,
+                airflow_orchestration_enabled=False,
+                cors_origin_count=1,
+                access_token_ttl_seconds=900,
+                refresh_token_ttl_seconds=2_592_000,
+                jwt_issuer="forgeml",
+            ),
+            safeguards=(
+                AdminSafeguardSummary(
+                    label="RBAC mutations",
+                    status="read-only",
+                    detail="Role changes require an audited workflow.",
+                    evidence="contracts/security/permission-catalog.v1.json",
+                ),
+            ),
+            operator_commands=("make production-readiness",),
+            stats=AdminControlPlaneStats(
+                total_users=1,
+                active_users=1,
+                disabled_users=0,
+                project_count=3,
+                audit_event_count=7,
+                release_evidence_report_count=2,
+                role_preset_count=1,
+                permission_count=1,
+                permission_group_count=1,
+            ),
+        )
 
     def list_audit_log(
         self,
@@ -143,8 +252,8 @@ class FakeAdministrationService:
             manifest_git_sha="abc123",
             manifest_git_branch="main",
             ci_run_url="https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-            artifact_count=41,
-            quality_gate_count=30,
+            artifact_count=43,
+            quality_gate_count=31,
             missing_artifacts=(),
             missing_quality_gates=(),
             comparison={"passed": True},
@@ -159,6 +268,39 @@ class FakeAdministrationService:
             error_message=None,
             created_at=datetime(2026, 8, 17, 12, 30, tzinfo=UTC),
         )
+
+
+def test_platform_admin_controls_route_uses_application_service_contract() -> None:
+    fake_service = FakeAdministrationService()
+    app = create_app()
+    app.dependency_overrides[get_administration_service] = lambda: fake_service
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        user_id="user-1",
+        email="admin@example.com",
+        organization_id=str(fake_service.organization_id),
+        permissions=frozenset({"admin:controls:read"}),
+    )
+    client = TestClient(app)
+
+    response = client.get("/api/v1/admin/controls")
+
+    assert response.status_code == 200
+    assert fake_service.admin_controls_query == GetPlatformAdminControlsQuery(
+        organization_id=fake_service.organization_id,
+    )
+    payload = response.json()
+    assert payload["schema_version"] == "forgeml.platform_admin_controls.v1"
+    assert payload["organization"]["slug"] == "forgeml-local"
+    assert payload["users"][0]["email"] == "admin@forgeml.dev"
+    assert payload["users"][0]["role_codes"] == ["platform_admin"]
+    assert payload["role_presets"][0]["code"] == "platform_admin"
+    assert payload["permission_groups"][0]["permissions"][0]["code"] == (
+        "admin:controls:read"
+    )
+    assert payload["environment"]["release_evidence_provider"] == "local_manifest"
+    assert payload["safeguards"][0]["label"] == "RBAC mutations"
+    assert payload["operator_commands"] == ["make production-readiness"]
+    assert payload["stats"]["project_count"] == 3
 
 
 def test_administration_audit_log_route_uses_application_service_contract() -> None:
@@ -371,8 +513,8 @@ def release_evidence_report_response(
         "manifest_git_sha": "abc123",
         "manifest_git_branch": "main",
         "ci_run_url": "https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-        "artifact_count": 41,
-        "quality_gate_count": 30,
+        "artifact_count": 43,
+        "quality_gate_count": 31,
         "missing_artifacts": [],
         "missing_quality_gates": [],
         "comparison": {"passed": True},

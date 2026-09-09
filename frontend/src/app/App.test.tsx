@@ -26,5 +26,6 @@ describe("App", () => {
     expect(screen.getByText("Alerts")).toBeInTheDocument();
     expect(screen.getByText("Release Evidence")).toBeInTheDocument();
     expect(screen.getByText("Operational Audit")).toBeInTheDocument();
+    expect(screen.getByText("Admin")).toBeInTheDocument();
   });
 });

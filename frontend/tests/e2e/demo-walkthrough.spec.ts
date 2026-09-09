@@ -88,6 +88,11 @@ const demoWalkthroughSteps = [
     heading: "Operational Audit",
     signals: ["Live Audit Events"],
   },
+  {
+    path: "/admin",
+    heading: "Admin Controls",
+    signals: ["Organization Overview", "RBAC Matrix", "Safe Admin Workflows"],
+  },
 ] as const;
 
 test("walks reviewer through demo readiness paths", async ({ page }) => {

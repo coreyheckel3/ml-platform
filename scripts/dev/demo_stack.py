@@ -398,6 +398,7 @@ def build_demo_summary(
             "/retraining",
             "/release-evidence",
             "/operational-audit",
+            "/admin",
         ],
     }
 

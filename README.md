@@ -19,7 +19,7 @@ Implemented foundation:
 - Deployments with approved-model-version gating, immutable revisions, canary traffic allocation, canary simulation, runtime health probes, rollback draining, events, and serving orchestrator boundary.
 - Inference endpoints with current-traffic revision resolution, deployment-revision attribution, request logs, deterministic runtime adapter, prediction response contracts, endpoint health probes, and metric snapshots.
 - Monitoring read APIs for project inference summaries, latency percentiles, endpoint error breakdowns, drift trends, training failures, retraining activity, and active alert counts.
-- Administration audit log read and write paths plus release evidence retrieval reports with organization-scoped RBAC filtering, auth/project lifecycle instrumentation, ML operations instrumentation, and SQLAlchemy persistence.
+- Administration audit log read and write paths plus release evidence retrieval reports and platform admin controls with organization-scoped RBAC filtering, user access visibility, runtime posture, auth/project lifecycle instrumentation, ML operations instrumentation, and SQLAlchemy persistence.
 - Alerting with rule definitions, threshold evaluation over inference snapshots, deduplicated alert events, acknowledgement, and resolution.
 - Drift detection with reference profiles, production-window reports over inference request logs, feature-level drift scores, and analyzer adapter boundary.
 - Automatic retraining with deployment-scoped policies, drift and alert trigger evaluation, cooldowns, daily run limits, approval gates, idempotent source handling, and Training module handoff.
@@ -28,7 +28,7 @@ Implemented foundation:
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
 - External training package adapter with an allowlisted `conversational-movie-recommender` profile, worker-side CLI execution, metric import, artifact checksums, profile catalog API, and Training Runs UI launch path.
 - Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
-- Portfolio review kit with reviewer guide, resume bullets, Portfolio Interview Mode, evidence map, architecture diagrams, screenshot catalog, Release Evidence and Operational Audit app surfaces, and CI-checked portfolio readiness contracts.
+- Portfolio review kit with reviewer guide, resume bullets, Portfolio Interview Mode, evidence map, architecture diagrams, screenshot catalog, Release Evidence, Operational Audit, and Admin Controls app surfaces, and CI-checked portfolio readiness contracts.
 - Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, release evidence notification contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, release evidence reports, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
@@ -125,6 +125,12 @@ Verify release evidence notification routing:
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_notifications_contract.py
+```
+
+Verify platform admin controls:
+
+```bash
+make admin-controls
 ```
 
 Verify the checked database migration contract:

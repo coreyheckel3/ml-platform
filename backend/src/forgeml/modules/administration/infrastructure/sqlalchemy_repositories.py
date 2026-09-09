@@ -1,10 +1,13 @@
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from forgeml.modules.administration.domain.entities import (
+    AdminControlPlaneSnapshot,
+    AdminOrganizationProfile,
+    AdminUserAccessProfile,
     AuditLogEntry,
     AuditLogEvent,
     ReleaseEvidenceReport,
@@ -16,6 +19,11 @@ from forgeml.modules.administration.infrastructure.sqlalchemy_models import (
 from forgeml.modules.administration.repositories.interfaces import (
     AuditLogFilters,
     ReleaseEvidenceReportFilters,
+)
+from forgeml.modules.auth.infrastructure.sqlalchemy_models import UserModel
+from forgeml.modules.projects.infrastructure.sqlalchemy_models import (
+    OrganizationModel,
+    ProjectModel,
 )
 
 
@@ -127,6 +135,46 @@ class SqlAlchemyReleaseEvidenceReportRepository:
         return _release_evidence_to_domain(model)
 
 
+class SqlAlchemyAdminControlPlaneRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def load_snapshot(self, organization_id: UUID) -> AdminControlPlaneSnapshot:
+        organization = self._session.get(OrganizationModel, organization_id)
+        user_models = self._session.scalars(
+            select(UserModel)
+            .where(UserModel.organization_id == organization_id)
+            .order_by(UserModel.email)
+        ).all()
+        project_count = self._count(
+            select(func.count(ProjectModel.id)).where(
+                ProjectModel.organization_id == organization_id
+            )
+        )
+        audit_event_count = self._count(
+            select(func.count(AuditLogModel.id)).where(
+                AuditLogModel.organization_id == organization_id
+            )
+        )
+        release_evidence_report_count = self._count(
+            select(func.count(ReleaseEvidenceReportModel.id)).where(
+                ReleaseEvidenceReportModel.organization_id == organization_id
+            )
+        )
+        return AdminControlPlaneSnapshot(
+            organization=(
+                _organization_to_domain(organization) if organization is not None else None
+            ),
+            users=tuple(_admin_user_to_domain(model) for model in user_models),
+            project_count=project_count,
+            audit_event_count=audit_event_count,
+            release_evidence_report_count=release_evidence_report_count,
+        )
+
+    def _count(self, statement: Select[tuple[int]]) -> int:
+        return int(self._session.scalar(statement) or 0)
+
+
 def _apply_filters(
     statement: Select[tuple[AuditLogModel]],
     filters: AuditLogFilters,
@@ -138,6 +186,32 @@ def _apply_filters(
     if filters.resource_type:
         statement = statement.where(AuditLogModel.resource_type == filters.resource_type)
     return statement
+
+
+def _organization_to_domain(model: OrganizationModel) -> AdminOrganizationProfile:
+    return AdminOrganizationProfile(
+        id=model.id,
+        name=model.name,
+        slug=model.slug,
+        status=model.status,
+        created_at=_ensure_utc(model.created_at) if model.created_at else None,
+    )
+
+
+def _admin_user_to_domain(model: UserModel) -> AdminUserAccessProfile:
+    permissions = tuple(
+        sorted(permission for permission in model.permissions_csv.split(",") if permission)
+    )
+    return AdminUserAccessProfile(
+        id=model.id,
+        email=model.email,
+        display_name=model.display_name,
+        status=model.status,
+        permissions=permissions,
+        last_login_at=_ensure_utc(model.last_login_at) if model.last_login_at else None,
+        created_at=_ensure_utc(model.created_at) if model.created_at else None,
+        updated_at=_ensure_utc(model.updated_at) if model.updated_at else None,
+    )
 
 
 def _to_domain(model: AuditLogModel) -> AuditLogEntry:

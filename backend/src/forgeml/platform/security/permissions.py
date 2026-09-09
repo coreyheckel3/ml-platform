@@ -38,6 +38,12 @@ PERMISSIONS: tuple[PermissionDefinition, ...] = (
         "execute",
         "Retrieve and persist release evidence from the configured provider.",
     ),
+    PermissionDefinition(
+        "admin:controls:read",
+        "administration",
+        "read",
+        "Read organization users, role presets, environment posture, and safe admin workflows.",
+    ),
     PermissionDefinition("projects:create", "projects", "create", "Create projects."),
     PermissionDefinition("projects:read", "projects", "read", "Read project metadata."),
     PermissionDefinition("datasets:create", "datasets", "create", "Create datasets."),
@@ -443,6 +449,7 @@ ROLE_PRESETS: tuple[RolePreset, ...] = (
         permissions=frozenset(
             {
                 "admin:audit_log:read",
+                "admin:controls:read",
                 "admin:release_evidence:read",
                 "projects:read",
             }

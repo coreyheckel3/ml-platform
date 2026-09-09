@@ -5,15 +5,26 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from forgeml.modules.administration.api.schemas import (
+    AdminControlPlaneStatsResponse,
+    AdminEnvironmentResponse,
+    AdminOrganizationResponse,
+    AdminPermissionGroupResponse,
+    AdminPermissionResponse,
+    AdminRolePresetResponse,
+    AdminSafeguardResponse,
+    AdminUserAccessResponse,
     AuditLogEntryResponse,
     AuditLogListResponse,
+    PlatformAdminControlsResponse,
     ReleaseEvidenceNotificationPolicyResponse,
     ReleaseEvidenceRefreshStatusResponse,
     ReleaseEvidenceReportListResponse,
     ReleaseEvidenceReportResponse,
 )
 from forgeml.modules.administration.application.services import (
+    AdminControlsRuntimeConfig,
     AdministrationService,
+    GetPlatformAdminControlsQuery,
     GetReleaseEvidenceRefreshStatusQuery,
     GetReleaseEvidenceReportQuery,
     ListAuditLogQuery,
@@ -23,10 +34,16 @@ from forgeml.modules.administration.application.services import (
     RetrieveReleaseEvidenceCommand,
 )
 from forgeml.modules.administration.domain.entities import (
+    AdminEnvironmentSummary,
+    AdminPermissionGroupSummary,
+    AdminRolePresetSummary,
+    AdminUserAccessProfile,
     AuditLogEntry,
+    PlatformAdminControls,
     ReleaseEvidenceReport,
 )
 from forgeml.modules.administration.infrastructure.sqlalchemy_repositories import (
+    SqlAlchemyAdminControlPlaneRepository,
     SqlAlchemyAuditLogRepository,
     SqlAlchemyReleaseEvidenceReportRepository,
 )
@@ -55,6 +72,10 @@ def get_administration_service(
 ) -> AdministrationService:
     return AdministrationService(
         audit_log=SqlAlchemyAuditLogRepository(session),
+        admin_controls=SqlAlchemyAdminControlPlaneRepository(session),
+        admin_controls_runtime_config=_admin_controls_runtime_config_from_settings(
+            settings
+        ),
         release_evidence_reports=SqlAlchemyReleaseEvidenceReportRepository(session),
         release_evidence_gateway=_release_evidence_gateway_from_settings(settings),
         release_evidence_config=_release_evidence_config_from_settings(settings),
@@ -65,6 +86,20 @@ def get_administration_service(
             _release_evidence_notification_policy_from_settings(settings)
         ),
     )
+
+
+@router.get("/admin/controls", response_model=PlatformAdminControlsResponse)
+def get_platform_admin_controls(
+    principal: Principal = Depends(get_current_principal),
+    service: AdministrationService = Depends(get_administration_service),
+) -> PlatformAdminControlsResponse:
+    controls = service.get_platform_admin_controls(
+        GetPlatformAdminControlsQuery(
+            organization_id=UUID(principal.organization_id),
+        ),
+        principal,
+    )
+    return _platform_admin_controls_response(controls)
 
 
 @router.get("/admin/audit-log", response_model=AuditLogListResponse)
@@ -177,6 +212,154 @@ def get_release_evidence_report(
     return _release_evidence_report_response(report)
 
 
+def _platform_admin_controls_response(
+    controls: PlatformAdminControls,
+) -> PlatformAdminControlsResponse:
+    return PlatformAdminControlsResponse(
+        organization=AdminOrganizationResponse(
+            id=str(controls.organization.id),
+            name=controls.organization.name,
+            slug=controls.organization.slug,
+            status=controls.organization.status,
+            created_at=(
+                controls.organization.created_at.isoformat()
+                if controls.organization.created_at
+                else None
+            ),
+        ),
+        users=[
+            _admin_user_access_response(user, controls.role_presets)
+            for user in controls.users
+        ],
+        role_presets=[
+            _admin_role_preset_response(role) for role in controls.role_presets
+        ],
+        permission_groups=[
+            _admin_permission_group_response(group)
+            for group in controls.permission_groups
+        ],
+        environment=_admin_environment_response(controls.environment),
+        safeguards=[
+            AdminSafeguardResponse(
+                label=safeguard.label,
+                status=safeguard.status,
+                detail=safeguard.detail,
+                evidence=safeguard.evidence,
+            )
+            for safeguard in controls.safeguards
+        ],
+        operator_commands=list(controls.operator_commands),
+        stats=AdminControlPlaneStatsResponse(
+            total_users=controls.stats.total_users,
+            active_users=controls.stats.active_users,
+            disabled_users=controls.stats.disabled_users,
+            project_count=controls.stats.project_count,
+            audit_event_count=controls.stats.audit_event_count,
+            release_evidence_report_count=controls.stats.release_evidence_report_count,
+            role_preset_count=controls.stats.role_preset_count,
+            permission_count=controls.stats.permission_count,
+            permission_group_count=controls.stats.permission_group_count,
+        ),
+    )
+
+
+def _admin_user_access_response(
+    user: AdminUserAccessProfile,
+    role_presets: tuple[AdminRolePresetSummary, ...],
+) -> AdminUserAccessResponse:
+    return AdminUserAccessResponse(
+        id=str(user.id),
+        email=user.email,
+        display_name=user.display_name,
+        status=user.status,
+        permissions=list(user.permissions),
+        permission_count=len(user.permissions),
+        role_codes=[
+            role.code
+            for role in role_presets
+            if _user_permissions_match_role(user.permissions, role.permissions)
+        ],
+        last_login_at=user.last_login_at.isoformat() if user.last_login_at else None,
+        created_at=user.created_at.isoformat() if user.created_at else None,
+        updated_at=user.updated_at.isoformat() if user.updated_at else None,
+    )
+
+
+def _admin_role_preset_response(
+    role: AdminRolePresetSummary,
+) -> AdminRolePresetResponse:
+    return AdminRolePresetResponse(
+        code=role.code,
+        name=role.name,
+        description=role.description,
+        permissions=list(role.permissions),
+        permission_count=role.permission_count,
+        assigned_user_count=role.assigned_user_count,
+        granted_to_current_principal=role.granted_to_current_principal,
+    )
+
+
+def _admin_permission_group_response(
+    group: AdminPermissionGroupSummary,
+) -> AdminPermissionGroupResponse:
+    return AdminPermissionGroupResponse(
+        module=group.module,
+        permission_count=group.permission_count,
+        granted_count=group.granted_count,
+        permissions=[
+            AdminPermissionResponse(
+                code=permission.code,
+                module=permission.module,
+                action=permission.action,
+                description=permission.description,
+                granted_to_current_principal=permission.granted_to_current_principal,
+            )
+            for permission in group.permissions
+        ],
+    )
+
+
+def _admin_environment_response(
+    environment: AdminEnvironmentSummary,
+) -> AdminEnvironmentResponse:
+    return AdminEnvironmentResponse(
+        environment=environment.environment,
+        production_like=environment.production_like,
+        docs_enabled=environment.docs_enabled,
+        rate_limit_enabled=environment.rate_limit_enabled,
+        request_logging_enabled=environment.request_logging_enabled,
+        structured_logging_enabled=environment.structured_logging_enabled,
+        readiness_checks_enabled=environment.readiness_checks_enabled,
+        external_training_profiles_enabled=environment.external_training_profiles_enabled,
+        release_evidence_provider=environment.release_evidence_provider,
+        release_evidence_repository=environment.release_evidence_repository,
+        release_evidence_branch=environment.release_evidence_branch,
+        release_evidence_workflow=environment.release_evidence_workflow,
+        release_evidence_artifact_name=environment.release_evidence_artifact_name,
+        object_storage_configured=environment.object_storage_configured,
+        redis_configured=environment.redis_configured,
+        mlflow_tracking_configured=environment.mlflow_tracking_configured,
+        airflow_orchestration_enabled=environment.airflow_orchestration_enabled,
+        cors_origin_count=environment.cors_origin_count,
+        access_token_ttl_seconds=environment.access_token_ttl_seconds,
+        refresh_token_ttl_seconds=environment.refresh_token_ttl_seconds,
+        jwt_issuer=environment.jwt_issuer,
+    )
+
+
+def _user_permissions_match_role(
+    user_permissions: tuple[str, ...],
+    role_permissions: tuple[str, ...],
+) -> bool:
+    user_permission_set = frozenset(user_permissions)
+    role_permission_set = frozenset(role_permissions)
+    if "*" in user_permission_set:
+        return "*" in role_permission_set
+    if "*" in role_permission_set:
+        return False
+    return role_permission_set.issubset(user_permission_set)
+
+
 def _audit_log_response(entry: AuditLogEntry) -> AuditLogEntryResponse:
     return AuditLogEntryResponse(
         id=str(entry.id),
@@ -257,6 +440,33 @@ def _release_evidence_refresh_status_response(
         notification_policy=_release_evidence_notification_policy_response(
             status.notification_policy
         ),
+    )
+
+
+def _admin_controls_runtime_config_from_settings(
+    settings: Settings,
+) -> AdminControlsRuntimeConfig:
+    return AdminControlsRuntimeConfig(
+        environment=settings.environment,
+        docs_enabled=settings.enable_docs,
+        rate_limit_enabled=settings.rate_limit_enabled,
+        request_logging_enabled=settings.request_logging_enabled,
+        structured_logging_enabled=settings.structured_logging_enabled,
+        readiness_checks_enabled=settings.readiness_checks_enabled,
+        external_training_profiles_enabled=settings.external_training_profiles_enabled,
+        release_evidence_provider=settings.release_evidence_provider,
+        release_evidence_repository=settings.release_evidence_github_repository,
+        release_evidence_branch=settings.release_evidence_github_branch,
+        release_evidence_workflow=settings.release_evidence_github_workflow,
+        release_evidence_artifact_name=settings.release_evidence_github_artifact_name,
+        object_storage_endpoint=settings.object_storage_endpoint,
+        redis_url=settings.redis_url,
+        mlflow_tracking_uri=settings.mlflow_tracking_uri,
+        airflow_orchestration_enabled=settings.airflow_orchestration_enabled,
+        cors_origin_count=len(settings.cors_origins),
+        access_token_ttl_seconds=settings.access_token_ttl_seconds,
+        refresh_token_ttl_seconds=settings.refresh_token_ttl_seconds,
+        jwt_issuer=settings.jwt_issuer,
     )
 
 

@@ -5,16 +5,26 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 from forgeml.modules.administration.domain.entities import (
+    AdminControlPlaneStats,
+    AdminEnvironmentSummary,
+    AdminPermissionGroupSummary,
+    AdminPermissionSummary,
+    AdminRolePresetSummary,
+    AdminSafeguardSummary,
+    AdminUserAccessProfile,
     AuditLogEntry,
     AuditLogEvent,
+    PlatformAdminControls,
     ReleaseEvidenceReport,
 )
 from forgeml.modules.administration.repositories.interfaces import (
+    AdminControlPlaneRepository,
     AuditLogFilters,
     AuditLogRepository,
     ReleaseEvidenceReportFilters,
     ReleaseEvidenceReportRepository,
 )
+from forgeml.platform.config_policy import is_production_like_environment
 from forgeml.platform.domain.errors import (
     DomainValidationError,
     PermissionDeniedError,
@@ -38,6 +48,7 @@ from forgeml.platform.release_evidence import (
     compare_release_manifest_to_contract,
     summarize_release_manifest,
 )
+from forgeml.platform.security.permissions import PERMISSIONS, ROLE_PRESETS
 from forgeml.platform.security.rbac import Principal
 
 
@@ -77,12 +88,41 @@ class GetReleaseEvidenceRefreshStatusQuery:
 
 
 @dataclass(frozen=True)
+class GetPlatformAdminControlsQuery:
+    organization_id: UUID
+
+
+@dataclass(frozen=True)
 class ReleaseEvidenceRetrievalConfig:
     provider: str
     repository: str | None
     branch: str | None
     workflow: str | None
     artifact_name: str | None
+
+
+@dataclass(frozen=True)
+class AdminControlsRuntimeConfig:
+    environment: str
+    docs_enabled: bool
+    rate_limit_enabled: bool
+    request_logging_enabled: bool
+    structured_logging_enabled: bool
+    readiness_checks_enabled: bool
+    external_training_profiles_enabled: bool
+    release_evidence_provider: str
+    release_evidence_repository: str | None
+    release_evidence_branch: str | None
+    release_evidence_workflow: str | None
+    release_evidence_artifact_name: str | None
+    object_storage_endpoint: str | None
+    redis_url: str | None
+    mlflow_tracking_uri: str | None
+    airflow_orchestration_enabled: bool
+    cors_origin_count: int
+    access_token_ttl_seconds: int
+    refresh_token_ttl_seconds: int
+    jwt_issuer: str
 
 
 @dataclass(frozen=True)
@@ -114,6 +154,8 @@ class AdministrationService:
         self,
         *,
         audit_log: AuditLogRepository,
+        admin_controls: AdminControlPlaneRepository | None = None,
+        admin_controls_runtime_config: AdminControlsRuntimeConfig | None = None,
         release_evidence_reports: ReleaseEvidenceReportRepository | None = None,
         release_evidence_gateway: ReleaseEvidenceGateway | None = None,
         release_evidence_config: ReleaseEvidenceRetrievalConfig | None = None,
@@ -121,11 +163,53 @@ class AdministrationService:
         release_evidence_notification_policy: ReleaseEvidenceNotificationPolicy | None = None,
     ) -> None:
         self._audit_log = audit_log
+        self._admin_controls = admin_controls
+        self._admin_controls_runtime_config = admin_controls_runtime_config
         self._release_evidence_reports = release_evidence_reports
         self._release_evidence_gateway = release_evidence_gateway
         self._release_evidence_config = release_evidence_config
         self._release_evidence_notifications = release_evidence_notifications
         self._release_evidence_notification_policy = release_evidence_notification_policy
+
+    def get_platform_admin_controls(
+        self,
+        query: GetPlatformAdminControlsQuery,
+        principal: Principal,
+    ) -> PlatformAdminControls:
+        if not principal.has("admin:controls:read"):
+            raise PermissionDeniedError("You do not have permission to read admin controls.")
+        self._assert_same_organization(query.organization_id, principal)
+        snapshot = self._require_admin_controls_repository().load_snapshot(
+            query.organization_id
+        )
+        if snapshot.organization is None:
+            raise ResourceNotFoundError("Organization was not found.")
+
+        role_presets = _admin_role_presets(snapshot.users, principal.permissions)
+        permission_groups = _admin_permission_groups(principal.permissions)
+        stats = AdminControlPlaneStats(
+            total_users=len(snapshot.users),
+            active_users=sum(1 for user in snapshot.users if user.status == "active"),
+            disabled_users=sum(1 for user in snapshot.users if user.status != "active"),
+            project_count=snapshot.project_count,
+            audit_event_count=snapshot.audit_event_count,
+            release_evidence_report_count=snapshot.release_evidence_report_count,
+            role_preset_count=len(role_presets),
+            permission_count=len(PERMISSIONS),
+            permission_group_count=len(permission_groups),
+        )
+        return PlatformAdminControls(
+            organization=snapshot.organization,
+            users=snapshot.users,
+            role_presets=role_presets,
+            permission_groups=permission_groups,
+            environment=_admin_environment_summary(
+                self._require_admin_controls_runtime_config()
+            ),
+            safeguards=_admin_safeguards(),
+            operator_commands=_admin_operator_commands(),
+            stats=stats,
+        )
 
     def list_audit_log(
         self,
@@ -324,6 +408,16 @@ class AdministrationService:
             )
         self._assert_same_organization(organization_id, principal)
 
+    def _require_admin_controls_repository(self) -> AdminControlPlaneRepository:
+        if self._admin_controls is None:
+            raise DomainValidationError("Platform admin controls are not configured.")
+        return self._admin_controls
+
+    def _require_admin_controls_runtime_config(self) -> AdminControlsRuntimeConfig:
+        if self._admin_controls_runtime_config is None:
+            raise DomainValidationError("Platform admin controls are not configured.")
+        return self._admin_controls_runtime_config
+
     @staticmethod
     def _assert_same_organization(organization_id: UUID, principal: Principal) -> None:
         if str(organization_id) != principal.organization_id:
@@ -413,6 +507,157 @@ def _clean_filter(value: str | None) -> str | None:
         return None
     cleaned = value.strip()
     return cleaned or None
+
+
+def _admin_role_presets(
+    users: tuple[AdminUserAccessProfile, ...],
+    principal_permissions: frozenset[str],
+) -> tuple[AdminRolePresetSummary, ...]:
+    return tuple(
+        AdminRolePresetSummary(
+            code=role.code,
+            name=role.name,
+            description=role.description,
+            permissions=tuple(sorted(role.permissions)),
+            permission_count=len(role.permissions),
+            assigned_user_count=sum(
+                1 for user in users if _user_matches_role(user.permissions, role.permissions)
+            ),
+            granted_to_current_principal=_permissions_granted(
+                principal_permissions,
+                role.permissions,
+            ),
+        )
+        for role in sorted(ROLE_PRESETS, key=lambda item: item.code)
+    )
+
+
+def _admin_permission_groups(
+    principal_permissions: frozenset[str],
+) -> tuple[AdminPermissionGroupSummary, ...]:
+    grouped: dict[str, list[AdminPermissionSummary]] = {}
+    for permission in sorted(PERMISSIONS, key=lambda item: (item.module, item.code)):
+        grouped.setdefault(permission.module, []).append(
+            AdminPermissionSummary(
+                code=permission.code,
+                module=permission.module,
+                action=permission.action,
+                description=permission.description,
+                granted_to_current_principal=(
+                    "*" in principal_permissions or permission.code in principal_permissions
+                ),
+            )
+        )
+
+    return tuple(
+        AdminPermissionGroupSummary(
+            module=module,
+            permission_count=len(permissions),
+            granted_count=sum(
+                1 for permission in permissions if permission.granted_to_current_principal
+            ),
+            permissions=tuple(permissions),
+        )
+        for module, permissions in sorted(grouped.items())
+    )
+
+
+def _admin_environment_summary(
+    config: AdminControlsRuntimeConfig,
+) -> AdminEnvironmentSummary:
+    return AdminEnvironmentSummary(
+        environment=config.environment,
+        production_like=is_production_like_environment(config.environment),
+        docs_enabled=config.docs_enabled,
+        rate_limit_enabled=config.rate_limit_enabled,
+        request_logging_enabled=config.request_logging_enabled,
+        structured_logging_enabled=config.structured_logging_enabled,
+        readiness_checks_enabled=config.readiness_checks_enabled,
+        external_training_profiles_enabled=config.external_training_profiles_enabled,
+        release_evidence_provider=config.release_evidence_provider,
+        release_evidence_repository=config.release_evidence_repository,
+        release_evidence_branch=config.release_evidence_branch,
+        release_evidence_workflow=config.release_evidence_workflow,
+        release_evidence_artifact_name=config.release_evidence_artifact_name,
+        object_storage_configured=bool(config.object_storage_endpoint),
+        redis_configured=bool(config.redis_url),
+        mlflow_tracking_configured=bool(config.mlflow_tracking_uri),
+        airflow_orchestration_enabled=config.airflow_orchestration_enabled,
+        cors_origin_count=config.cors_origin_count,
+        access_token_ttl_seconds=config.access_token_ttl_seconds,
+        refresh_token_ttl_seconds=config.refresh_token_ttl_seconds,
+        jwt_issuer=config.jwt_issuer,
+    )
+
+
+def _admin_safeguards() -> tuple[AdminSafeguardSummary, ...]:
+    return (
+        AdminSafeguardSummary(
+            label="Tenant isolation",
+            status="enforced",
+            detail="Admin controls are scoped to the caller organization ID from JWT claims.",
+            evidence="backend/tests/integration/security/test_tenant_isolation.py",
+        ),
+        AdminSafeguardSummary(
+            label="RBAC mutations",
+            status="read-only",
+            detail=(
+                "Role changes require a dedicated audited workflow before write APIs "
+                "are exposed."
+            ),
+            evidence="contracts/security/permission-catalog.v1.json",
+        ),
+        AdminSafeguardSummary(
+            label="Release governance",
+            status="visible",
+            detail="Release evidence refresh state, reports, and audit actions remain linked.",
+            evidence="contracts/ops/release-evidence-drilldown-api.v1.json",
+        ),
+        AdminSafeguardSummary(
+            label="Runtime guardrails",
+            status="contracted",
+            detail=(
+                "Production-like settings are validated by runtime policy and CI "
+                "readiness gates."
+            ),
+            evidence="contracts/security/runtime-config-policy.v1.json",
+        ),
+    )
+
+
+def _admin_operator_commands() -> tuple[str, ...]:
+    return (
+        "make production-readiness",
+        "PYTHONPATH=. python scripts/ci/check_platform_admin_controls_contract.py",
+        "PYTHONPATH=. python scripts/ci/check_permission_catalog.py",
+        (
+            "PYTHONPATH=backend/src:. python scripts/ops/refresh_release_evidence.py "
+            "--base-url http://127.0.0.1:8001 --once"
+        ),
+    )
+
+
+def _user_matches_role(
+    user_permissions: tuple[str, ...],
+    role_permissions: frozenset[str],
+) -> bool:
+    user_permission_set = frozenset(user_permissions)
+    if "*" in user_permission_set:
+        return "*" in role_permissions
+    if "*" in role_permissions:
+        return False
+    return role_permissions.issubset(user_permission_set)
+
+
+def _permissions_granted(
+    principal_permissions: frozenset[str],
+    required_permissions: frozenset[str],
+) -> bool:
+    if "*" in principal_permissions:
+        return True
+    if "*" in required_permissions:
+        return "*" in principal_permissions
+    return required_permissions.issubset(principal_permissions)
 
 
 def _first_or_none(reports: list[ReleaseEvidenceReport]) -> ReleaseEvidenceReport | None:

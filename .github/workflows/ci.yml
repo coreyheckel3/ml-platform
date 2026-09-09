@@ -89,6 +89,8 @@ jobs:
         run: python scripts/ci/check_release_evidence_notifications_contract.py
       - name: Check operational audit UX contract
         run: python scripts/ci/check_operational_audit_ux_contract.py
+      - name: Check platform admin controls contract
+        run: python scripts/ci/check_platform_admin_controls_contract.py
       - name: Check release manifest verifier contract
         run: python scripts/ci/check_release_manifest_verifier_contract.py
       - name: Check demo readiness contract

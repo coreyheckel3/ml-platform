@@ -53,6 +53,7 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "browser_walkthrough_script",
             "frontend_screenshot_capture",
             "portfolio_interview_mode",
+            "admin_controls_review",
             "manual_review_runbook",
             "reviewer_reset_flow",
             "architecture_walkthrough",
@@ -73,6 +74,7 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "release_evidence",
             "operational_audit",
             "portfolio_interview",
+            "admin_controls",
         ],
         "demo_projects": [
             "movie-recommendation",
@@ -88,6 +90,7 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "frontend/tests/e2e/demo-walkthrough.spec.ts",
             "frontend/tests/e2e/demo-screenshots.spec.ts",
             "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx",
+            "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx",
         ],
     }
 
@@ -171,6 +174,7 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ("VITE_FORGEML_API_PROXY_TARGET", sources["scripts/dev/demo_stack.py"]),
         ("--fresh", sources["scripts/dev/demo_stack.py"]),
         ("release-evidence-refresh.json", sources["scripts/dev/demo_stack.py"]),
+        ("/admin", sources["scripts/dev/demo_stack.py"]),
         ("DEMO_RESET_SCHEMA_VERSION", sources["scripts/dev/demo_reset.py"]),
         ("build_demo_reset_plan", sources["scripts/dev/demo_reset.py"]),
         ("safe_reset_targets", sources["scripts/dev/demo_reset.py"]),
@@ -186,6 +190,8 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ),
         ("demoWalkthroughSteps", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
         ("/portfolio", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
+        ("/admin", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
+        ("Admin Controls", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
         (
             "Portfolio Interview Mode",
             sources["frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx"],
@@ -198,6 +204,10 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ("page.screenshot", sources["frontend/tests/e2e/demo-screenshots.spec.ts"]),
         (
             "11-portfolio-interview-mode.png",
+            sources["frontend/tests/e2e/demo-screenshots.spec.ts"],
+        ),
+        (
+            "12-admin-controls.png",
             sources["frontend/tests/e2e/demo-screenshots.spec.ts"],
         ),
         ("demo-stack", sources["Makefile"]),
@@ -221,6 +231,8 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ("browser_walkthrough_script", contract_source),
         ("frontend_screenshot_capture", contract_source),
         ("portfolio_interview_mode", contract_source),
+        ("admin_controls_review", contract_source),
+        ("admin_controls", contract_source),
         ("reviewer_reset_flow", contract_source),
         ("architecture_walkthrough", contract_source),
     )

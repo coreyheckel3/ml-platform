@@ -116,6 +116,7 @@ def test_demo_summary_records_manual_review_paths(tmp_path: Path) -> None:
     assert "/monitoring" in summary["manual_review_paths"]
     assert "/release-evidence" in summary["manual_review_paths"]
     assert "/operational-audit" in summary["manual_review_paths"]
+    assert "/admin" in summary["manual_review_paths"]
 
 
 def test_port_from_url_uses_explicit_or_scheme_default() -> None:

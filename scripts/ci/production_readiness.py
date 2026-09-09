@@ -43,6 +43,9 @@ try:
     from scripts.ci.check_operational_audit_ux_contract import (
         check_operational_audit_ux_contract as verify_operational_audit_ux_contract,
     )
+    from scripts.ci.check_platform_admin_controls_contract import (
+        check_platform_admin_controls_contract as verify_platform_admin_controls_contract,
+    )
     from scripts.ci.check_portfolio_interview_mode_contract import (
         check_portfolio_interview_mode_contract as verify_portfolio_interview_mode_contract,
     )
@@ -112,6 +115,9 @@ except ModuleNotFoundError:
     )
     from check_operational_audit_ux_contract import (  # type: ignore[no-redef]
         check_operational_audit_ux_contract as verify_operational_audit_ux_contract,
+    )
+    from check_platform_admin_controls_contract import (  # type: ignore[no-redef]
+        check_platform_admin_controls_contract as verify_platform_admin_controls_contract,
     )
     from check_portfolio_interview_mode_contract import (  # type: ignore[no-redef]
         check_portfolio_interview_mode_contract as verify_portfolio_interview_mode_contract,
@@ -296,6 +302,7 @@ REQUIRED_FILES = (
     "contracts/ops/release-evidence-scheduled-refresh.v1.json",
     "contracts/ops/release-evidence-notifications.v1.json",
     "contracts/ops/operational-audit-ux.v1.json",
+    "contracts/ops/platform-admin-controls.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
     "contracts/ops/portfolio-interview-mode.v1.json",
@@ -310,6 +317,9 @@ REQUIRED_FILES = (
     "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
+    "frontend/src/modules/admin_controls/api/adminControls.ts",
+    "frontend/src/modules/admin_controls/pages/AdminControlsPage.tsx",
+    "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx",
     "backend/src/forgeml/modules/administration/domain/entities.py",
     "backend/src/forgeml/modules/administration/repositories/interfaces.py",
     "backend/src/forgeml/modules/administration/application/services.py",
@@ -320,6 +330,7 @@ REQUIRED_FILES = (
     "backend/alembic/versions/202607190016_release_evidence_reports.py",
     "backend/tests/api/test_administration_api.py",
     "backend/tests/unit/administration/test_administration_service.py",
+    "backend/tests/integration/administration/test_admin_controls_repository.py",
     "backend/tests/integration/administration/test_audit_log_repository.py",
     "backend/src/forgeml/platform/release_evidence/__init__.py",
     "backend/src/forgeml/platform/release_evidence/retrieval.py",
@@ -331,6 +342,7 @@ REQUIRED_FILES = (
     "scripts/ci/check_release_evidence_drilldown_api_contract.py",
     "scripts/ci/check_release_evidence_scheduled_refresh_contract.py",
     "scripts/ci/check_release_evidence_notifications_contract.py",
+    "scripts/ci/check_platform_admin_controls_contract.py",
     "backend/tests/unit/platform/test_release_evidence_retrieval.py",
     "backend/tests/unit/ops/test_release_evidence_retrieval_cli.py",
     "backend/tests/unit/ops/test_release_evidence_refresh.py",
@@ -338,6 +350,7 @@ REQUIRED_FILES = (
     "backend/tests/unit/ops/test_release_evidence_drilldown_api_contract.py",
     "backend/tests/unit/ops/test_release_evidence_scheduled_refresh_contract.py",
     "backend/tests/unit/ops/test_release_evidence_notifications_contract.py",
+    "backend/tests/unit/ops/test_platform_admin_controls_contract.py",
     "frontend/src/modules/operational_audit/data/releaseEvidenceAuditEvents.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.ts",
     "frontend/src/modules/operational_audit/lib/auditTimeline.test.ts",
@@ -375,6 +388,7 @@ REQUIRED_FILES = (
     "backend/tests/unit/dev/test_demo_reset.py",
     "backend/tests/unit/dev/test_refresh_demo_data.py",
     "docs/runbooks/demo-readiness.md",
+    "docs/runbooks/admin-controls.md",
     "docs/architecture-walkthrough.md",
 )
 
@@ -425,6 +439,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_release_evidence_scheduled_refresh_contract(repo_root),
         check_release_evidence_notifications_contract(repo_root),
         check_operational_audit_ux_contract(repo_root),
+        check_platform_admin_controls_contract(repo_root),
         check_release_manifest_verifier_contract(repo_root),
         check_demo_readiness_contract(repo_root),
         check_ci_runtime_contract(repo_root),
@@ -1984,6 +1999,7 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
     has_quality_gates = {
         "python scripts/ci/check_release_evidence_ux_contract.py",
         "python scripts/ci/check_portfolio_interview_mode_contract.py",
+        "python scripts/ci/check_platform_admin_controls_contract.py",
         "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
         "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
     }.issubset(quality_gates)
@@ -1994,10 +2010,13 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
         and "forgeml-release-manifest" in data_source
         and "release_manifest_verifier_contract" in data_source
         and "portfolio_interview_mode_contract" in data_source
+        and "platform_admin_controls_contract" in data_source
+        and "contracts/ops/platform-admin-controls.v1.json" in data_source
     )
     has_screenshot_catalog = (
         "09-release-evidence.png" in screenshot_catalog
         and "11-portfolio-interview-mode.png" in screenshot_catalog
+        and "12-admin-controls.png" in screenshot_catalog
     )
     has_evidence_map = "Release evidence UX" in evidence_map
     has_release_manifest_artifact = (
@@ -2561,6 +2580,125 @@ def check_operational_audit_ux_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_release_manifest_artifact={has_release_manifest_artifact}, "
                 f"has_release_evidence_gate={has_release_evidence_gate}, "
                 f"has_contract_docs={has_contract_docs}"
+            )
+        ),
+    )
+
+
+def check_platform_admin_controls_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    release_manifest_source = (repo_root / "scripts/ops/build_release_manifest.py").read_text(
+        encoding="utf-8"
+    )
+    contract = json.loads(
+        (repo_root / "contracts/ops/platform-admin-controls.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    route = contract.get("route", {})
+    source_assets = {asset for asset in contract.get("required_source_assets", [])}
+    quality_gates = set(contract.get("quality_gates", []))
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/administration/application/services.py"
+    ).read_text(encoding="utf-8")
+    route_source = (
+        repo_root / "backend/src/forgeml/modules/administration/api/routes.py"
+    ).read_text(encoding="utf-8")
+    page_source = (
+        repo_root / "frontend/src/modules/admin_controls/pages/AdminControlsPage.tsx"
+    ).read_text(encoding="utf-8")
+    frontend_api_source = (
+        repo_root / "frontend/src/modules/admin_controls/api/adminControls.ts"
+    ).read_text(encoding="utf-8")
+    navigation_source = (repo_root / "frontend/src/app/navigation.ts").read_text(
+        encoding="utf-8"
+    )
+    screenshots_source = (
+        repo_root / "frontend/tests/e2e/demo-screenshots.spec.ts"
+    ).read_text(encoding="utf-8")
+    screenshot_catalog = (repo_root / "docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+    admin_runbook = (repo_root / "docs/runbooks/admin-controls.md").read_text(
+        encoding="utf-8"
+    )
+    contract_current, contract_detail = verify_platform_admin_controls_contract(
+        repo_root / "contracts/ops/platform-admin-controls.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_ci_gate = "python scripts/ci/check_platform_admin_controls_contract.py" in ci_source
+    has_route = (
+        route.get("path") == "/admin"
+        and route.get("label") == "Admin"
+        and 'label: "Admin"' in navigation_source
+        and "AdminControlsPage" in page_source
+    )
+    has_backend_contract = (
+        "/admin/controls" in route_source
+        and "get_platform_admin_controls" in service_source
+        and "admin:controls:read" in service_source
+    )
+    has_frontend_contract = (
+        "/api/v1/admin/controls" in frontend_api_source
+        and "Organization Overview" in page_source
+        and "RBAC Matrix" in page_source
+        and "Environment Visibility" in page_source
+        and "Safe Admin Workflows" in page_source
+    )
+    has_source_assets = {
+        "backend/tests/integration/administration/test_admin_controls_repository.py",
+        "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx",
+        "docs/runbooks/admin-controls.md",
+    }.issubset(source_assets)
+    has_quality_gates = {
+        "python scripts/ci/check_platform_admin_controls_contract.py",
+        "backend/tests/unit/ops/test_platform_admin_controls_contract.py",
+        "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx",
+    }.issubset(quality_gates)
+    has_release_manifest = (
+        "platform_admin_controls_contract" in release_manifest_source
+        and "contracts/ops/platform-admin-controls.v1.json" in release_manifest_source
+    )
+    has_browser_evidence = (
+        "/admin" in screenshots_source and "12-admin-controls.png" in screenshot_catalog
+    )
+    has_runbook = (
+        "GET /api/v1/admin/controls" in admin_runbook
+        and "admin:controls:read" in admin_runbook
+        and "make admin-controls" in admin_runbook
+    )
+    passed = (
+        contract_current
+        and has_ci_gate
+        and has_route
+        and has_backend_contract
+        and has_frontend_contract
+        and has_source_assets
+        and has_quality_gates
+        and has_release_manifest
+        and has_browser_evidence
+        and has_runbook
+    )
+    return ReadinessCheck(
+        name="platform admin controls contract",
+        passed=passed,
+        detail=(
+            "admin control-plane route, RBAC read model, runtime posture, "
+            "docs, screenshots, release manifest, and CI gate are configured"
+            if passed
+            else (
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_ci_gate={has_ci_gate}, "
+                f"has_route={has_route}, "
+                f"has_backend_contract={has_backend_contract}, "
+                f"has_frontend_contract={has_frontend_contract}, "
+                f"has_source_assets={has_source_assets}, "
+                f"has_quality_gates={has_quality_gates}, "
+                f"has_release_manifest={has_release_manifest}, "
+                f"has_browser_evidence={has_browser_evidence}, "
+                f"has_runbook={has_runbook}"
             )
         ),
     )

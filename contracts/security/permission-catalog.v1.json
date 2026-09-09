@@ -9,7 +9,16 @@
       "code": "admin:audit_log:read",
       "description": "Read organization audit log events.",
       "enforced_at": [
-        "backend/src/forgeml/modules/administration/application/services.py:135"
+        "backend/src/forgeml/modules/administration/application/services.py:219"
+      ],
+      "module": "administration"
+    },
+    {
+      "action": "read",
+      "code": "admin:controls:read",
+      "description": "Read organization users, role presets, environment posture, and safe admin workflows.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/administration/application/services.py:179"
       ],
       "module": "administration"
     },
@@ -18,7 +27,7 @@
       "code": "admin:release_evidence:read",
       "description": "Read organization release evidence retrieval reports.",
       "enforced_at": [
-        "backend/src/forgeml/modules/administration/application/services.py:321"
+        "backend/src/forgeml/modules/administration/application/services.py:405"
       ],
       "module": "administration"
     },
@@ -27,7 +36,7 @@
       "code": "admin:release_evidence:retrieve",
       "description": "Retrieve and persist release evidence from the configured provider.",
       "enforced_at": [
-        "backend/src/forgeml/modules/administration/application/services.py:181"
+        "backend/src/forgeml/modules/administration/application/services.py:265"
       ],
       "module": "administration"
     },
@@ -676,6 +685,7 @@
       "name": "Security Auditor",
       "permissions": [
         "admin:audit_log:read",
+        "admin:controls:read",
         "admin:release_evidence:read",
         "projects:read"
       ]
@@ -683,8 +693,8 @@
   ],
   "schema_version": "forgeml.permission_catalog.v1",
   "summary": {
-    "enforced_permission_count": 57,
-    "permission_count": 57,
+    "enforced_permission_count": 58,
+    "permission_count": 58,
     "role_preset_count": 5
   }
 }

@@ -1,6 +1,107 @@
 from pydantic import BaseModel, Field
 
 
+class AdminOrganizationResponse(BaseModel):
+    id: str
+    name: str
+    slug: str
+    status: str
+    created_at: str | None
+
+
+class AdminUserAccessResponse(BaseModel):
+    id: str
+    email: str
+    display_name: str
+    status: str
+    permissions: list[str] = Field(default_factory=list)
+    permission_count: int
+    role_codes: list[str] = Field(default_factory=list)
+    last_login_at: str | None
+    created_at: str | None
+    updated_at: str | None
+
+
+class AdminRolePresetResponse(BaseModel):
+    code: str
+    name: str
+    description: str
+    permissions: list[str] = Field(default_factory=list)
+    permission_count: int
+    assigned_user_count: int
+    granted_to_current_principal: bool
+
+
+class AdminPermissionResponse(BaseModel):
+    code: str
+    module: str
+    action: str
+    description: str
+    granted_to_current_principal: bool
+
+
+class AdminPermissionGroupResponse(BaseModel):
+    module: str
+    permission_count: int
+    granted_count: int
+    permissions: list[AdminPermissionResponse] = Field(default_factory=list)
+
+
+class AdminEnvironmentResponse(BaseModel):
+    environment: str
+    production_like: bool
+    docs_enabled: bool
+    rate_limit_enabled: bool
+    request_logging_enabled: bool
+    structured_logging_enabled: bool
+    readiness_checks_enabled: bool
+    external_training_profiles_enabled: bool
+    release_evidence_provider: str
+    release_evidence_repository: str | None
+    release_evidence_branch: str | None
+    release_evidence_workflow: str | None
+    release_evidence_artifact_name: str | None
+    object_storage_configured: bool
+    redis_configured: bool
+    mlflow_tracking_configured: bool
+    airflow_orchestration_enabled: bool
+    cors_origin_count: int
+    access_token_ttl_seconds: int
+    refresh_token_ttl_seconds: int
+    jwt_issuer: str
+
+
+class AdminSafeguardResponse(BaseModel):
+    label: str
+    status: str
+    detail: str
+    evidence: str
+
+
+class AdminControlPlaneStatsResponse(BaseModel):
+    total_users: int
+    active_users: int
+    disabled_users: int
+    project_count: int
+    audit_event_count: int
+    release_evidence_report_count: int
+    role_preset_count: int
+    permission_count: int
+    permission_group_count: int
+
+
+class PlatformAdminControlsResponse(BaseModel):
+    schema_version: str = "forgeml.platform_admin_controls.v1"
+    organization: AdminOrganizationResponse
+    users: list[AdminUserAccessResponse] = Field(default_factory=list)
+    role_presets: list[AdminRolePresetResponse] = Field(default_factory=list)
+    permission_groups: list[AdminPermissionGroupResponse] = Field(default_factory=list)
+    environment: AdminEnvironmentResponse
+    safeguards: list[AdminSafeguardResponse] = Field(default_factory=list)
+    operator_commands: list[str] = Field(default_factory=list)
+    stats: AdminControlPlaneStatsResponse
+
+
 class AuditLogEntryResponse(BaseModel):
     id: str
     organization_id: str | None

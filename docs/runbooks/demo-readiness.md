@@ -164,7 +164,7 @@ make demo-screenshots
 Playwright writes transient screenshots under `test-results`. The captured
 screens cover Dashboard, Portfolio Interview Mode, Projects, Example Projects,
 Training Runs, Models, Deployments, Inference, Monitoring, Release Evidence,
-and Operational Audit.
+Operational Audit, and Admin Controls.
 
 For reviewer packaging, use the portfolio screenshot catalog at
 `docs/portfolio/screenshot-catalog.md`.
@@ -190,6 +190,8 @@ After `make demo-stack` finishes the seed refresh, open
 11. Open Retraining and confirm policy evaluations point back to the triggering drift or alert signal.
 12. Open Release Evidence and Operational Audit to confirm release governance
     and audit trails are visible.
+13. Open Admin Controls and confirm organization users, RBAC presets,
+    environment posture, and safe admin workflows are visible.
 
 ## Retraining Lifecycle Check
 

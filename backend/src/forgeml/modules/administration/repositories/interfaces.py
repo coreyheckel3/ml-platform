@@ -3,6 +3,7 @@ from typing import Protocol
 from uuid import UUID
 
 from forgeml.modules.administration.domain.entities import (
+    AdminControlPlaneSnapshot,
     AuditLogEntry,
     AuditLogEvent,
     ReleaseEvidenceReport,
@@ -55,4 +56,9 @@ class ReleaseEvidenceReportRepository(Protocol):
         organization_id: UUID,
         report_id: UUID,
     ) -> ReleaseEvidenceReport | None:
+        raise NotImplementedError
+
+
+class AdminControlPlaneRepository(Protocol):
+    def load_snapshot(self, organization_id: UUID) -> AdminControlPlaneSnapshot:
         raise NotImplementedError

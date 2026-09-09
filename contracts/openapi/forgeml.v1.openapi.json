@@ -1,6 +1,459 @@
 {
   "components": {
     "schemas": {
+      "AdminControlPlaneStatsResponse": {
+        "properties": {
+          "active_users": {
+            "title": "Active Users",
+            "type": "integer"
+          },
+          "audit_event_count": {
+            "title": "Audit Event Count",
+            "type": "integer"
+          },
+          "disabled_users": {
+            "title": "Disabled Users",
+            "type": "integer"
+          },
+          "permission_count": {
+            "title": "Permission Count",
+            "type": "integer"
+          },
+          "permission_group_count": {
+            "title": "Permission Group Count",
+            "type": "integer"
+          },
+          "project_count": {
+            "title": "Project Count",
+            "type": "integer"
+          },
+          "release_evidence_report_count": {
+            "title": "Release Evidence Report Count",
+            "type": "integer"
+          },
+          "role_preset_count": {
+            "title": "Role Preset Count",
+            "type": "integer"
+          },
+          "total_users": {
+            "title": "Total Users",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_users",
+          "active_users",
+          "disabled_users",
+          "project_count",
+          "audit_event_count",
+          "release_evidence_report_count",
+          "role_preset_count",
+          "permission_count",
+          "permission_group_count"
+        ],
+        "title": "AdminControlPlaneStatsResponse",
+        "type": "object"
+      },
+      "AdminEnvironmentResponse": {
+        "properties": {
+          "access_token_ttl_seconds": {
+            "title": "Access Token Ttl Seconds",
+            "type": "integer"
+          },
+          "airflow_orchestration_enabled": {
+            "title": "Airflow Orchestration Enabled",
+            "type": "boolean"
+          },
+          "cors_origin_count": {
+            "title": "Cors Origin Count",
+            "type": "integer"
+          },
+          "docs_enabled": {
+            "title": "Docs Enabled",
+            "type": "boolean"
+          },
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "external_training_profiles_enabled": {
+            "title": "External Training Profiles Enabled",
+            "type": "boolean"
+          },
+          "jwt_issuer": {
+            "title": "Jwt Issuer",
+            "type": "string"
+          },
+          "mlflow_tracking_configured": {
+            "title": "Mlflow Tracking Configured",
+            "type": "boolean"
+          },
+          "object_storage_configured": {
+            "title": "Object Storage Configured",
+            "type": "boolean"
+          },
+          "production_like": {
+            "title": "Production Like",
+            "type": "boolean"
+          },
+          "rate_limit_enabled": {
+            "title": "Rate Limit Enabled",
+            "type": "boolean"
+          },
+          "readiness_checks_enabled": {
+            "title": "Readiness Checks Enabled",
+            "type": "boolean"
+          },
+          "redis_configured": {
+            "title": "Redis Configured",
+            "type": "boolean"
+          },
+          "refresh_token_ttl_seconds": {
+            "title": "Refresh Token Ttl Seconds",
+            "type": "integer"
+          },
+          "release_evidence_artifact_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Evidence Artifact Name"
+          },
+          "release_evidence_branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Evidence Branch"
+          },
+          "release_evidence_provider": {
+            "title": "Release Evidence Provider",
+            "type": "string"
+          },
+          "release_evidence_repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Evidence Repository"
+          },
+          "release_evidence_workflow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Evidence Workflow"
+          },
+          "request_logging_enabled": {
+            "title": "Request Logging Enabled",
+            "type": "boolean"
+          },
+          "structured_logging_enabled": {
+            "title": "Structured Logging Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "environment",
+          "production_like",
+          "docs_enabled",
+          "rate_limit_enabled",
+          "request_logging_enabled",
+          "structured_logging_enabled",
+          "readiness_checks_enabled",
+          "external_training_profiles_enabled",
+          "release_evidence_provider",
+          "release_evidence_repository",
+          "release_evidence_branch",
+          "release_evidence_workflow",
+          "release_evidence_artifact_name",
+          "object_storage_configured",
+          "redis_configured",
+          "mlflow_tracking_configured",
+          "airflow_orchestration_enabled",
+          "cors_origin_count",
+          "access_token_ttl_seconds",
+          "refresh_token_ttl_seconds",
+          "jwt_issuer"
+        ],
+        "title": "AdminEnvironmentResponse",
+        "type": "object"
+      },
+      "AdminOrganizationResponse": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "status",
+          "created_at"
+        ],
+        "title": "AdminOrganizationResponse",
+        "type": "object"
+      },
+      "AdminPermissionGroupResponse": {
+        "properties": {
+          "granted_count": {
+            "title": "Granted Count",
+            "type": "integer"
+          },
+          "module": {
+            "title": "Module",
+            "type": "string"
+          },
+          "permission_count": {
+            "title": "Permission Count",
+            "type": "integer"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/AdminPermissionResponse"
+            },
+            "title": "Permissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "module",
+          "permission_count",
+          "granted_count"
+        ],
+        "title": "AdminPermissionGroupResponse",
+        "type": "object"
+      },
+      "AdminPermissionResponse": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "granted_to_current_principal": {
+            "title": "Granted To Current Principal",
+            "type": "boolean"
+          },
+          "module": {
+            "title": "Module",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "module",
+          "action",
+          "description",
+          "granted_to_current_principal"
+        ],
+        "title": "AdminPermissionResponse",
+        "type": "object"
+      },
+      "AdminRolePresetResponse": {
+        "properties": {
+          "assigned_user_count": {
+            "title": "Assigned User Count",
+            "type": "integer"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "granted_to_current_principal": {
+            "title": "Granted To Current Principal",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permission_count": {
+            "title": "Permission Count",
+            "type": "integer"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Permissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "description",
+          "permission_count",
+          "assigned_user_count",
+          "granted_to_current_principal"
+        ],
+        "title": "AdminRolePresetResponse",
+        "type": "object"
+      },
+      "AdminSafeguardResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "evidence": {
+            "title": "Evidence",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "status",
+          "detail",
+          "evidence"
+        ],
+        "title": "AdminSafeguardResponse",
+        "type": "object"
+      },
+      "AdminUserAccessResponse": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "permission_count": {
+            "title": "Permission Count",
+            "type": "integer"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Permissions",
+            "type": "array"
+          },
+          "role_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Role Codes",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "status",
+          "permission_count",
+          "last_login_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AdminUserAccessResponse",
+        "type": "object"
+      },
       "AlertEvaluationResponse": {
         "properties": {
           "endpoint_id": {
@@ -3875,6 +4328,66 @@
         "title": "MonitoringTrainingOverviewResponse",
         "type": "object"
       },
+      "PlatformAdminControlsResponse": {
+        "properties": {
+          "environment": {
+            "$ref": "#/components/schemas/AdminEnvironmentResponse"
+          },
+          "operator_commands": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Operator Commands",
+            "type": "array"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/AdminOrganizationResponse"
+          },
+          "permission_groups": {
+            "items": {
+              "$ref": "#/components/schemas/AdminPermissionGroupResponse"
+            },
+            "title": "Permission Groups",
+            "type": "array"
+          },
+          "role_presets": {
+            "items": {
+              "$ref": "#/components/schemas/AdminRolePresetResponse"
+            },
+            "title": "Role Presets",
+            "type": "array"
+          },
+          "safeguards": {
+            "items": {
+              "$ref": "#/components/schemas/AdminSafeguardResponse"
+            },
+            "title": "Safeguards",
+            "type": "array"
+          },
+          "schema_version": {
+            "default": "forgeml.platform_admin_controls.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/AdminControlPlaneStatsResponse"
+          },
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUserAccessResponse"
+            },
+            "title": "Users",
+            "type": "array"
+          }
+        },
+        "required": [
+          "organization",
+          "environment",
+          "stats"
+        ],
+        "title": "PlatformAdminControlsResponse",
+        "type": "object"
+      },
       "PredictRequest": {
         "properties": {
           "payload": {
@@ -6357,6 +6870,32 @@
           }
         ],
         "summary": "List Audit Log",
+        "tags": [
+          "administration"
+        ]
+      }
+    },
+    "/api/v1/admin/controls": {
+      "get": {
+        "operationId": "get_platform_admin_controls_api_v1_admin_controls_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformAdminControlsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Platform Admin Controls",
         "tags": [
           "administration"
         ]
