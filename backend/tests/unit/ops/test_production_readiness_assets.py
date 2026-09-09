@@ -408,10 +408,12 @@ def test_release_manifest_contract_gate_is_enforced() -> None:
     assert "contracts/ops/demo-readiness.v1.json" in artifact_paths
     assert "contracts/ops/ci-runtime.v1.json" in artifact_paths
     assert "contracts/ops/portfolio-readiness.v1.json" in artifact_paths
+    assert "contracts/ops/portfolio-interview-mode.v1.json" in artifact_paths
     assert "docs/runbooks/demo-readiness.md" in artifact_paths
     assert "docs/architecture-walkthrough.md" in artifact_paths
     assert "docs/portfolio/reviewer-guide.md" in artifact_paths
     assert "docs/portfolio/resume-bullets.md" in artifact_paths
+    assert "docs/portfolio/interview-mode.md" in artifact_paths
     assert "docs/portfolio/evidence-map.md" in artifact_paths
     assert "docs/portfolio/architecture-diagrams.md" in artifact_paths
     assert "docs/portfolio/screenshot-catalog.md" in artifact_paths
@@ -752,16 +754,24 @@ def test_portfolio_readiness_contract_gate_is_enforced() -> None:
     )
     reviewer_guide = Path("docs/portfolio/reviewer-guide.md").read_text(encoding="utf-8")
     resume_bullets = Path("docs/portfolio/resume-bullets.md").read_text(encoding="utf-8")
+    interview_mode = Path("docs/portfolio/interview-mode.md").read_text(encoding="utf-8")
     evidence_map = Path("docs/portfolio/evidence-map.md").read_text(encoding="utf-8")
     diagrams = Path("docs/portfolio/architecture-diagrams.md").read_text(encoding="utf-8")
     screenshots = Path("docs/portfolio/screenshot-catalog.md").read_text(encoding="utf-8")
 
     assert "python scripts/ci/check_portfolio_readiness_contract.py" in workflow
+    assert "python scripts/ci/check_portfolio_interview_mode_contract.py" in workflow
     assert contract["schema_version"] == "forgeml.portfolio_readiness_contract.v1"
     assert "mlops_release_governance" in contract["portfolio_claims"]
     assert "browser_verified_demo" in contract["portfolio_claims"]
+    assert "interview_ready_storytelling" in contract["portfolio_claims"]
     assert "make demo-stack" in reviewer_guide
+    assert "make portfolio-interview" in reviewer_guide
     assert "MLOps Engineer" in resume_bullets
+    assert "Portfolio Interview Mode" in interview_mode
+    assert "portfolio_interview_mode_contract" in interview_mode
     assert "Portfolio assets under contract" in evidence_map
+    assert "Portfolio interview mode" in evidence_map
     assert diagrams.count("```mermaid") >= 4
     assert "08-monitoring.png" in screenshots
+    assert "11-portfolio-interview-mode.png" in screenshots

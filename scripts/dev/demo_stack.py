@@ -385,6 +385,7 @@ def build_demo_summary(
             "password": "forgeml-local-admin",
         },
         "manual_review_paths": [
+            "/portfolio",
             "/projects",
             "/datasets",
             "/training-runs",

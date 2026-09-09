@@ -111,6 +111,7 @@ def test_demo_summary_records_manual_review_paths(tmp_path: Path) -> None:
     assert summary["api_ready"] is True
     assert summary["frontend_ready"] is True
     assert summary["seeded_evidence_ready"] is True
+    assert "/portfolio" in summary["manual_review_paths"]
     assert "/training-runs" in summary["manual_review_paths"]
     assert "/monitoring" in summary["manual_review_paths"]
     assert "/release-evidence" in summary["manual_review_paths"]

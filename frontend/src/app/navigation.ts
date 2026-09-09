@@ -10,6 +10,7 @@ import {
   FlaskConical,
   Gauge,
   Home,
+  Presentation,
   RadioTower,
   Radar,
   RefreshCw,
@@ -20,6 +21,7 @@ import {
 
 export const navigationItems = [
   { label: "Dashboard", path: "/", icon: Home },
+  { label: "Portfolio", path: "/portfolio", icon: Presentation },
   { label: "Projects", path: "/projects", icon: Boxes },
   { label: "Examples", path: "/examples", icon: BookOpen },
   { label: "Datasets", path: "/datasets", icon: Database },

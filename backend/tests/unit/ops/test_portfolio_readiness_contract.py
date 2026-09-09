@@ -77,13 +77,23 @@ def test_portfolio_readiness_contract_shape() -> None:
     assert parsed["schema_version"] == "forgeml.portfolio_readiness_contract.v1"
     assert "docs/portfolio/reviewer-guide.md" in asset_paths
     assert "docs/portfolio/resume-bullets.md" in asset_paths
+    assert "docs/portfolio/interview-mode.md" in asset_paths
     assert "docs/portfolio/evidence-map.md" in asset_paths
     assert "docs/portfolio/architecture-diagrams.md" in asset_paths
     assert "docs/portfolio/screenshot-catalog.md" in asset_paths
     assert "mlops_release_governance" in parsed["portfolio_claims"]
     assert "browser_verified_demo" in parsed["portfolio_claims"]
+    assert "interview_ready_storytelling" in parsed["portfolio_claims"]
     assert "make demo-stack-fresh" in parsed["operator_commands"]
     assert "make demo-walkthrough" in parsed["operator_commands"]
+    assert "make portfolio-interview" in parsed["operator_commands"]
+    assert (
+        "PYTHONPATH=. python scripts/ci/check_portfolio_interview_mode_contract.py"
+        in parsed["operator_commands"]
+    )
     assert "python scripts/ci/check_portfolio_readiness_contract.py" in parsed[
+        "quality_gates"
+    ]
+    assert "python scripts/ci/check_portfolio_interview_mode_contract.py" in parsed[
         "quality_gates"
     ]

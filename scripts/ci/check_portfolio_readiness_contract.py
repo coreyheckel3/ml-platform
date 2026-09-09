@@ -15,6 +15,7 @@ PORTFOLIO_ASSETS = (
     "docs/portfolio/README.md",
     "docs/portfolio/reviewer-guide.md",
     "docs/portfolio/resume-bullets.md",
+    "docs/portfolio/interview-mode.md",
     "docs/portfolio/evidence-map.md",
     "docs/portfolio/architecture-diagrams.md",
     "docs/portfolio/screenshot-catalog.md",
@@ -28,6 +29,7 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
             "docs.portfolio.README",
             "docs.portfolio.reviewer-guide",
             "docs.portfolio.resume-bullets",
+            "docs.portfolio.interview-mode",
             "docs.portfolio.evidence-map",
             "docs.portfolio.architecture-diagrams",
             "docs.portfolio.screenshot-catalog",
@@ -40,6 +42,7 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
                     "ForgeML Portfolio Review Kit",
                     "reviewer-guide.md",
                     "resume-bullets.md",
+                    "interview-mode.md",
                     "evidence-map.md",
                     "architecture-diagrams.md",
                     "screenshot-catalog.md",
@@ -66,6 +69,17 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
                     "AI Platform Engineer",
                     "Backend / Platform Engineer",
                     "Short Project Summary",
+                ],
+            },
+            {
+                "name": "interview_mode",
+                "path": "docs/portfolio/interview-mode.md",
+                "required_fragments": [
+                    "Portfolio Interview Mode",
+                    "Reviewer Dashboard",
+                    "Architecture Walkthrough",
+                    "Validation Paths",
+                    "portfolio_interview_mode_contract",
                 ],
             },
             {
@@ -110,6 +124,7 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
             "adapter_boundaries",
             "tenant_aware_security",
             "browser_verified_demo",
+            "interview_ready_storytelling",
         ],
         "operator_commands": [
             "PYTHONPATH=. python scripts/ci/check_portfolio_readiness_contract.py",
@@ -118,15 +133,19 @@ def build_portfolio_readiness_contract() -> dict[str, Any]:
             "make demo-walkthrough",
             "make demo-screenshots",
             "make production-readiness",
+            "make portfolio-interview",
+            "PYTHONPATH=. python scripts/ci/check_portfolio_interview_mode_contract.py",
         ],
         "quality_gates": [
             "python scripts/ci/check_portfolio_readiness_contract.py",
+            "python scripts/ci/check_portfolio_interview_mode_contract.py",
             "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
+            "backend/tests/unit/ops/test_portfolio_interview_mode_contract.py",
             "backend/tests/unit/ops/test_production_readiness_assets.py",
         ],
         "summary": {
             "reviewer_asset_count": len(PORTFOLIO_ASSETS),
-            "portfolio_claim_count": 6,
+            "portfolio_claim_count": 7,
         },
     }
 

@@ -11,6 +11,7 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", { name: "Dashboard" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Portfolio")).toBeInTheDocument();
     expect(screen.getByText("Projects")).toBeInTheDocument();
     expect(screen.getByText("Examples")).toBeInTheDocument();
     expect(screen.getByText("Feature Store")).toBeInTheDocument();
@@ -23,5 +24,7 @@ describe("App", () => {
     expect(screen.getByText("Drift")).toBeInTheDocument();
     expect(screen.getByText("Retraining")).toBeInTheDocument();
     expect(screen.getByText("Alerts")).toBeInTheDocument();
+    expect(screen.getByText("Release Evidence")).toBeInTheDocument();
+    expect(screen.getByText("Operational Audit")).toBeInTheDocument();
   });
 });

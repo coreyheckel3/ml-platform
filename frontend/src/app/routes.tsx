@@ -90,6 +90,14 @@ const OperationalAuditPage = lazy(() =>
   })),
 );
 
+const loadPortfolioInterviewPage = () =>
+  import("../modules/portfolio/pages/PortfolioInterviewPage");
+const PortfolioInterviewPage = lazy(() =>
+  loadPortfolioInterviewPage().then(({ PortfolioInterviewPage }) => ({
+    default: PortfolioInterviewPage,
+  })),
+);
+
 const loadProjectsPage = () => import("../modules/projects/pages/ProjectsPage");
 const ProjectsPage = lazy(() =>
   loadProjectsPage().then(({ ProjectsPage }) => ({ default: ProjectsPage })),
@@ -133,6 +141,11 @@ type AppRoute = {
 export const appRoutes: readonly AppRoute[] = [
   { path: "/", element: <DashboardPage />, preload: loadDashboardPage },
   { path: "/login", element: <LoginPage />, preload: loadLoginPage },
+  {
+    path: "/portfolio",
+    element: <PortfolioInterviewPage />,
+    preload: loadPortfolioInterviewPage,
+  },
   { path: "/projects", element: <ProjectsPage />, preload: loadProjectsPage },
   {
     path: "/examples",

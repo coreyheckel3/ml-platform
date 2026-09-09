@@ -79,7 +79,9 @@ def test_release_evidence_ux_contract_shape() -> None:
     assert "Live Evidence Retrieval" in parsed["required_ui_sections"]
     assert "Scheduled Refresh" in parsed["required_ui_sections"]
     assert "09-release-evidence.png" in parsed["required_release_signals"]
+    assert "11-portfolio-interview-mode.png" in parsed["required_release_signals"]
     assert "external_training_package_contract" in parsed["required_release_signals"]
+    assert "portfolio_interview_mode_contract" in parsed["required_release_signals"]
     assert "contracts/training/external-package-runner.v1.json" in parsed[
         "required_release_signals"
     ]
@@ -90,5 +92,8 @@ def test_release_evidence_ux_contract_shape() -> None:
     )
     assert "GitHubActionsReleaseEvidenceGateway" in parsed["required_release_signals"]
     assert "python scripts/ci/check_release_evidence_ux_contract.py" in parsed[
+        "quality_gates"
+    ]
+    assert "python scripts/ci/check_portfolio_interview_mode_contract.py" in parsed[
         "quality_gates"
     ]

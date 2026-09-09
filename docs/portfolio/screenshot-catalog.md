@@ -28,6 +28,7 @@ capability it demonstrates.
 | `08-monitoring.png` | `/monitoring` | Latency percentiles, error breakdowns, drift trends, training failures, and retraining activity. |
 | `09-release-evidence.png` | `/release-evidence` | Release manifest artifacts, quality gates, live retrieval, scheduled refresh, API drilldown, reviewer commands, CI provenance, and screenshot evidence. |
 | `10-operational-audit.png` | `/operational-audit` | Unified audit timeline for release evidence, deployment, retraining, security, and registry events. |
+| `11-portfolio-interview-mode.png` | `/portfolio` | Reviewer dashboard, architecture walkthrough, evidence explanations, validation paths, and interview prompts. |
 
 ## Capture Contract
 

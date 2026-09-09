@@ -162,8 +162,9 @@ make demo-screenshots
 ```
 
 Playwright writes transient screenshots under `test-results`. The captured
-screens cover Dashboard, Projects, Example Projects, Training Runs, Models,
-Deployments, Inference, and Monitoring.
+screens cover Dashboard, Portfolio Interview Mode, Projects, Example Projects,
+Training Runs, Models, Deployments, Inference, Monitoring, Release Evidence,
+and Operational Audit.
 
 For reviewer packaging, use the portfolio screenshot catalog at
 `docs/portfolio/screenshot-catalog.md`.
@@ -174,16 +175,21 @@ After `make demo-stack` finishes the seed refresh, open
 `http://127.0.0.1:5173` and validate:
 
 1. Sign in with the local admin account.
-2. Open Projects and confirm the three example projects are present.
-3. Open Datasets and confirm dataset versions are finalized and validated.
-4. Open Training Runs and confirm seeded runs show progress, elapsed time,
+2. Open Portfolio Interview Mode and confirm the Reviewer Dashboard,
+   Architecture Walkthrough, Evidence Explanations, Validation Paths, and
+   Interview Talk Track are visible.
+3. Open Projects and confirm the three example projects are present.
+4. Open Datasets and confirm dataset versions are finalized and validated.
+5. Open Training Runs and confirm seeded runs show progress, elapsed time,
    orchestration state, events, and execution logs.
-5. Open Models and confirm model versions are approved.
-6. Open Deployments and confirm healthy revisions are receiving traffic.
-7. Open Inference and run an endpoint probe.
-8. Open Monitoring and confirm inference, drift, training, and retraining signals.
-9. Open Alerts and confirm evaluated alert events are visible.
-10. Open Retraining and confirm policy evaluations point back to the triggering drift or alert signal.
+6. Open Models and confirm model versions are approved.
+7. Open Deployments and confirm healthy revisions are receiving traffic.
+8. Open Inference and run an endpoint probe.
+9. Open Monitoring and confirm inference, drift, training, and retraining signals.
+10. Open Alerts and confirm evaluated alert events are visible.
+11. Open Retraining and confirm policy evaluations point back to the triggering drift or alert signal.
+12. Open Release Evidence and Operational Audit to confirm release governance
+    and audit trails are visible.
 
 ## Retraining Lifecycle Check
 

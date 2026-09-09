@@ -36,6 +36,9 @@ make demo-stack-fresh
 ```
 
 Use `admin@forgeml.dev` and `forgeml-local-admin` to sign in locally.
+Open `/portfolio` first when the reviewer wants the shortest productized
+interview path through architecture, evidence, validation commands, and role
+talk tracks.
 
 ## What To Look For
 
@@ -87,19 +90,23 @@ The project favors verifiable engineering behavior over static claims:
   redacted targets, failure statuses, and delivery audit records.
 - Demo readiness includes repo-scoped reset, fresh stack startup, browser
   walkthrough validation, deterministic screenshots, and seeded release evidence.
+- Portfolio Interview Mode gives reviewers a first-class `/portfolio` route that
+  connects architecture decisions, ML lifecycle evidence, release governance,
+  validation commands, screenshots, and interview prompts.
 
 ## Suggested Walkthrough Narrative
 
 1. Frame ForgeML as a platform control plane for multiple ML projects.
-2. Open the dashboard and explain that the frontend is a real operations console.
-3. Select a project and walk through datasets, features, experiments, and
+2. Open Portfolio Interview Mode and choose the claim you want to defend.
+3. Open the dashboard and explain that the frontend is a real operations console.
+4. Select a project and walk through datasets, features, experiments, and
    training runs.
-4. Open the Training Runs external package profile panel and show how
+5. Open the Training Runs external package profile panel and show how
    `conversational-movie-recommender` can run through the worker adapter.
-5. Promote a succeeded training run to a registered model version.
-6. Approve, deploy, probe inference, and show monitoring snapshots.
-7. Explain how drift and alerts can hand off to retraining policies.
-8. Close with the release-governance loop: contracts, release manifest,
+6. Promote a succeeded training run to a registered model version.
+7. Approve, deploy, probe inference, and show monitoring snapshots.
+8. Explain how drift and alerts can hand off to retraining policies.
+9. Close with the release-governance loop: contracts, release manifest,
    verification, Docker, CI evidence, the Release Evidence page, and the
    Operational Audit timeline.
 
@@ -107,6 +114,7 @@ The project favors verifiable engineering behavior over static claims:
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/ci/check_portfolio_readiness_contract.py
+PYTHONPATH=. .venv/bin/python scripts/ci/check_portfolio_interview_mode_contract.py
 PYTHONPATH=. .venv/bin/python scripts/ci/check_demo_readiness_contract.py
 PYTHONPATH=. .venv/bin/python scripts/dev/demo_reset.py --plan --dry-run
 PYTHONPATH=. .venv/bin/python scripts/ci/check_release_evidence_ux_contract.py
@@ -122,5 +130,6 @@ PYTHONPATH=. .venv/bin/python scripts/ops/verify_release_manifest.py --manifest 
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/retrieve_release_evidence.py --repo coreyheckel3/ml-platform --branch main --workflow ci.yml --artifact-name forgeml-release-manifest
 PYTHONPATH=backend/src:. .venv/bin/python scripts/ops/refresh_release_evidence.py --base-url http://127.0.0.1:8001 --once --stale-after-seconds 86400
 make demo-walkthrough
+make portfolio-interview
 npm --prefix frontend exec playwright test demo-walkthrough.spec.ts --project chromium
 ```

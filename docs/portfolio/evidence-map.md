@@ -27,6 +27,7 @@ training script.
 | Release evidence scheduled refresh | `scripts/ops/refresh_release_evidence.py`, `contracts/ops/release-evidence-scheduled-refresh.v1.json`, `frontend/src/modules/release_evidence` |
 | Release evidence notifications | `backend/src/forgeml/platform/notifications`, `frontend/src/modules/release_evidence`, `contracts/ops/release-evidence-notifications.v1.json` |
 | Operational audit UX | `frontend/src/modules/operational_audit`, `contracts/ops/operational-audit-ux.v1.json`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
+| Portfolio interview mode | `frontend/src/modules/portfolio`, `docs/portfolio/interview-mode.md`, `contracts/ops/portfolio-interview-mode.v1.json`, `frontend/tests/e2e/demo-walkthrough.spec.ts` |
 | Browser lifecycle coverage | `frontend/tests/e2e/platform-lifecycle.spec.ts`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Reviewer-ready demo path | `docs/runbooks/demo-readiness.md`, `scripts/dev/demo_stack.py`, `scripts/dev/demo_reset.py`, `scripts/dev/refresh_demo_data.py`, `frontend/tests/e2e/demo-walkthrough.spec.ts`, `contracts/ops/demo-readiness.v1.json` |
 | Portfolio assets under contract | `docs/portfolio`, `contracts/ops/portfolio-readiness.v1.json`, `scripts/ci/check_portfolio_readiness_contract.py` |
@@ -44,6 +45,6 @@ The main CI workflow validates:
   orchestration, deployment, release, release evidence UX, live release
   evidence retrieval, release evidence drilldown API, scheduled release
   evidence refresh, release evidence notifications, operational audit UX,
-  demo, CI runtime, and portfolio readiness contracts
+  portfolio interview mode, demo, CI runtime, and portfolio readiness contracts
 - Release manifest generation, verification, and artifact publication on
   main-branch pushes

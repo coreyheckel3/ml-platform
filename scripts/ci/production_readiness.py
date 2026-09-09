@@ -43,6 +43,9 @@ try:
     from scripts.ci.check_operational_audit_ux_contract import (
         check_operational_audit_ux_contract as verify_operational_audit_ux_contract,
     )
+    from scripts.ci.check_portfolio_interview_mode_contract import (
+        check_portfolio_interview_mode_contract as verify_portfolio_interview_mode_contract,
+    )
     from scripts.ci.check_portfolio_readiness_contract import (
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
     )
@@ -110,6 +113,9 @@ except ModuleNotFoundError:
     from check_operational_audit_ux_contract import (  # type: ignore[no-redef]
         check_operational_audit_ux_contract as verify_operational_audit_ux_contract,
     )
+    from check_portfolio_interview_mode_contract import (  # type: ignore[no-redef]
+        check_portfolio_interview_mode_contract as verify_portfolio_interview_mode_contract,
+    )
     from check_portfolio_readiness_contract import (  # type: ignore[no-redef]
         check_portfolio_readiness_contract as verify_portfolio_readiness_contract,
     )
@@ -167,9 +173,11 @@ REQUIRED_FILES = (
     ".github/workflows/terraform-plan.yml",
     "contracts/ops/ci-runtime.v1.json",
     "contracts/ops/portfolio-readiness.v1.json",
+    "contracts/ops/portfolio-interview-mode.v1.json",
     "docs/portfolio/README.md",
     "docs/portfolio/reviewer-guide.md",
     "docs/portfolio/resume-bullets.md",
+    "docs/portfolio/interview-mode.md",
     "docs/portfolio/evidence-map.md",
     "docs/portfolio/architecture-diagrams.md",
     "docs/portfolio/screenshot-catalog.md",
@@ -290,10 +298,14 @@ REQUIRED_FILES = (
     "contracts/ops/operational-audit-ux.v1.json",
     "contracts/ops/release-manifest-verification.v1.json",
     "contracts/ops/demo-readiness.v1.json",
+    "contracts/ops/portfolio-interview-mode.v1.json",
     "frontend/tests/e2e/platform-lifecycle.spec.ts",
     "frontend/tests/e2e/demo-walkthrough.spec.ts",
     "frontend/tests/e2e/demo-screenshots.spec.ts",
     "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
+    "frontend/src/modules/portfolio/data/interviewMode.ts",
+    "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx",
+    "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.test.tsx",
     "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
     "frontend/src/modules/release_evidence/api/releaseEvidence.ts",
     "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.tsx",
@@ -346,6 +358,7 @@ REQUIRED_FILES = (
     "scripts/ci/check_demo_readiness_contract.py",
     "scripts/ci/check_ci_runtime_contract.py",
     "scripts/ci/check_portfolio_readiness_contract.py",
+    "scripts/ci/check_portfolio_interview_mode_contract.py",
     "backend/tests/unit/ops/test_release_smoke.py",
     "backend/tests/unit/ops/test_release_smoke_contract.py",
     "backend/tests/unit/ops/test_release_manifest.py",
@@ -357,6 +370,7 @@ REQUIRED_FILES = (
     "backend/tests/unit/ops/test_demo_readiness_contract.py",
     "backend/tests/unit/ops/test_ci_runtime_contract.py",
     "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
+    "backend/tests/unit/ops/test_portfolio_interview_mode_contract.py",
     "backend/tests/unit/dev/test_demo_stack.py",
     "backend/tests/unit/dev/test_demo_reset.py",
     "backend/tests/unit/dev/test_refresh_demo_data.py",
@@ -415,6 +429,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_demo_readiness_contract(repo_root),
         check_ci_runtime_contract(repo_root),
         check_portfolio_readiness_contract(repo_root),
+        check_portfolio_interview_mode_contract(repo_root),
     ]
 
 
@@ -1787,10 +1802,12 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/demo-readiness.v1.json",
         "contracts/ops/ci-runtime.v1.json",
         "contracts/ops/portfolio-readiness.v1.json",
+        "contracts/ops/portfolio-interview-mode.v1.json",
         "docs/runbooks/demo-readiness.md",
         "docs/architecture-walkthrough.md",
         "docs/portfolio/reviewer-guide.md",
         "docs/portfolio/resume-bullets.md",
+        "docs/portfolio/interview-mode.md",
         "docs/portfolio/evidence-map.md",
         "docs/portfolio/architecture-diagrams.md",
         "docs/portfolio/screenshot-catalog.md",
@@ -1810,6 +1827,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "demo_readiness_contract",
         "ci_runtime_contract",
         "portfolio_readiness_contract",
+        "portfolio_interview_mode_contract",
         "external_training_package_contract",
         "mlflow_tracking_contract",
         "airflow_orchestration_contract",
@@ -1965,6 +1983,7 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
     }.issubset(source_assets)
     has_quality_gates = {
         "python scripts/ci/check_release_evidence_ux_contract.py",
+        "python scripts/ci/check_portfolio_interview_mode_contract.py",
         "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
         "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
     }.issubset(quality_gates)
@@ -1974,8 +1993,12 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
         and "Demo Screenshot Evidence" in page_source
         and "forgeml-release-manifest" in data_source
         and "release_manifest_verifier_contract" in data_source
+        and "portfolio_interview_mode_contract" in data_source
     )
-    has_screenshot_catalog = "09-release-evidence.png" in screenshot_catalog
+    has_screenshot_catalog = (
+        "09-release-evidence.png" in screenshot_catalog
+        and "11-portfolio-interview-mode.png" in screenshot_catalog
+    )
     has_evidence_map = "Release evidence UX" in evidence_map
     has_release_manifest_artifact = (
         "release_evidence_ux_contract" in manifest_source
@@ -2828,6 +2851,9 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
     evidence_map = (repo_root / "docs/portfolio/evidence-map.md").read_text(
         encoding="utf-8"
     )
+    interview_mode = (repo_root / "docs/portfolio/interview-mode.md").read_text(
+        encoding="utf-8"
+    )
     diagrams = (repo_root / "docs/portfolio/architecture-diagrams.md").read_text(
         encoding="utf-8"
     )
@@ -2838,6 +2864,7 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "docs/portfolio/README.md",
         "docs/portfolio/reviewer-guide.md",
         "docs/portfolio/resume-bullets.md",
+        "docs/portfolio/interview-mode.md",
         "docs/portfolio/evidence-map.md",
         "docs/portfolio/architecture-diagrams.md",
         "docs/portfolio/screenshot-catalog.md",
@@ -2849,6 +2876,7 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "adapter_boundaries",
         "tenant_aware_security",
         "browser_verified_demo",
+        "interview_ready_storytelling",
     }
     missing_assets = sorted(required_assets - asset_paths)
     missing_claims = sorted(required_claims - claims)
@@ -2860,11 +2888,13 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
     )
     has_quality_gates = {
         "python scripts/ci/check_portfolio_readiness_contract.py",
+        "python scripts/ci/check_portfolio_interview_mode_contract.py",
         "backend/tests/unit/ops/test_portfolio_readiness_contract.py",
     }.issubset(quality_gates)
     has_reviewer_path = (
         "make demo-stack" in reviewer_guide
         and "make production-readiness" in reviewer_guide
+        and "make portfolio-interview" in reviewer_guide
         and "release-governance loop" in reviewer_guide
     )
     has_resume_variants = all(
@@ -2880,10 +2910,16 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "Portfolio assets under contract" in evidence_map
         and "contracts/ops/portfolio-readiness.v1.json" in evidence_map
     )
+    has_interview_mode = (
+        "Portfolio Interview Mode" in interview_mode
+        and "portfolio_interview_mode_contract" in interview_mode
+        and "Portfolio interview mode" in evidence_map
+    )
     has_diagrams = diagrams.count("```mermaid") >= 4
     has_screenshot_catalog = (
         "01-dashboard.png" in screenshots
         and "08-monitoring.png" in screenshots
+        and "11-portfolio-interview-mode.png" in screenshots
         and "Navigate to each screenshot route explicitly" in screenshots
     )
     passed = (
@@ -2893,6 +2929,7 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
         and has_reviewer_path
         and has_resume_variants
         and has_evidence_traceability
+        and has_interview_mode
         and has_diagrams
         and has_screenshot_catalog
         and not missing_assets
@@ -2912,10 +2949,126 @@ def check_portfolio_readiness_contract(repo_root: Path) -> ReadinessCheck:
                 f"has_reviewer_path={has_reviewer_path}, "
                 f"has_resume_variants={has_resume_variants}, "
                 f"has_evidence_traceability={has_evidence_traceability}, "
+                f"has_interview_mode={has_interview_mode}, "
                 f"has_diagrams={has_diagrams}, "
                 f"has_screenshot_catalog={has_screenshot_catalog}, "
                 f"missing_assets={missing_assets}, "
                 f"missing_claims={missing_claims}"
+            )
+        ),
+    )
+
+
+def check_portfolio_interview_mode_contract(repo_root: Path) -> ReadinessCheck:
+    def read(path: str) -> str:
+        file_path = repo_root / path
+        if not file_path.is_file():
+            return ""
+        return file_path.read_text(encoding="utf-8")
+
+    ci_source = read(".github/workflows/ci.yml")
+    release_manifest_source = read("scripts/ops/build_release_manifest.py")
+    page_source = read("frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx")
+    page_test_source = read(
+        "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.test.tsx"
+    )
+    data_source = read("frontend/src/modules/portfolio/data/interviewMode.ts")
+    routes_source = read("frontend/src/app/routes.tsx")
+    navigation_source = read("frontend/src/app/navigation.ts")
+    walkthrough_source = read("frontend/tests/e2e/demo-walkthrough.spec.ts")
+    screenshots_source = read("frontend/tests/e2e/demo-screenshots.spec.ts")
+    smoke_source = read("frontend/tests/e2e/smoke.spec.ts")
+    interview_doc = read("docs/portfolio/interview-mode.md")
+    evidence_map = read("docs/portfolio/evidence-map.md")
+    screenshot_catalog = read("docs/portfolio/screenshot-catalog.md")
+    contract_current, contract_detail = verify_portfolio_interview_mode_contract(
+        repo_root / "contracts/ops/portfolio-interview-mode.v1.json",
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+
+    has_ci_gate = "python scripts/ci/check_portfolio_interview_mode_contract.py" in ci_source
+    has_route = (
+        'path: "/portfolio"' in routes_source
+        and "loadPortfolioInterviewPage" in routes_source
+        and 'label: "Portfolio"' in navigation_source
+        and "Presentation" in navigation_source
+    )
+    has_page_sections = all(
+        fragment in page_source
+        for fragment in (
+            "Reviewer Dashboard",
+            "Architecture Walkthrough",
+            "Evidence Explanations",
+            "Validation Paths",
+            "Interview Talk Track",
+            "Portfolio Evidence Contract",
+        )
+    )
+    has_interview_signals = all(
+        fragment in page_source + data_source
+        for fragment in (
+            "Multi-project ML platform",
+            "modular monolith",
+            "conversational-movie-recommender",
+            "release-governance loop",
+            "make demo-stack-fresh",
+            "make demo-walkthrough",
+            "make production-readiness",
+            "portfolio_interview_mode_contract",
+            "contracts/ops/portfolio-interview-mode.v1.json",
+        )
+    )
+    has_frontend_tests = (
+        "Portfolio Interview Mode" in page_test_source
+        and "portfolio_interview_mode_contract" in page_test_source
+        and 'name: "Portfolio"' in smoke_source
+        and 'name: "Portfolio Interview Mode"' in smoke_source
+    )
+    has_browser_coverage = (
+        "/portfolio" in walkthrough_source
+        and "11-portfolio-interview-mode.png" in screenshots_source
+        and "11-portfolio-interview-mode.png" in screenshot_catalog
+    )
+    has_docs = (
+        "Portfolio Interview Mode" in interview_doc
+        and "Validation Paths" in interview_doc
+        and "portfolio_interview_mode_contract" in interview_doc
+        and "Portfolio interview mode" in evidence_map
+    )
+    has_release_manifest = (
+        "portfolio_interview_mode_contract" in release_manifest_source
+        and "contracts/ops/portfolio-interview-mode.v1.json" in release_manifest_source
+    )
+    passed = (
+        contract_current
+        and has_ci_gate
+        and has_route
+        and has_page_sections
+        and has_interview_signals
+        and has_frontend_tests
+        and has_browser_coverage
+        and has_docs
+        and has_release_manifest
+    )
+    return ReadinessCheck(
+        name="portfolio interview mode contract",
+        passed=passed,
+        detail=(
+            "reviewer dashboard, architecture walkthrough, validation paths, "
+            "screenshots, docs, CI gate, and release manifest evidence are configured"
+            if passed
+            else (
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_ci_gate={has_ci_gate}, "
+                f"has_route={has_route}, "
+                f"has_page_sections={has_page_sections}, "
+                f"has_interview_signals={has_interview_signals}, "
+                f"has_frontend_tests={has_frontend_tests}, "
+                f"has_browser_coverage={has_browser_coverage}, "
+                f"has_docs={has_docs}, "
+                f"has_release_manifest={has_release_manifest}"
             )
         ),
     )

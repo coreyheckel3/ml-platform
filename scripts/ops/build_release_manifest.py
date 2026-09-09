@@ -215,6 +215,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         required=True,
     ),
     ReleaseArtifactDefinition(
+        name="portfolio_interview_mode_contract",
+        kind="operations_contract",
+        path="contracts/ops/portfolio-interview-mode.v1.json",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
         name="production_readiness_runbook",
         kind="runbook",
         path="docs/runbooks/production-readiness.md",
@@ -236,6 +242,12 @@ REQUIRED_RELEASE_ARTIFACTS: tuple[ReleaseArtifactDefinition, ...] = (
         name="portfolio_reviewer_guide",
         kind="portfolio_doc",
         path="docs/portfolio/reviewer-guide.md",
+        required=True,
+    ),
+    ReleaseArtifactDefinition(
+        name="portfolio_interview_mode_guide",
+        kind="portfolio_doc",
+        path="docs/portfolio/interview-mode.md",
         required=True,
     ),
     ReleaseArtifactDefinition(
@@ -351,6 +363,7 @@ REQUIRED_QUALITY_GATES: tuple[str, ...] = (
     "demo_readiness_contract",
     "ci_runtime_contract",
     "portfolio_readiness_contract",
+    "portfolio_interview_mode_contract",
 )
 
 RELEASE_EVIDENCE_TYPES: tuple[str, ...] = (

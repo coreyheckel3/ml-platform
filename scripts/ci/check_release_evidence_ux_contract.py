@@ -60,6 +60,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "contracts/ops/release-evidence-scheduled-refresh.v1.json",
             "contracts/ops/release-evidence-notifications.v1.json",
             "contracts/ops/portfolio-readiness.v1.json",
+            "contracts/ops/portfolio-interview-mode.v1.json",
             "contracts/training/external-package-runner.v1.json",
             "external_training_package_contract",
             "release_manifest_verifier_contract",
@@ -67,12 +68,14 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "release_evidence_drilldown_api_contract",
             "release_evidence_scheduled_refresh_contract",
             "release_evidence_notifications_contract",
+            "portfolio_interview_mode_contract",
             "GitHubActionsReleaseEvidenceGateway",
             "refresh_release_evidence.py",
             "release_evidence.notification_failed",
             "make production-readiness",
             "make demo-screenshots",
             "09-release-evidence.png",
+            "11-portfolio-interview-mode.png",
         ],
         "operator_commands": [
             "PYTHONPATH=. python scripts/ci/check_release_evidence_ux_contract.py",
@@ -84,6 +87,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "python scripts/ci/check_release_evidence_drilldown_api_contract.py",
             "python scripts/ci/check_release_evidence_scheduled_refresh_contract.py",
             "python scripts/ci/check_release_evidence_notifications_contract.py",
+            "python scripts/ci/check_portfolio_interview_mode_contract.py",
             "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
             "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
             "frontend/tests/e2e/smoke.spec.ts",
@@ -92,7 +96,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         "summary": {
             "source_asset_count": len(REQUIRED_SOURCE_ASSETS),
             "ui_section_count": 8,
-            "release_signal_count": 21,
+            "release_signal_count": 24,
         },
     }
 

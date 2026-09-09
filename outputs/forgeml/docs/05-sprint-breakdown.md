@@ -2395,6 +2395,39 @@ Implemented scope:
   readiness checks, unit tests, runbooks, screenshot catalog, evidence map, and
   reviewer guide coverage for Sprint 71.
 
+## Sprint 72: Portfolio Interview Mode
+
+Theme: turn the shipped platform into a reviewer-ready product surface that
+maps architecture claims to code, tests, contracts, docs, screenshots, and live
+validation paths.
+
+Acceptance criteria:
+
+- The app exposes a first-class `/portfolio` route through the main navigation.
+- Reviewers can inspect the project claims, architecture walkthrough, evidence
+  explanations, validation commands, and interview prompts in one page.
+- The page connects claims to live product routes including monitoring, release
+  evidence, operational audit, examples, projects, and training runs.
+- CI verifies that the route, frontend tests, browser flows, docs, release
+  manifests, and screenshot catalog stay aligned.
+- Release and portfolio readiness contracts include the new interview-mode
+  evidence.
+
+Implemented scope:
+
+- Added `frontend/src/modules/portfolio` with typed interview-mode data,
+  `PortfolioInterviewPage`, and page-level tests.
+- Wired the Portfolio navigation item and `/portfolio` route into the app shell,
+  smoke flow, demo walkthrough, and screenshot capture suite.
+- Added `docs/portfolio/interview-mode.md` and updated the reviewer guide,
+  evidence map, screenshot catalog, demo runbook, README, and portfolio index.
+- Added `scripts/ci/check_portfolio_interview_mode_contract.py`, the checked-in
+  `contracts/ops/portfolio-interview-mode.v1.json`, CI wiring, Make target, and
+  backend unit coverage.
+- Extended release manifest, release evidence UX, demo readiness, portfolio
+  readiness, and production-readiness checks so the new reviewer surface is
+  treated as release evidence.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2430,7 +2463,7 @@ sequence.
 | 69 | Live Training Run Observability | Completed | In-flight Training Runs polling, selected-run progress refresh, live lifecycle progressbar, elapsed/queue/runtime timing, latest log context, live/snapshot logs indicator, and frontend regression coverage. |
 | 70 | Release Evidence Notifications | Completed | Webhook-style notification adapter boundary, audit-only default mode, failed evidence alert payloads, delivery audit records, frontend routing policy, CI contract, and escalation docs. |
 | 71 | Demo Environment Polish | Completed | Fresh demo reset, local release manifest generation, seeded release evidence refresh, deterministic browser walkthrough, Make targets, docs, contracts, and CI-ready validation. |
-| 72 | Portfolio Interview Mode | Planned | Reviewer dashboard, architecture walkthrough page, evidence explanations, and interview-ready validation paths. |
+| 72 | Portfolio Interview Mode | Completed | Reviewer dashboard, architecture walkthrough page, evidence explanations, interview-ready validation paths, product route, docs, CI contract, release evidence, and screenshot coverage. |
 | 73 | Platform Admin Controls | Planned | Organization and user administration UI, RBAC management, environment visibility, and safer admin workflows. |
 | 74 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
 | 75 | Evaluation and Model Comparison UX | Planned | Richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |

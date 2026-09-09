@@ -289,8 +289,8 @@ PYTHONPATH=. python scripts/ci/check_ci_runtime_contract.py
 ## Portfolio Readiness
 
 `portfolio-readiness.v1.json` records the reviewer-facing portfolio package:
-reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot
-catalog, and its CI quality gate.
+reviewer guide, resume bullets, interview mode guide, evidence map,
+architecture diagrams, screenshot catalog, and its CI quality gate.
 
 Regenerate after an intentional portfolio asset change:
 
@@ -302,4 +302,23 @@ Verify the checked-in contract:
 
 ```bash
 PYTHONPATH=. python scripts/ci/check_portfolio_readiness_contract.py
+```
+
+## Portfolio Interview Mode
+
+`portfolio-interview-mode.v1.json` records the productized reviewer route at
+`/portfolio`: reviewer dashboard sections, Architecture Walkthrough, Evidence
+Explanations, Validation Paths, Interview Talk Track, screenshot coverage, docs,
+and CI wiring.
+
+Regenerate after an intentional Portfolio Interview Mode change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_portfolio_interview_mode_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_portfolio_interview_mode_contract.py
 ```

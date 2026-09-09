@@ -11,6 +11,11 @@ test("opens dashboard and navigates to projects", async ({ page }) => {
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
+  await page.getByRole("link", { name: "Portfolio" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Portfolio Interview Mode" }),
+  ).toBeVisible();
+
   await page.getByRole("link", { name: "Projects" }).click();
   await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
   await page.getByRole("button", { name: "New" }).click();

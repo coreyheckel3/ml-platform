@@ -28,7 +28,7 @@ Implemented foundation:
 - Training execution runner contract with local example execution, generated artifact metadata, linked experiment-run updates, and an opt-in adapter selector for demo workloads.
 - External training package adapter with an allowlisted `conversational-movie-recommender` profile, worker-side CLI execution, metric import, artifact checksums, profile catalog API, and Training Runs UI launch path.
 - Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
-- Portfolio review kit with reviewer guide, resume bullets, evidence map, architecture diagrams, screenshot catalog, Release Evidence and Operational Audit app surfaces, and CI-checked portfolio readiness contract.
+- Portfolio review kit with reviewer guide, resume bullets, Portfolio Interview Mode, evidence map, architecture diagrams, screenshot catalog, Release Evidence and Operational Audit app surfaces, and CI-checked portfolio readiness contracts.
 - Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, release evidence notification contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, release evidence reports, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
@@ -57,8 +57,8 @@ make demo-stack-fresh
 ```
 
 See [the demo readiness runbook](docs/runbooks/demo-readiness.md) and
-[the architecture walkthrough](docs/architecture-walkthrough.md) for the
-reviewer path.
+[the Portfolio Interview Mode guide](docs/portfolio/interview-mode.md) for the
+reviewer path. The live console entry point is `/portfolio`.
 
 Install backend dependencies:
 
@@ -214,9 +214,11 @@ Validate portfolio review assets:
 
 ```bash
 make portfolio-readiness
+make portfolio-interview
 ```
 
-The reviewer kit lives under [docs/portfolio](docs/portfolio).
+The reviewer kit lives under [docs/portfolio](docs/portfolio), and the live
+interview walkthrough lives at `/portfolio`.
 
 ## Architecture
 

@@ -169,6 +169,12 @@
       "required": true
     },
     {
+      "kind": "operations_contract",
+      "name": "portfolio_interview_mode_contract",
+      "path": "contracts/ops/portfolio-interview-mode.v1.json",
+      "required": true
+    },
+    {
       "kind": "runbook",
       "name": "production_readiness_runbook",
       "path": "docs/runbooks/production-readiness.md",
@@ -190,6 +196,12 @@
       "kind": "portfolio_doc",
       "name": "portfolio_reviewer_guide",
       "path": "docs/portfolio/reviewer-guide.md",
+      "required": true
+    },
+    {
+      "kind": "portfolio_doc",
+      "name": "portfolio_interview_mode_guide",
+      "path": "docs/portfolio/interview-mode.md",
       "required": true
     },
     {
@@ -314,7 +326,8 @@
     "release_manifest_verifier_contract",
     "demo_readiness_contract",
     "ci_runtime_contract",
-    "portfolio_readiness_contract"
+    "portfolio_readiness_contract",
+    "portfolio_interview_mode_contract"
   ],
   "required_release_fields": [
     "version",
@@ -339,7 +352,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 29,
-    "required_artifact_count": 40
+    "quality_gate_count": 30,
+    "required_artifact_count": 42
   }
 }

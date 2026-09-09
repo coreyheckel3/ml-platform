@@ -1,0 +1,75 @@
+{
+  "generated_from": [
+    "frontend.modules.portfolio",
+    "frontend.app.navigation",
+    "frontend.app.routes",
+    "frontend.tests.e2e.demo-walkthrough",
+    "frontend.tests.e2e.demo-screenshots",
+    "docs.portfolio.interview-mode"
+  ],
+  "operator_commands": [
+    "PYTHONPATH=. python scripts/ci/check_portfolio_interview_mode_contract.py",
+    "make portfolio-interview",
+    "make demo-stack-fresh",
+    "make demo-walkthrough",
+    "make demo-screenshots",
+    "make production-readiness"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_portfolio_interview_mode_contract.py",
+    "backend/tests/unit/ops/test_portfolio_interview_mode_contract.py",
+    "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.test.tsx",
+    "frontend/tests/e2e/demo-walkthrough.spec.ts",
+    "frontend/tests/e2e/demo-screenshots.spec.ts"
+  ],
+  "required_interview_signals": [
+    "Portfolio Interview Mode",
+    "Multi-project ML platform",
+    "modular monolith",
+    "conversational-movie-recommender",
+    "release-governance loop",
+    "make demo-stack-fresh",
+    "make demo-walkthrough",
+    "make demo-screenshots",
+    "make production-readiness",
+    "portfolio_interview_mode_contract",
+    "contracts/ops/portfolio-interview-mode.v1.json",
+    "docs/portfolio/interview-mode.md",
+    "11-portfolio-interview-mode.png"
+  ],
+  "required_source_assets": [
+    "frontend/src/modules/portfolio/data/interviewMode.ts",
+    "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx",
+    "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.test.tsx",
+    "frontend/src/app/navigation.ts",
+    "frontend/src/app/routes.tsx",
+    "frontend/tests/e2e/demo-walkthrough.spec.ts",
+    "frontend/tests/e2e/demo-screenshots.spec.ts",
+    "frontend/tests/e2e/smoke.spec.ts",
+    "Makefile",
+    "docs/portfolio/interview-mode.md",
+    "docs/portfolio/README.md",
+    "docs/portfolio/reviewer-guide.md",
+    "docs/portfolio/evidence-map.md",
+    "docs/portfolio/screenshot-catalog.md"
+  ],
+  "required_ui_sections": [
+    "Reviewer Dashboard",
+    "Architecture Walkthrough",
+    "Evidence Explanations",
+    "Validation Paths",
+    "Interview Talk Track",
+    "Portfolio Evidence Contract"
+  ],
+  "route": {
+    "label": "Portfolio",
+    "navigation_icon": "Presentation",
+    "path": "/portfolio"
+  },
+  "schema_version": "forgeml.portfolio_interview_mode_contract.v1",
+  "summary": {
+    "interview_signal_count": 13,
+    "source_asset_count": 14,
+    "ui_section_count": 6
+  }
+}

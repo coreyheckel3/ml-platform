@@ -42,8 +42,8 @@ export type ScheduledReleaseEvidenceRefresh = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 40,
-  qualityGateCount: 29,
+  artifactCount: 41,
+  qualityGateCount: 30,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -128,6 +128,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     path: "contracts/ops/portfolio-readiness.v1.json",
     signal: "Keeps reviewer assets, screenshots, and resume evidence under CI.",
   },
+  {
+    name: "Portfolio Interview Mode Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/portfolio-interview-mode.v1.json",
+    signal:
+      "Keeps the /portfolio reviewer route, interview docs, validation paths, screenshots, and CI wiring aligned.",
+  },
 ];
 
 export const qualityGates: EvidenceGate[] = [
@@ -206,6 +213,12 @@ export const qualityGates: EvidenceGate[] = [
     signal:
       "Failure notification policy, webhook adapter behavior, delivery audit records, and escalation docs stay enforced in CI.",
   },
+  {
+    name: "portfolio_interview_mode_contract",
+    owner: "Operations",
+    signal:
+      "Portfolio Interview Mode route, docs, screenshot coverage, and validation paths stay enforced in CI.",
+  },
 ];
 
 export const screenshotEvidence: ScreenshotEvidence[] = [
@@ -239,6 +252,12 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
     fileName: "10-operational-audit.png",
     route: "/operational-audit",
     signal: "Operational timeline for release evidence, deployments, retraining, and security events.",
+  },
+  {
+    fileName: "11-portfolio-interview-mode.png",
+    route: "/portfolio",
+    signal:
+      "Reviewer dashboard, architecture walkthrough, evidence explanations, validation paths, and interview prompts.",
   },
 ];
 

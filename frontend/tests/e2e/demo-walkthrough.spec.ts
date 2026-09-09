@@ -9,6 +9,11 @@ const demoWalkthroughSteps = [
     signals: ["API Health", "Recent Training Runs"],
   },
   {
+    path: "/portfolio",
+    heading: "Portfolio Interview Mode",
+    signals: ["Reviewer Dashboard", "Architecture Walkthrough", "Validation Paths"],
+  },
+  {
     path: "/projects",
     heading: "Projects",
     signals: ["Fraud Detection"],

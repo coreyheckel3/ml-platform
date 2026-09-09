@@ -20,6 +20,11 @@ const demoScreens = [
     path: "/operational-audit",
     heading: "Operational Audit",
     fileName: "10-operational-audit.png"
+  },
+  {
+    path: "/portfolio",
+    heading: "Portfolio Interview Mode",
+    fileName: "11-portfolio-interview-mode.png"
   }
 ] as const;
 
