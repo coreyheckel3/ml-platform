@@ -42,8 +42,8 @@ export type ScheduledReleaseEvidenceRefresh = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 44,
-  qualityGateCount: 32,
+  artifactCount: 45,
+  qualityGateCount: 33,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -107,6 +107,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     path: "contracts/ops/lifecycle-polish.v1.json",
     signal:
       "Verifies the project lifecycle API, ten-stage readiness map, RBAC, screenshots, and CI coverage.",
+  },
+  {
+    name: "Evaluation Comparison Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/evaluation-comparison.v1.json",
+    signal:
+      "Verifies experiment comparison, metric slices, model-card evidence, approval checklists, and reviewer-ready narratives.",
   },
   {
     name: "Release Evidence Retrieval Contract",
@@ -216,6 +223,12 @@ export const qualityGates: EvidenceGate[] = [
       "Lifecycle route, cross-module readiness API, RBAC, screenshots, and docs stay enforced in CI.",
   },
   {
+    name: "evaluation_comparison_contract",
+    owner: "Operations",
+    signal:
+      "Evaluation route, comparison API, metric slices, model-card evidence, approval readiness, and docs stay enforced in CI.",
+  },
+  {
     name: "release_evidence_retrieval_contract",
     owner: "Operations",
     signal:
@@ -296,6 +309,12 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
     route: "/lifecycle",
     signal:
       "Project lifecycle readiness across datasets, features, training, registry, deployment, inference, monitoring, drift, and retraining.",
+  },
+  {
+    fileName: "14-evaluation.png",
+    route: "/evaluation",
+    signal:
+      "Evaluation leaderboard, metric slices, model-card evidence, approval checklist, and reviewer narrative.",
   },
 ];
 

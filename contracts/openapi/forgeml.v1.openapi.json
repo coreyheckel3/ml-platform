@@ -2310,6 +2310,399 @@
         "title": "EvaluateRetrainingPolicyRequest",
         "type": "object"
       },
+      "EvaluationApprovalChecklistItemResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "evidence": {
+            "title": "Evidence",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "status",
+          "detail",
+          "evidence"
+        ],
+        "title": "EvaluationApprovalChecklistItemResponse",
+        "type": "object"
+      },
+      "EvaluationComparisonSummaryResponse": {
+        "properties": {
+          "approval_checklist": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationApprovalChecklistItemResponse"
+            },
+            "title": "Approval Checklist",
+            "type": "array"
+          },
+          "candidate_count": {
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "higher_is_better": {
+            "title": "Higher Is Better",
+            "type": "boolean"
+          },
+          "leaderboard": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationLeaderboardEntryResponse"
+            },
+            "title": "Leaderboard",
+            "type": "array"
+          },
+          "metric_slices": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationMetricSliceResponse"
+            },
+            "title": "Metric Slices",
+            "type": "array"
+          },
+          "model_cards": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationModelCardResponse"
+            },
+            "title": "Model Cards",
+            "type": "array"
+          },
+          "narrative": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Narrative",
+            "type": "array"
+          },
+          "primary_metric_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Metric Name"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_name": {
+            "title": "Project Name",
+            "type": "string"
+          },
+          "project_slug": {
+            "title": "Project Slug",
+            "type": "string"
+          },
+          "project_status": {
+            "title": "Project Status",
+            "type": "string"
+          },
+          "recommended_experiment_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Experiment Run Id"
+          },
+          "schema_version": {
+            "default": "forgeml.evaluation_comparison.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "project_name",
+          "project_slug",
+          "project_status",
+          "primary_metric_name",
+          "higher_is_better",
+          "candidate_count",
+          "recommended_experiment_run_id",
+          "generated_at"
+        ],
+        "title": "EvaluationComparisonSummaryResponse",
+        "type": "object"
+      },
+      "EvaluationLeaderboardEntryResponse": {
+        "properties": {
+          "approval_status": {
+            "title": "Approval Status",
+            "type": "string"
+          },
+          "delta_from_baseline": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta From Baseline"
+          },
+          "evidence_summary": {
+            "title": "Evidence Summary",
+            "type": "string"
+          },
+          "experiment_name": {
+            "title": "Experiment Name",
+            "type": "string"
+          },
+          "experiment_run_id": {
+            "title": "Experiment Run Id",
+            "type": "string"
+          },
+          "model_type": {
+            "title": "Model Type",
+            "type": "string"
+          },
+          "model_version_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version Label"
+          },
+          "primary_metric_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Metric Name"
+          },
+          "primary_metric_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Metric Value"
+          },
+          "quality_score": {
+            "title": "Quality Score",
+            "type": "integer"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rank",
+          "experiment_run_id",
+          "run_name",
+          "experiment_name",
+          "status",
+          "model_type",
+          "primary_metric_name",
+          "primary_metric_value",
+          "delta_from_baseline",
+          "quality_score",
+          "model_version_label",
+          "approval_status",
+          "evidence_summary"
+        ],
+        "title": "EvaluationLeaderboardEntryResponse",
+        "type": "object"
+      },
+      "EvaluationMetricSliceResponse": {
+        "properties": {
+          "baseline_value": {
+            "title": "Baseline Value",
+            "type": "number"
+          },
+          "best_experiment_run_id": {
+            "title": "Best Experiment Run Id",
+            "type": "string"
+          },
+          "best_run_name": {
+            "title": "Best Run Name",
+            "type": "string"
+          },
+          "best_value": {
+            "title": "Best Value",
+            "type": "number"
+          },
+          "candidate_count": {
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "delta_from_baseline": {
+            "title": "Delta From Baseline",
+            "type": "number"
+          },
+          "higher_is_better": {
+            "title": "Higher Is Better",
+            "type": "boolean"
+          },
+          "metric_name": {
+            "title": "Metric Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric_name",
+          "candidate_count",
+          "best_value",
+          "baseline_value",
+          "delta_from_baseline",
+          "best_experiment_run_id",
+          "best_run_name",
+          "higher_is_better"
+        ],
+        "title": "EvaluationMetricSliceResponse",
+        "type": "object"
+      },
+      "EvaluationModelCardResponse": {
+        "properties": {
+          "approval_status": {
+            "title": "Approval Status",
+            "type": "string"
+          },
+          "artifact_manifest_hash": {
+            "title": "Artifact Manifest Hash",
+            "type": "string"
+          },
+          "artifact_manifest_uri": {
+            "title": "Artifact Manifest Uri",
+            "type": "string"
+          },
+          "artifact_uri": {
+            "title": "Artifact Uri",
+            "type": "string"
+          },
+          "lineage_summary": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lineage Summary",
+            "type": "array"
+          },
+          "metric_summary": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationModelMetricResponse"
+            },
+            "title": "Metric Summary",
+            "type": "array"
+          },
+          "model_format": {
+            "title": "Model Format",
+            "type": "string"
+          },
+          "model_name": {
+            "title": "Model Name",
+            "type": "string"
+          },
+          "model_version_id": {
+            "title": "Model Version Id",
+            "type": "string"
+          },
+          "risk_flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Risk Flags",
+            "type": "array"
+          },
+          "signature_summary": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Signature Summary",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "model_version_id",
+          "model_name",
+          "version",
+          "status",
+          "approval_status",
+          "model_format",
+          "artifact_uri",
+          "artifact_manifest_uri",
+          "artifact_manifest_hash"
+        ],
+        "title": "EvaluationModelCardResponse",
+        "type": "object"
+      },
+      "EvaluationModelMetricResponse": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "tone": {
+            "title": "Tone",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "value",
+          "tone"
+        ],
+        "title": "EvaluationModelMetricResponse",
+        "type": "object"
+      },
       "ExperimentArtifactListResponse": {
         "properties": {
           "items": {
@@ -10918,6 +11311,54 @@
         "summary": "List Drift Reports For Project",
         "tags": [
           "drift_detection"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/evaluation/comparison": {
+      "get": {
+        "operationId": "get_evaluation_comparison_summary_api_v1_projects__project_id__evaluation_comparison_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationComparisonSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Evaluation Comparison Summary",
+        "tags": [
+          "evaluation"
         ]
       }
     },

@@ -26,8 +26,8 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByRole("heading", { name: "Release Evidence" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("44")).toBeInTheDocument();
-    expect(screen.getByText("32")).toBeInTheDocument();
+    expect(screen.getByText("45")).toBeInTheDocument();
+    expect(screen.getByText("33")).toBeInTheDocument();
     expect(screen.getAllByText("forgeml-release-manifest").length).toBeGreaterThan(1);
     expect(screen.getByText("Release Manifest")).toBeInTheDocument();
     expect(screen.getByText("Live Evidence Retrieval")).toBeInTheDocument();
@@ -58,6 +58,9 @@ describe("ReleaseEvidencePage", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getAllByText("Lifecycle Polish Contract").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Evaluation Comparison Contract").length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText("Security Hardening Contract").length).toBeGreaterThan(0);
     expect(
@@ -90,12 +93,14 @@ describe("ReleaseEvidencePage", () => {
     expect(screen.getByText("portfolio_interview_mode_contract")).toBeInTheDocument();
     expect(screen.getByText("platform_admin_controls_contract")).toBeInTheDocument();
     expect(screen.getByText("lifecycle_polish_contract")).toBeInTheDocument();
+    expect(screen.getByText("evaluation_comparison_contract")).toBeInTheDocument();
     expect(screen.getByText("Demo Screenshot Evidence")).toBeInTheDocument();
     expect(screen.getByText("09-release-evidence.png")).toBeInTheDocument();
     expect(screen.getByText("10-operational-audit.png")).toBeInTheDocument();
     expect(screen.getByText("11-portfolio-interview-mode.png")).toBeInTheDocument();
     expect(screen.getByText("12-admin-controls.png")).toBeInTheDocument();
     expect(screen.getByText("13-lifecycle.png")).toBeInTheDocument();
+    expect(screen.getByText("14-evaluation.png")).toBeInTheDocument();
     expect(screen.getByText("/release-evidence")).toBeInTheDocument();
   });
 
@@ -216,8 +221,8 @@ function releaseEvidenceReport(
     manifest_git_sha: "abc123def4567890",
     manifest_git_branch: "main",
     ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-    artifact_count: 37,
-    quality_gate_count: 26,
+    artifact_count: 45,
+    quality_gate_count: 33,
     missing_artifacts: [],
     missing_quality_gates: [],
     comparison: { passed: status === "passed" },
@@ -225,10 +230,12 @@ function releaseEvidenceReport(
       artifact_names: [
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
+        "evaluation_comparison_contract",
       ],
       quality_gate_names: [
         "release_evidence_drilldown_api_contract",
         "release_evidence_scheduled_refresh_contract",
+        "evaluation_comparison_contract",
       ],
     },
     report: {

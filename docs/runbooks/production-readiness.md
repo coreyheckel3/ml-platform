@@ -28,6 +28,7 @@ python scripts/ci/check_release_evidence_notifications_contract.py
 python scripts/ci/check_operational_audit_ux_contract.py
 python scripts/ci/check_platform_admin_controls_contract.py
 python scripts/ci/check_lifecycle_polish_contract.py
+python scripts/ci/check_evaluation_comparison_contract.py
 python scripts/ci/check_release_manifest_verifier_contract.py
 python scripts/ci/check_demo_readiness_contract.py
 python scripts/ci/check_ci_runtime_contract.py
@@ -126,6 +127,7 @@ k6 run -e FORGEML_BASE_URL=https://staging-api.forgeml.example load/k6/api_smoke
 - Operational audit UX contract result proving `/operational-audit` links live audit events, release evidence annotations, screenshots, and route-level follow-up
 - Platform admin controls contract result proving `/admin` exposes organization users, RBAC presets, runtime posture, safe workflows, and operator commands
 - Lifecycle polish contract result proving `/lifecycle` exposes project readiness across datasets, features, training, registry, deployment, inference, monitoring, drift detection, and retraining
+- Evaluation comparison contract result proving `/evaluation` exposes experiment leaderboard ranking, metric slices, model-card evidence, approval readiness, and reviewer narratives
 - Demo readiness contract result proving local stack startup, seeded data refresh, screenshot capture, and architecture walkthrough assets are checked
 - CI runtime contract result proving GitHub Actions runtime pins avoid retired action majors
 - Portfolio readiness contract result proving reviewer guide, resume bullets, evidence map, architecture diagrams, and screenshot catalog assets are checked

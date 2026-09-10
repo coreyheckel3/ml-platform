@@ -238,6 +238,26 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_lifecycle_polish_contract.py
 ```
 
+## Evaluation Comparison
+
+`evaluation-comparison.v1.json` records the reviewer evaluation contract:
+`/evaluation` routing, `GET /api/v1/projects/{project_id}/evaluation/comparison`,
+`evaluation:read` RBAC, experiment leaderboard ranking, metric slices, model-card
+evidence, approval checklists, deterministic screenshot capture, and runbook
+coverage.
+
+Regenerate after an intentional evaluation product-surface change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_evaluation_comparison_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_evaluation_comparison_contract.py
+```
+
 ## Release Manifest Verification
 
 `release-manifest-verification.v1.json` records the required verifier behavior for

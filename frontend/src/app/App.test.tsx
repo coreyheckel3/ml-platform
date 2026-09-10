@@ -16,6 +16,7 @@ describe("App", () => {
     expect(screen.getByText("Examples")).toBeInTheDocument();
     expect(screen.getByText("Feature Store")).toBeInTheDocument();
     expect(screen.getByText("Experiments")).toBeInTheDocument();
+    expect(screen.getByText("Evaluation")).toBeInTheDocument();
     expect(screen.getByText("Training Runs")).toBeInTheDocument();
     expect(screen.getByText("Models")).toBeInTheDocument();
     expect(screen.getByText("Deployments")).toBeInTheDocument();

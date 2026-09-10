@@ -31,6 +31,9 @@ try:
     from scripts.ci.check_deployment_runtime_contract import (
         check_deployment_runtime_contract as verify_deployment_runtime_contract,
     )
+    from scripts.ci.check_evaluation_comparison_contract import (
+        check_evaluation_comparison_contract as verify_evaluation_comparison_contract,
+    )
     from scripts.ci.check_external_training_package_contract import (
         check_external_training_package_contract as verify_external_training_package_contract,
     )
@@ -106,6 +109,9 @@ except ModuleNotFoundError:
     )
     from check_deployment_runtime_contract import (  # type: ignore[no-redef]
         check_deployment_runtime_contract as verify_deployment_runtime_contract,
+    )
+    from check_evaluation_comparison_contract import (  # type: ignore[no-redef]
+        check_evaluation_comparison_contract as verify_evaluation_comparison_contract,
     )
     from check_external_training_package_contract import (  # type: ignore[no-redef]
         check_external_training_package_contract as verify_external_training_package_contract,
@@ -285,6 +291,22 @@ REQUIRED_FILES = (
     "frontend/src/modules/lifecycle/pages/LifecyclePage.tsx",
     "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
     "docs/runbooks/lifecycle-polish.md",
+    "scripts/ci/check_evaluation_comparison_contract.py",
+    "contracts/ops/evaluation-comparison.v1.json",
+    "backend/src/forgeml/modules/evaluation/domain/entities.py",
+    "backend/src/forgeml/modules/evaluation/repositories/interfaces.py",
+    "backend/src/forgeml/modules/evaluation/application/services.py",
+    "backend/src/forgeml/modules/evaluation/infrastructure/sqlalchemy_repositories.py",
+    "backend/src/forgeml/modules/evaluation/api/routes.py",
+    "backend/src/forgeml/modules/evaluation/api/schemas.py",
+    "backend/tests/unit/evaluation/test_evaluation_service.py",
+    "backend/tests/integration/evaluation/test_evaluation_repository.py",
+    "backend/tests/api/test_evaluation_api.py",
+    "backend/tests/unit/ops/test_evaluation_comparison_contract.py",
+    "frontend/src/modules/evaluation/api/evaluation.ts",
+    "frontend/src/modules/evaluation/pages/EvaluationPage.tsx",
+    "frontend/src/modules/evaluation/pages/EvaluationPage.test.tsx",
+    "docs/runbooks/evaluation-comparison.md",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -440,6 +462,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_deployment_runtime_contract(repo_root),
         check_monitoring_dashboard_contract(repo_root),
         check_lifecycle_polish_contract(repo_root),
+        check_evaluation_comparison_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -1365,6 +1388,142 @@ def check_frontend_performance_contract(repo_root: Path) -> ReadinessCheck:
     )
 
 
+def check_evaluation_comparison_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/ops/evaluation-comparison.v1.json"
+    has_ci_gate = "python scripts/ci/check_evaluation_comparison_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="evaluation comparison contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    route = contract.get("route", {})
+    source_assets = {asset for asset in contract.get("required_source_assets", [])}
+    ui_sections = set(contract.get("required_ui_sections", []))
+    comparison_signals = set(contract.get("required_comparison_signals", []))
+    quality_gates = set(contract.get("quality_gates", []))
+    page_source = (
+        repo_root / "frontend/src/modules/evaluation/pages/EvaluationPage.tsx"
+    ).read_text(encoding="utf-8")
+    repository_source = (
+        repo_root
+        / "backend/src/forgeml/modules/evaluation/infrastructure/"
+        "sqlalchemy_repositories.py"
+    ).read_text(encoding="utf-8")
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/evaluation/application/services.py"
+    ).read_text(encoding="utf-8")
+    release_manifest_source = (
+        repo_root / "scripts/ops/build_release_manifest.py"
+    ).read_text(encoding="utf-8")
+    release_evidence_source = (
+        repo_root / "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    screenshot_catalog = (repo_root / "docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+    runbook_source = (repo_root / "docs/runbooks/evaluation-comparison.md").read_text(
+        encoding="utf-8"
+    )
+    contract_current, contract_detail = verify_evaluation_comparison_contract(
+        contract_path,
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_route = (
+        route.get("path") == "/evaluation"
+        and route.get("label") == "Evaluation"
+        and "EvaluationPage" in page_source
+    )
+    has_ui_sections = {
+        "Run Leaderboard",
+        "Metric Slices",
+        "Model Card Evidence",
+        "Approval Checklist",
+        "Evaluation Narrative",
+    }.issubset(ui_sections)
+    has_comparison_signals = {
+        "primary_metric_name",
+        "delta_from_baseline",
+        "quality_score",
+        "metric_summary",
+        "signature_summary",
+        "lineage_summary",
+        "risk_flags",
+        "approval_checklist",
+    }.issubset(comparison_signals)
+    has_source_assets = {
+        "backend/src/forgeml/modules/evaluation/infrastructure/"
+        "sqlalchemy_repositories.py",
+        "backend/tests/integration/evaluation/test_evaluation_repository.py",
+        "frontend/src/modules/evaluation/pages/EvaluationPage.tsx",
+        "frontend/src/modules/evaluation/pages/EvaluationPage.test.tsx",
+        "frontend/tests/e2e/demo-walkthrough.spec.ts",
+    }.issubset(source_assets)
+    has_quality_gates = {
+        "python scripts/ci/check_evaluation_comparison_contract.py",
+        "backend/tests/unit/evaluation/test_evaluation_service.py",
+        "backend/tests/integration/evaluation/test_evaluation_repository.py",
+        "backend/tests/api/test_evaluation_api.py",
+        "frontend/src/modules/evaluation/pages/EvaluationPage.test.tsx",
+    }.issubset(quality_gates)
+    has_backend_contract = (
+        "ProjectModel.organization_id" in repository_source
+        and "ExperimentRunModel" in repository_source
+        and "TrainingRunModel" in repository_source
+        and "ModelApprovalModel" in repository_source
+        and "evaluation:read" in service_source
+    )
+    has_release_evidence = (
+        "evaluation_comparison_contract" in release_manifest_source
+        and "contracts/ops/evaluation-comparison.v1.json" in release_manifest_source
+        and "Evaluation Comparison Contract" in release_evidence_source
+        and "14-evaluation.png" in screenshot_catalog
+    )
+    has_runbook = (
+        "GET /api/v1/projects/{project_id}/evaluation/comparison" in runbook_source
+        and "evaluation:read" in runbook_source
+        and "make evaluation-comparison" in runbook_source
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_route
+        and has_ui_sections
+        and has_comparison_signals
+        and has_source_assets
+        and has_quality_gates
+        and has_backend_contract
+        and has_release_evidence
+        and has_runbook
+    )
+    return ReadinessCheck(
+        name="evaluation comparison contract",
+        passed=passed,
+        detail=(
+            "evaluation API, read model, RBAC, UI, screenshots, release "
+            "evidence, docs, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_route={has_route}, "
+                f"has_ui_sections={has_ui_sections}, "
+                f"has_comparison_signals={has_comparison_signals}, "
+                f"has_source_assets={has_source_assets}, "
+                f"has_quality_gates={has_quality_gates}, "
+                f"has_backend_contract={has_backend_contract}, "
+                f"has_release_evidence={has_release_evidence}, "
+                f"has_runbook={has_runbook}"
+            )
+        ),
+    )
+
+
 def check_frontend_e2e_contract(repo_root: Path) -> ReadinessCheck:
     ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     spec_source = (
@@ -1973,6 +2132,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/release-evidence-ux.v1.json",
         "contracts/ops/release-evidence-retrieval.v1.json",
         "contracts/ops/lifecycle-polish.v1.json",
+        "contracts/ops/evaluation-comparison.v1.json",
         "contracts/ops/release-manifest-verification.v1.json",
         "contracts/ops/demo-readiness.v1.json",
         "contracts/ops/ci-runtime.v1.json",
@@ -2009,6 +2169,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "deployment_runtime_contract",
         "monitoring_dashboard_contract",
         "lifecycle_polish_contract",
+        "evaluation_comparison_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)
@@ -2162,6 +2323,7 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
         "python scripts/ci/check_portfolio_interview_mode_contract.py",
         "python scripts/ci/check_platform_admin_controls_contract.py",
         "python scripts/ci/check_lifecycle_polish_contract.py",
+        "python scripts/ci/check_evaluation_comparison_contract.py",
         "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
         "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
     }.issubset(quality_gates)
@@ -2174,14 +2336,17 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
         and "portfolio_interview_mode_contract" in data_source
         and "platform_admin_controls_contract" in data_source
         and "lifecycle_polish_contract" in data_source
+        and "evaluation_comparison_contract" in data_source
         and "contracts/ops/platform-admin-controls.v1.json" in data_source
         and "contracts/ops/lifecycle-polish.v1.json" in data_source
+        and "contracts/ops/evaluation-comparison.v1.json" in data_source
     )
     has_screenshot_catalog = (
         "09-release-evidence.png" in screenshot_catalog
         and "11-portfolio-interview-mode.png" in screenshot_catalog
         and "12-admin-controls.png" in screenshot_catalog
         and "13-lifecycle.png" in screenshot_catalog
+        and "14-evaluation.png" in screenshot_catalog
     )
     has_evidence_map = "Release evidence UX" in evidence_map
     has_release_manifest_artifact = (
@@ -2983,6 +3148,7 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "reviewer_reset_flow",
         "architecture_walkthrough",
         "lifecycle_readiness_review",
+        "evaluation_comparison_review",
     }.issubset(capabilities)
     has_seeded_surfaces = {
         "projects",
@@ -2998,6 +3164,7 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "release_evidence",
         "operational_audit",
         "lifecycle",
+        "evaluation",
     }.issubset(seeded_surfaces)
     has_quality_gates = {
         "backend/tests/unit/dev/test_demo_stack.py",
@@ -3006,6 +3173,7 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "frontend/tests/e2e/demo-walkthrough.spec.ts",
         "frontend/tests/e2e/demo-screenshots.spec.ts",
         "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+        "frontend/src/modules/evaluation/pages/EvaluationPage.test.tsx",
     }.issubset(quality_gates)
     has_live_command = (
         "make demo-stack" in runbook_source
@@ -3034,10 +3202,12 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         and "demoWalkthroughSteps" in browser_walkthrough_source
         and "installForgeMLApiMock" in browser_walkthrough_source
         and "/lifecycle" in browser_walkthrough_source
+        and "/evaluation" in browser_walkthrough_source
     )
     has_screenshot_capture = (
         "page.screenshot" in screenshots_source
         and "13-lifecycle.png" in screenshots_source
+        and "14-evaluation.png" in screenshots_source
     )
     passed = (
         has_ci_gate

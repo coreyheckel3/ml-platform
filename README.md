@@ -14,6 +14,8 @@ Implemented foundation:
 - Dataset registry with dataset CRUD, immutable version records, upload instructions, schema inference, validation runs, and SQLAlchemy persistence.
 - Feature store metadata with feature sets, definitions, pipeline registration, lineage, materialization records, and orchestration adapter boundary.
 - Experiment tracking with experiment groups, linked run records, parameters, metrics, evaluation reports, and artifact metadata.
+- Evaluation comparison with project-scoped candidate ranking, metric slices,
+  model card evidence, approval checklists, and reviewer-ready narratives.
 - Training run workflow lifecycle with orchestration adapter boundary, dataset or feature-set lineage, result recording, cancellation, and experiment-run synchronization.
 - Model registry with registered models, validated and idempotent promotion from succeeded training execution manifests, signatures, metrics, approval workflow, and lineage.
 - Deployments with approved-model-version gating, immutable revisions, canary traffic allocation, canary simulation, runtime health probes, rollback draining, events, and serving orchestrator boundary.
@@ -29,7 +31,7 @@ Implemented foundation:
 - External training package adapter with an allowlisted `conversational-movie-recommender` profile, worker-side CLI execution, metric import, artifact checksums, profile catalog API, and Training Runs UI launch path.
 - Developer experience tooling with one-command demo stack startup, seeded data refresh, deterministic screenshot capture, a demo readiness runbook, an architecture walkthrough, and CI-checked demo readiness contracts.
 - Portfolio review kit with reviewer guide, resume bullets, Portfolio Interview Mode, evidence map, architecture diagrams, screenshot catalog, Release Evidence, Operational Audit, and Admin Controls app surfaces, and CI-checked portfolio readiness contracts.
-- Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, release evidence notification contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
+- Production hardening with secure response headers, configurable API rate limiting, structured request logs, dependency readiness probes, production runtime config guardrails, Prometheus metrics for throttling, production-readiness CI checks, checked OpenAPI, Problem Details error contracts, Alembic migration topology contracts, SQLAlchemy schema metadata contracts, API authorization, permission catalog, security hardening contracts, runtime config policy, observability contracts, monitoring dashboard contracts, evaluation comparison contracts, deployment runtime contracts, release-candidate smoke contracts, release manifest provenance, CI release evidence publishing, release evidence UX contracts, live release evidence retrieval contracts, release evidence drilldown API contracts, release evidence notification contracts, operational audit UX contracts, release manifest verification, frontend production dependency auditing, frontend bundle budgets, browser E2E lifecycle coverage, runbooks, threat model, backup and restore scripts, and k6 smoke load tests.
 - Project Lifecycle route and API with a ten-stage readiness read model spanning datasets, feature store, experiments, training, registry, deployment, inference, monitoring, drift detection, and retraining.
 - SQLAlchemy 2.x repository implementations for auth, administration, projects, datasets, feature store, experiments, training runs, model registry, deployments, inference, monitoring, alerting, drift detection, and retraining.
 - Alembic migrations for organization, user, refresh session, project, audit, release evidence reports, outbox, dataset registry, feature store, experiments, training run, model registry, deployment, inference, alerting, drift detection, and retraining tables.
@@ -132,6 +134,12 @@ Verify platform admin controls:
 
 ```bash
 make admin-controls
+```
+
+Verify evaluation comparison evidence:
+
+```bash
+make evaluation-comparison
 ```
 
 Verify the checked database migration contract:

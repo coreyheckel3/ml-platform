@@ -39,6 +39,11 @@ const demoWalkthroughSteps = [
     signals: ["Experiment Registry"],
   },
   {
+    path: "/evaluation",
+    heading: "Evaluation",
+    signals: ["Run Leaderboard", "Metric Slices", "Model Card Evidence"],
+  },
+  {
     path: "/training-runs",
     heading: "Training Runs",
     signals: ["Run Detail", "Execution Logs"],

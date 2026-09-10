@@ -146,6 +146,8 @@ Then in ForgeML:
 
 The prediction log stores normalized recommendations, the recommender answer,
 parsed query, adapter trace, model version, model format, and model artifact URI.
+Open Evaluation after promotion to compare the recommender run against other
+training candidates and inspect the model-card evidence before deployment.
 
 ## Screenshot Capture
 
@@ -163,8 +165,8 @@ make demo-screenshots
 
 Playwright writes transient screenshots under `test-results`. The captured
 screens cover Dashboard, Portfolio Interview Mode, Projects, Example Projects,
-Training Runs, Models, Deployments, Inference, Lifecycle, Monitoring, Release
-Evidence, Operational Audit, and Admin Controls.
+Training Runs, Models, Deployments, Inference, Lifecycle, Evaluation,
+Monitoring, Release Evidence, Operational Audit, and Admin Controls.
 
 For reviewer packaging, use the portfolio screenshot catalog at
 `docs/portfolio/screenshot-catalog.md`.
@@ -182,17 +184,19 @@ After `make demo-stack` finishes the seed refresh, open
 4. Open Datasets and confirm dataset versions are finalized and validated.
 5. Open Training Runs and confirm seeded runs show progress, elapsed time,
    orchestration state, events, and execution logs.
-6. Open Models and confirm model versions are approved.
-7. Open Deployments and confirm healthy revisions are receiving traffic.
-8. Open Inference and run an endpoint probe.
-9. Open Lifecycle and confirm Stage Readiness, Project Signals, and Dependency
+6. Open Evaluation and confirm Run Leaderboard, Metric Slices, Model Card
+   Evidence, Approval Checklist, and Evaluation Narrative are populated.
+7. Open Models and confirm model versions are approved.
+8. Open Deployments and confirm healthy revisions are receiving traffic.
+9. Open Inference and run an endpoint probe.
+10. Open Lifecycle and confirm Stage Readiness, Project Signals, and Dependency
    Map summarize the full project path.
-10. Open Monitoring and confirm inference, drift, training, and retraining signals.
-11. Open Alerts and confirm evaluated alert events are visible.
-12. Open Retraining and confirm policy evaluations point back to the triggering drift or alert signal.
-13. Open Release Evidence and Operational Audit to confirm release governance
+11. Open Monitoring and confirm inference, drift, training, and retraining signals.
+12. Open Alerts and confirm evaluated alert events are visible.
+13. Open Retraining and confirm policy evaluations point back to the triggering drift or alert signal.
+14. Open Release Evidence and Operational Audit to confirm release governance
     and audit trails are visible.
-14. Open Admin Controls and confirm organization users, RBAC presets,
+15. Open Admin Controls and confirm organization users, RBAC presets,
     environment posture, and safe admin workflows are visible.
 
 ## Retraining Lifecycle Check

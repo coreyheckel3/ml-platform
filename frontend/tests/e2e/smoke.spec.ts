@@ -34,6 +34,9 @@ test("opens dashboard and navigates to projects", async ({ page }) => {
   await page.getByRole("link", { name: "Experiments" }).click();
   await expect(page.getByRole("heading", { name: "Experiments" })).toBeVisible();
 
+  await page.getByRole("link", { name: "Evaluation" }).click();
+  await expect(page.getByRole("heading", { name: "Evaluation" })).toBeVisible();
+
   await page.getByRole("link", { name: "Training Runs" }).click();
   await expect(page.getByRole("heading", { name: "Training Runs" })).toBeVisible();
 

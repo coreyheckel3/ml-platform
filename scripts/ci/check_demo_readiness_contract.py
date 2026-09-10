@@ -55,6 +55,7 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "portfolio_interview_mode",
             "admin_controls_review",
             "lifecycle_readiness_review",
+            "evaluation_comparison_review",
             "manual_review_runbook",
             "reviewer_reset_flow",
             "architecture_walkthrough",
@@ -77,6 +78,7 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "portfolio_interview",
             "admin_controls",
             "lifecycle",
+            "evaluation",
         ],
         "demo_projects": [
             "movie-recommendation",
@@ -94,6 +96,7 @@ def build_demo_readiness_contract() -> dict[str, Any]:
             "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx",
             "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx",
             "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+            "frontend/src/modules/evaluation/pages/EvaluationPage.test.tsx",
         ],
     }
 
@@ -147,6 +150,7 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         "frontend/tests/e2e/demo-screenshots.spec.ts",
         "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx",
         "frontend/src/modules/lifecycle/pages/LifecyclePage.tsx",
+        "frontend/src/modules/evaluation/pages/EvaluationPage.tsx",
         "docs/runbooks/demo-readiness.md",
         "docs/architecture-walkthrough.md",
         "README.md",
@@ -198,6 +202,8 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ("Admin Controls", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
         ("/lifecycle", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
         ("Lifecycle", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
+        ("/evaluation", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
+        ("Evaluation", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
         (
             "Portfolio Interview Mode",
             sources["frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx"],
@@ -205,6 +211,10 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         (
             "End-to-End Lifecycle Readiness",
             sources["frontend/src/modules/lifecycle/pages/LifecyclePage.tsx"],
+        ),
+        (
+            "Run Leaderboard",
+            sources["frontend/src/modules/evaluation/pages/EvaluationPage.tsx"],
         ),
         ("installForgeMLApiMock", sources["frontend/tests/e2e/demo-walkthrough.spec.ts"]),
         (
@@ -222,6 +232,10 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ),
         (
             "13-lifecycle.png",
+            sources["frontend/tests/e2e/demo-screenshots.spec.ts"],
+        ),
+        (
+            "14-evaluation.png",
             sources["frontend/tests/e2e/demo-screenshots.spec.ts"],
         ),
         ("demo-stack", sources["Makefile"]),
@@ -249,6 +263,8 @@ def validate_demo_readiness_definition(repo_root: Path = REPO_ROOT) -> tuple[str
         ("admin_controls", contract_source),
         ("lifecycle_readiness_review", contract_source),
         ("lifecycle", contract_source),
+        ("evaluation_comparison_review", contract_source),
+        ("evaluation", contract_source),
         ("reviewer_reset_flow", contract_source),
         ("architecture_walkthrough", contract_source),
     )

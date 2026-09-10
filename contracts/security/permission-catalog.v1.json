@@ -243,6 +243,15 @@
       "module": "drift_detection"
     },
     {
+      "action": "read",
+      "code": "evaluation:read",
+      "description": "Read experiment evaluation comparisons, metric slices, and model card evidence.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/evaluation/application/services.py:64"
+      ],
+      "module": "evaluation"
+    },
+    {
       "action": "write",
       "code": "experiment_artifacts:write",
       "description": "Attach experiment artifacts.",
@@ -596,6 +605,7 @@
         "drift_profiles:read",
         "drift_reports:create",
         "drift_reports:read",
+        "evaluation:read",
         "experiment_artifacts:write",
         "experiment_runs:create",
         "experiment_runs:read",
@@ -641,6 +651,7 @@
         "drift_profiles:read",
         "drift_reports:create",
         "drift_reports:read",
+        "evaluation:read",
         "inference:predict",
         "inference_endpoints:create",
         "inference_endpoints:read",
@@ -670,6 +681,7 @@
         "deployments:read",
         "drift_profiles:read",
         "drift_reports:read",
+        "evaluation:read",
         "experiment_runs:read",
         "experiments:read",
         "feature_sets:read",
@@ -705,8 +717,8 @@
   ],
   "schema_version": "forgeml.permission_catalog.v1",
   "summary": {
-    "enforced_permission_count": 59,
-    "permission_count": 59,
+    "enforced_permission_count": 60,
+    "permission_count": 60,
     "role_preset_count": 5
   }
 }

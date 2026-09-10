@@ -3,7 +3,7 @@ RUFF ?= .venv/bin/ruff
 UVICORN ?= .venv/bin/uvicorn
 NPM ?= npm
 
-.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness portfolio-readiness portfolio-interview admin-controls lifecycle-polish docker-up docker-down docker-full demo-stack demo-stack-fresh demo-stack-plan demo-reset demo-refresh demo-walkthrough demo-screenshots
+.PHONY: backend-dev frontend-dev test backend-test frontend-test example-training lint format production-readiness portfolio-readiness portfolio-interview admin-controls lifecycle-polish evaluation-comparison docker-up docker-down docker-full demo-stack demo-stack-fresh demo-stack-plan demo-reset demo-refresh demo-walkthrough demo-screenshots
 
 backend-dev:
 	$(UVICORN) forgeml.main:create_app --factory --host 0.0.0.0 --port 8000 --reload --app-dir backend/src
@@ -46,6 +46,9 @@ admin-controls:
 
 lifecycle-polish:
 	PYTHONPATH=. $(PYTHON) scripts/ci/check_lifecycle_polish_contract.py
+
+evaluation-comparison:
+	PYTHONPATH=. $(PYTHON) scripts/ci/check_evaluation_comparison_contract.py
 
 docker-up:
 	docker compose -f infra/compose/docker-compose.yml --profile core up --build

@@ -137,6 +137,7 @@ Contract tests should protect boundaries:
 - Security hardening contract for organization isolation, RBAC matrix, rate-limit partitioning, audit metadata redaction, and secrets/runtime guardrail evidence.
 - Structured request logging contract with sensitive query-parameter redaction.
 - Monitoring dashboard contract for project operations overview, inference errors, latency percentiles, drift trends, training failures, retraining activity, and frontend section coverage.
+- Evaluation comparison contract for project comparison API, candidate ranking, metric slices, model card evidence, approval checklists, reviewer narrative, RBAC, screenshot catalog, and release evidence coverage.
 - Release smoke operations contract for the live API surfaces required during release-candidate validation.
 - Release manifest operations contract for release artifact hashes, image targets, evidence types, and quality gates.
 - Release evidence workflow contract for CI manifest publication behavior.
@@ -163,6 +164,12 @@ contract wiring.
 Monitoring dashboard tests cover project operations aggregation, API
 serialization, frontend rendering of inference, drift, training, and retraining
 panels, checked OpenAPI coverage, and CI contract wiring.
+
+Evaluation comparison tests cover project-scoped candidate ranking, metric
+direction handling, model version evidence, approval checklist generation, API
+serialization, frontend rendering of leaderboard, metric slices, model card
+evidence, evaluation narrative, checked OpenAPI coverage, and CI contract
+wiring.
 
 ## Release Smoke Tests
 
@@ -348,6 +355,27 @@ real module state instead of handcrafted demo text:
   Project Signals, Recommended Actions, and Dependency Map rendering.
 - Capture `13-lifecycle.png` in the deterministic Playwright screenshot flow.
 - Verify the lifecycle polish contract matches backend sources, permission
+  catalog, frontend route/navigation, release evidence, docs, CI wiring, and
+  production-readiness.
+
+## Evaluation Comparison Tests
+
+Evaluation comparison tests should keep reviewer-facing model decisions tied to
+experiment, training, registry, approval, and lineage records:
+
+- Unit test evaluation service candidate ranking, primary metric selection,
+  lower-is-better direction handling, approval checklist generation, missing
+  permissions, cross-organization denial, and missing-project behavior.
+- Integration test SQLAlchemy aggregate loading across experiment runs,
+  training runs, model versions, approvals, and lineage with tenant isolation.
+- API test
+  `GET /api/v1/projects/{project_id}/evaluation/comparison` through FastAPI
+  dependency overrides.
+- Frontend test authenticated summary loading, signed-out behavior, run
+  leaderboard rendering, metric slice rendering, model card evidence, approval
+  checklist, and Evaluation Narrative sections.
+- Capture `14-evaluation.png` in the deterministic Playwright screenshot flow.
+- Verify the evaluation comparison contract matches backend sources, permission
   catalog, frontend route/navigation, release evidence, docs, CI wiring, and
   production-readiness.
 

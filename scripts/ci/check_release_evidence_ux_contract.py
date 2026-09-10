@@ -63,6 +63,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "contracts/ops/portfolio-interview-mode.v1.json",
             "contracts/ops/platform-admin-controls.v1.json",
             "contracts/ops/lifecycle-polish.v1.json",
+            "contracts/ops/evaluation-comparison.v1.json",
             "contracts/training/external-package-runner.v1.json",
             "external_training_package_contract",
             "release_manifest_verifier_contract",
@@ -73,6 +74,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "portfolio_interview_mode_contract",
             "platform_admin_controls_contract",
             "lifecycle_polish_contract",
+            "evaluation_comparison_contract",
             "GitHubActionsReleaseEvidenceGateway",
             "refresh_release_evidence.py",
             "release_evidence.notification_failed",
@@ -82,6 +84,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "11-portfolio-interview-mode.png",
             "12-admin-controls.png",
             "13-lifecycle.png",
+            "14-evaluation.png",
         ],
         "operator_commands": [
             "PYTHONPATH=. python scripts/ci/check_release_evidence_ux_contract.py",
@@ -96,6 +99,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
             "python scripts/ci/check_portfolio_interview_mode_contract.py",
             "python scripts/ci/check_platform_admin_controls_contract.py",
             "python scripts/ci/check_lifecycle_polish_contract.py",
+            "python scripts/ci/check_evaluation_comparison_contract.py",
             "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
             "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
             "frontend/tests/e2e/smoke.spec.ts",
@@ -104,7 +108,7 @@ def build_release_evidence_ux_contract() -> dict[str, Any]:
         "summary": {
             "source_asset_count": len(REQUIRED_SOURCE_ASSETS),
             "ui_section_count": 8,
-            "release_signal_count": 30,
+            "release_signal_count": 33,
         },
     }
 
@@ -223,8 +227,12 @@ def validate_release_evidence_ux_definition(
         findings.append("Playwright smoke test does not navigate to Release Evidence.")
     if "09-release-evidence.png" not in screenshots_source:
         findings.append("Demo screenshot flow does not capture Release Evidence.")
+    if "14-evaluation.png" not in screenshots_source:
+        findings.append("Demo screenshot flow does not capture Evaluation.")
     if "09-release-evidence.png" not in screenshot_catalog_source:
         findings.append("Screenshot catalog does not list Release Evidence.")
+    if "14-evaluation.png" not in screenshot_catalog_source:
+        findings.append("Screenshot catalog does not list Evaluation.")
     if "Release evidence UX" not in evidence_map_source:
         findings.append("Evidence map does not mention the Release evidence UX.")
     if "release_manifest_verifier_contract" not in page_test_source:

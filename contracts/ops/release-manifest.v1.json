@@ -158,6 +158,12 @@
     },
     {
       "kind": "operations_contract",
+      "name": "evaluation_comparison_contract",
+      "path": "contracts/ops/evaluation-comparison.v1.json",
+      "required": true
+    },
+    {
+      "kind": "operations_contract",
       "name": "release_manifest_verification_contract",
       "path": "contracts/ops/release-manifest-verification.v1.json",
       "required": true
@@ -337,6 +343,7 @@
     "operational_audit_ux_contract",
     "platform_admin_controls_contract",
     "lifecycle_polish_contract",
+    "evaluation_comparison_contract",
     "release_manifest_verifier_contract",
     "demo_readiness_contract",
     "ci_runtime_contract",
@@ -366,7 +373,7 @@
   "summary": {
     "evidence_type_count": 5,
     "image_target_count": 5,
-    "quality_gate_count": 32,
-    "required_artifact_count": 44
+    "quality_gate_count": 33,
+    "required_artifact_count": 45
   }
 }

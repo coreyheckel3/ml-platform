@@ -16,6 +16,7 @@ import {
   Radar,
   RefreshCw,
   Rocket,
+  Scale,
   Settings,
   ShieldCheck,
   Workflow
@@ -29,6 +30,7 @@ export const navigationItems = [
   { label: "Datasets", path: "/datasets", icon: Database },
   { label: "Feature Store", path: "/feature-store", icon: GitBranch },
   { label: "Experiments", path: "/experiments", icon: FlaskConical },
+  { label: "Evaluation", path: "/evaluation", icon: Scale },
   { label: "Training Runs", path: "/training-runs", icon: Workflow },
   { label: "Models", path: "/models", icon: BrainCircuit },
   { label: "Deployments", path: "/deployments", icon: Rocket },

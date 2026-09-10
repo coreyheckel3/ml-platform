@@ -2506,6 +2506,48 @@ Implemented scope:
   generation, Make target, CI wiring, production-readiness coverage, and unit
   contract tests.
 
+## Sprint 75: Evaluation and Model Comparison UX
+
+Theme: add a reviewer-ready Evaluation surface that compares experiment and
+training outcomes for the selected project, connects candidates to registered
+model evidence, and turns raw metrics into an approval-ready decision view.
+
+Acceptance criteria:
+
+- The backend exposes
+  `GET /api/v1/projects/{project_id}/evaluation/comparison` behind
+  `evaluation:read`.
+- The evaluation module keeps clean architecture boundaries across domain
+  entities, repository interface, SQLAlchemy implementation, application
+  service, API route, and Pydantic schemas.
+- The frontend exposes `/evaluation` through navigation with Run Leaderboard,
+  Metric Slices, Model Card Evidence, Approval Checklist, and Evaluation
+  Narrative sections.
+- CI verifies backend layers, RBAC, route wiring, frontend tests, deterministic
+  browser coverage, release evidence data, docs, screenshot catalog, and the
+  `14-evaluation.png` screenshot through a dedicated contract.
+- The comparison is read-only and derives evidence from experiment runs,
+  training runs, registered model versions, approvals, and lineage without
+  adding duplicated evaluation decision tables.
+
+Implemented scope:
+
+- Added `backend/src/forgeml/modules/evaluation` with immutable comparison read
+  models, repository boundary, SQLAlchemy aggregate queries, application
+  ranking/narrative composition, Pydantic schemas, and the evaluation API route.
+- Added `evaluation:read` to the permission catalog and ML engineer/operator/
+  viewer role presets.
+- Added `frontend/src/modules/evaluation` with typed API client,
+  `EvaluationPage`, route loading, navigation, page tests, stateful Playwright
+  API mocks, smoke coverage, demo walkthrough coverage, and screenshot capture
+  for `14-evaluation.png`.
+- Added `docs/runbooks/evaluation-comparison.md` and updated production
+  readiness, demo readiness, evidence map, screenshot catalog, README, release
+  evidence, release manifest, and ops contract documentation.
+- Added `scripts/ci/check_evaluation_comparison_contract.py`, checked-in
+  contract generation, Make target, CI wiring, production-readiness coverage,
+  and unit contract tests.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2544,7 +2586,7 @@ sequence.
 | 72 | Portfolio Interview Mode | Completed | Reviewer dashboard, architecture walkthrough page, evidence explanations, interview-ready validation paths, product route, docs, CI contract, release evidence, and screenshot coverage. |
 | 73 | Platform Admin Controls | Completed | Organization-scoped admin read model, user access visibility, RBAC presets, runtime posture, safe admin workflows, `/admin` UI, docs, CI contract, release evidence, and screenshot coverage. |
 | 74 | End-to-End ML Lifecycle Polish | Completed | Project lifecycle API, ten-stage readiness read model, `/lifecycle` UI, RBAC, demo walkthrough, screenshot coverage, runbook, release evidence, and CI contract. |
-| 75 | Evaluation and Model Comparison UX | Planned | Richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |
+| 75 | Evaluation and Model Comparison UX | Completed | Project-scoped evaluation comparison API, `/evaluation` UI, run leaderboard, metric slices, model card evidence, approval checklist, reviewer narrative, RBAC, docs, release evidence, and CI contract. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the
 runtime platform roadmap forward from Sprint 51.

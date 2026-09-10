@@ -156,6 +156,7 @@ async function handleApiRoute(
         "deployments:rollback",
         "inference:predict",
         "lifecycle:read",
+        "evaluation:read",
         "admin:controls:read",
         "admin:audit_log:read",
         "admin:release_evidence:read",
@@ -282,6 +283,15 @@ async function handleApiRoute(
     const [, projectId] = lifecycleSummaryMatch;
     ensureProjectDependencies(state, projectId);
     return fulfillJson(route, buildProjectLifecycleSummary(state, projectId));
+  }
+
+  const evaluationComparisonMatch = path.match(
+    /^\/api\/v1\/projects\/([^/]+)\/evaluation\/comparison$/,
+  );
+  if (method === "GET" && evaluationComparisonMatch) {
+    const [, projectId] = evaluationComparisonMatch;
+    ensureProjectDependencies(state, projectId);
+    return fulfillJson(route, buildEvaluationComparisonSummary(state, projectId));
   }
 
   const monitoringSummaryMatch = path.match(
@@ -675,6 +685,7 @@ async function handleTrainingRunAction(
       ...run,
       status: stringValue(body.status, "succeeded"),
       metrics: numericRecordValue(body.metrics, { auc: 0.94 }),
+      evaluation_report: recordValue(body.evaluation_report),
       error_message: nullableString(body.error_message),
       attempt_count: Number(run.attempt_count ?? 1) || 1,
       worker_id: null,
@@ -719,6 +730,8 @@ async function promoteTrainingRun(
     training_run_id: trainingRunId,
     experiment_run_id: run.experiment_run_id,
     artifact_uri: `${run.artifact_uri}/model.json`,
+    artifact_manifest_uri: `${run.artifact_uri}/artifact-manifest.json`,
+    artifact_manifest_hash: "sha256:e2e-model-manifest",
     model_format: stringValue(body.model_format, "mlflow"),
     signature: recordValue(body.signature),
     metrics: run.metrics,
@@ -1286,8 +1299,8 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     manifest_git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
     manifest_git_branch: "main",
     ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
-    artifact_count: 44,
-    quality_gate_count: 32,
+    artifact_count: 45,
+    quality_gate_count: 33,
     missing_artifacts: [],
     missing_quality_gates: [],
     comparison: {
@@ -1306,6 +1319,7 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
         "release_evidence_notifications_contract",
         "platform_admin_controls_contract",
         "lifecycle_polish_contract",
+        "evaluation_comparison_contract",
       ],
       quality_gate_names: [
         "external_training_package_contract",
@@ -1314,6 +1328,7 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
         "release_evidence_notifications_contract",
         "platform_admin_controls_contract",
         "lifecycle_polish_contract",
+        "evaluation_comparison_contract",
       ],
       ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
     },
@@ -1407,6 +1422,7 @@ function adminControlsResponse(state: ForgeMLApiMockState): Entity {
     "inference:predict",
     "monitoring:read",
     "lifecycle:read",
+    "evaluation:read",
   ];
   return {
     schema_version: "forgeml.platform_admin_controls.v1",
@@ -2086,6 +2102,272 @@ function buildProjectLifecycleSummary(state: ForgeMLApiMockState, projectId: str
   };
 }
 
+function buildEvaluationComparisonSummary(
+  state: ForgeMLApiMockState,
+  projectId: string,
+): Entity {
+  const project = state.projects.find((item) => item.id === projectId) ?? projectRecord(
+    projectId,
+    "ML Project",
+    "Mock project",
+  );
+  const experiments = state.experimentsByProject.get(projectId) ?? [];
+  const trainingRuns = state.trainingRunsByProject.get(projectId) ?? [];
+  const models = state.modelsByProject.get(projectId) ?? [];
+  const modelVersions = models.flatMap(
+    (model) => state.versionsByModel.get(stringValue(model.id, "")) ?? [],
+  );
+  const versionsByExperimentRun = new Map(
+    modelVersions.map((version) => [version.experiment_run_id, version]),
+  );
+  const candidates = trainingRuns.map((run, index) => {
+    const experiment = experiments.find((item) => item.id === run.experiment_id);
+    const version = versionsByExperimentRun.get(run.experiment_run_id);
+    const model = version
+      ? models.find((item) => item.id === version.registered_model_id)
+      : undefined;
+    const approvalStatus = approvalStatusForVersion(version);
+    const primaryMetricName = stringValue(run.objective_metric_name, "auc");
+    const primaryMetricValue = nullableNumberValue(run.metrics[primaryMetricName]);
+    return {
+      rank: index + 1,
+      experiment_run_id: run.experiment_run_id,
+      run_name: stringValue(run.run_name, run.id),
+      experiment_name: stringValue(experiment?.name, `${project.name} Experiment`),
+      status: run.status,
+      model_type: stringValue(run.model_type, "model"),
+      primary_metric_name: primaryMetricName,
+      primary_metric_value: primaryMetricValue,
+      delta_from_baseline: null,
+      quality_score: evaluationQualityScore(run, version),
+      model_version_label: version && model ? `${stringValue(model.name, "Model")} v${version.version}` : null,
+      approval_status: approvalStatus,
+      evidence_summary: version
+        ? `${stringValue(model?.name, "Model")} v${version.version} is ${approvalStatus}.`
+        : "Training run metrics are available before registry promotion.",
+    };
+  });
+  const sortedCandidates = rankEvaluationCandidates(candidates);
+  const primaryMetricName = stringValue(sortedCandidates[0]?.primary_metric_name, "auc");
+  const baselineValue = Math.min(
+    ...sortedCandidates
+      .map((candidate) => numberValue(candidate.primary_metric_value, Number.NaN))
+      .filter((value) => Number.isFinite(value)),
+  );
+  const leaderboard = sortedCandidates.map((candidate, index) => {
+    const value = nullableNumberValue(candidate.primary_metric_value);
+    return {
+      ...candidate,
+      rank: index + 1,
+      delta_from_baseline:
+        value === null || !Number.isFinite(baselineValue) ? null : value - baselineValue,
+    };
+  });
+  const modelCards = modelVersions.map((version) => {
+    const model = models.find((item) => item.id === version.registered_model_id);
+    const approvalStatus = approvalStatusForVersion(version);
+    const signature = recordValue(version.signature);
+    const riskFlags = [
+      ...(!Object.keys(version.metrics).length ? ["missing_metrics"] : []),
+      ...(!Object.keys(signature).length ? ["missing_signature"] : []),
+      ...(!stringValue(version.artifact_manifest_hash, "") ? ["missing_artifact_manifest"] : []),
+      ...(approvalStatus !== "approved" ? ["approval_not_complete"] : []),
+    ];
+    return {
+      model_version_id: version.id,
+      model_name: stringValue(model?.name, "Model"),
+      version: version.version,
+      status: version.status,
+      approval_status: approvalStatus,
+      model_format: stringValue(version.model_format, "mlflow"),
+      metric_summary: Object.entries(version.metrics).map(([label, value]) => ({
+        label,
+        value,
+        tone: label === primaryMetricName ? "success" : "neutral",
+      })),
+      signature_summary: signatureSummary(signature),
+      artifact_uri: version.artifact_uri,
+      artifact_manifest_uri: stringValue(version.artifact_manifest_uri, ""),
+      artifact_manifest_hash: stringValue(version.artifact_manifest_hash, ""),
+      lineage_summary: [
+        `training_run:${version.training_run_id}`,
+        `experiment_run:${version.experiment_run_id}`,
+      ],
+      risk_flags: riskFlags,
+    };
+  });
+  return {
+    schema_version: "forgeml.evaluation_comparison.v1",
+    project_id: projectId,
+    project_name: project.name,
+    project_slug: project.slug,
+    project_status: stringValue(project.status, "active"),
+    primary_metric_name: sortedCandidates.length > 0 ? primaryMetricName : null,
+    higher_is_better: true,
+    candidate_count: sortedCandidates.length,
+    recommended_experiment_run_id: sortedCandidates[0]?.experiment_run_id ?? null,
+    leaderboard,
+    metric_slices: buildEvaluationMetricSlices(trainingRuns),
+    model_cards: modelCards,
+    approval_checklist: buildEvaluationApprovalChecklist(leaderboard[0], modelCards),
+    narrative: buildEvaluationNarrative(leaderboard, modelCards),
+    generated_at: "2026-08-18T16:30:00Z",
+  };
+}
+
+function rankEvaluationCandidates(candidates: Entity[]): Entity[] {
+  return [...candidates].sort((left, right) => {
+    const leftValue = numberValue(left.primary_metric_value, Number.NEGATIVE_INFINITY);
+    const rightValue = numberValue(right.primary_metric_value, Number.NEGATIVE_INFINITY);
+    return rightValue - leftValue;
+  });
+}
+
+function buildEvaluationMetricSlices(trainingRuns: TrainingRun[]): Entity[] {
+  const metricNames = [...new Set(trainingRuns.flatMap((run) => Object.keys(run.metrics)))];
+  return metricNames.map((metricName) => {
+    const candidateValues = trainingRuns
+      .map((run) => ({ run, value: run.metrics[metricName] }))
+      .filter((item) => Number.isFinite(item.value));
+    const sorted = [...candidateValues].sort((left, right) => right.value - left.value);
+    const best = sorted[0];
+    const baselineValue = Math.min(...candidateValues.map((item) => item.value));
+    return {
+      metric_name: metricName,
+      candidate_count: candidateValues.length,
+      best_value: best?.value ?? 0,
+      baseline_value: Number.isFinite(baselineValue) ? baselineValue : 0,
+      delta_from_baseline: best ? best.value - baselineValue : 0,
+      best_experiment_run_id: best?.run.experiment_run_id ?? "",
+      best_run_name: stringValue(best?.run.run_name, "training run"),
+      higher_is_better: !/(loss|error|latency|rmse|mae|mse)/i.test(metricName),
+    };
+  });
+}
+
+function buildEvaluationApprovalChecklist(
+  leader: Entity | undefined,
+  modelCards: Entity[],
+): Entity[] {
+  if (!leader) {
+    return [
+      {
+        key: "candidate",
+        label: "Evaluation candidate",
+        status: "missing",
+        detail: "No scored experiment run is available yet.",
+        evidence: "Create or complete a training run with logged metrics.",
+      },
+    ];
+  }
+  const modelCard = modelCards.find((card) =>
+    stringValue(leader.model_version_label, "").startsWith(stringValue(card.model_name, "")),
+  );
+  return [
+    {
+      key: "offline_metrics",
+      label: "Offline metrics",
+      status: leader.primary_metric_value === null ? "missing" : "passed",
+      detail: "Primary offline metrics are attached to the candidate run.",
+      evidence: stringValue(leader.run_name, "training run"),
+    },
+    {
+      key: "evaluation_report",
+      label: "Evaluation report",
+      status: "passed",
+      detail: "Evaluation metadata is attached through the training run result.",
+      evidence: stringValue(leader.experiment_run_id, "experiment run"),
+    },
+    {
+      key: "lineage",
+      label: "Dataset and feature lineage",
+      status: "passed",
+      detail: "The candidate links to reproducible training context.",
+      evidence: "training_run and experiment_run",
+    },
+    {
+      key: "artifact_manifest",
+      label: "Artifact manifest",
+      status: stringValue(modelCard?.artifact_manifest_hash, "") ? "passed" : "missing",
+      detail: "Model artifact manifest evidence is required for review.",
+      evidence: stringValue(modelCard?.artifact_manifest_uri, "model registry"),
+    },
+    {
+      key: "model_signature",
+      label: "Model signature",
+      status: (modelCard?.signature_summary as string[] | undefined)?.length ? "passed" : "warning",
+      detail: "Model inputs and outputs are captured for serving review.",
+      evidence: stringValue(modelCard?.model_format, "model registry"),
+    },
+    {
+      key: "approval",
+      label: "Reviewer approval",
+      status: leader.approval_status === "approved" ? "passed" : "warning",
+      detail: "The recommended candidate should be approved before release.",
+      evidence: stringValue(leader.model_version_label, "not promoted"),
+    },
+  ];
+}
+
+function buildEvaluationNarrative(leaderboard: Entity[], modelCards: Entity[]): string[] {
+  const leader = leaderboard[0];
+  if (!leader) {
+    return [
+      "No evaluation candidates are available for this project yet.",
+      "Create a training run with metrics before comparing models.",
+      "Model card evidence will appear after a run is promoted to the registry.",
+    ];
+  }
+  return [
+    `${stringValue(leader.run_name, "A run")} currently leads the comparison on ${stringValue(leader.primary_metric_name, "metric")}=${formatMetric(numberValue(leader.primary_metric_value, 0))}.`,
+    `${modelCards.length} model card evidence records are linked to registry versions.`,
+    "Approval readiness is derived from metrics, lineage, artifacts, signatures, and reviewer state.",
+  ];
+}
+
+function evaluationQualityScore(run: TrainingRun, version: ModelVersion | undefined): number {
+  let score = 0;
+  if (run.status === "succeeded") {
+    score += 35;
+  }
+  if (Object.keys(run.metrics).length) {
+    score += 25;
+  }
+  if (version) {
+    score += 20;
+  }
+  if (version?.status === "approved") {
+    score += 20;
+  }
+  return Math.min(score, 100);
+}
+
+function approvalStatusForVersion(version: ModelVersion | undefined): string {
+  if (!version) {
+    return "not_registered";
+  }
+  if (version.status === "approved") {
+    return "approved";
+  }
+  if (version.status === "pending_approval") {
+    return "requested";
+  }
+  return "not_requested";
+}
+
+function signatureSummary(signature: Entity): string[] {
+  const inputs = Array.isArray(signature.inputs) ? signature.inputs.length : 0;
+  const outputs = Array.isArray(signature.outputs) ? signature.outputs.length : 0;
+  if (inputs || outputs) {
+    return [`${inputs} inputs`, `${outputs} outputs`];
+  }
+  return Object.keys(signature);
+}
+
+function formatMetric(value: number): string {
+  return Math.abs(value) >= 1 ? value.toFixed(3) : value.toFixed(4);
+}
+
 function projectLifecycleStage({
   key,
   title,
@@ -2348,6 +2630,10 @@ function nullableString(value: unknown): string | null {
 
 function numberValue(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function nullableNumberValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 function recordValue(value: unknown): Entity {

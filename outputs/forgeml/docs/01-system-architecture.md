@@ -83,6 +83,13 @@ Owns training run requests, pipeline configuration, hyperparameter search reques
 
 Owns ForgeML experiment abstractions, metrics, parameters, run status, and MLflow adapter integration.
 
+### Evaluation
+
+Owns project-scoped comparison read models, metric normalization, model card
+evidence, approval checklist composition, and reviewer-ready evaluation
+narratives derived from experiment, training, registry, approval, and lineage
+records.
+
 ### Model Registry
 
 Owns registered models, versions, artifact metadata, approval state, promotion rules, and model lineage.

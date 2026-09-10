@@ -252,8 +252,8 @@ class FakeAdministrationService:
             manifest_git_sha="abc123",
             manifest_git_branch="main",
             ci_run_url="https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-            artifact_count=44,
-            quality_gate_count=32,
+            artifact_count=45,
+            quality_gate_count=33,
             missing_artifacts=(),
             missing_quality_gates=(),
             comparison={"passed": True},
@@ -262,6 +262,7 @@ class FakeAdministrationService:
                 "artifact_names": [
                     "release_evidence_drilldown_api_contract",
                     "lifecycle_polish_contract",
+                    "evaluation_comparison_contract",
                 ],
             },
             report={
@@ -516,8 +517,8 @@ def release_evidence_report_response(
         "manifest_git_sha": "abc123",
         "manifest_git_branch": "main",
         "ci_run_url": "https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-        "artifact_count": 44,
-        "quality_gate_count": 32,
+        "artifact_count": 45,
+        "quality_gate_count": 33,
         "missing_artifacts": [],
         "missing_quality_gates": [],
         "comparison": {"passed": True},
@@ -526,6 +527,7 @@ def release_evidence_report_response(
             "artifact_names": [
                 "release_evidence_drilldown_api_contract",
                 "lifecycle_polish_contract",
+                "evaluation_comparison_contract",
             ],
         },
         "report": {

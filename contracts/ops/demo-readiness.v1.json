@@ -11,6 +11,7 @@
     "portfolio_interview_mode",
     "admin_controls_review",
     "lifecycle_readiness_review",
+    "evaluation_comparison_review",
     "manual_review_runbook",
     "reviewer_reset_flow",
     "architecture_walkthrough"
@@ -49,7 +50,8 @@
     "frontend/tests/e2e/demo-screenshots.spec.ts",
     "frontend/src/modules/portfolio/pages/PortfolioInterviewPage.tsx",
     "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx",
-    "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx"
+    "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+    "frontend/src/modules/evaluation/pages/EvaluationPage.test.tsx"
   ],
   "schema_version": "forgeml.demo_readiness_contract.v1",
   "seeded_surfaces": [
@@ -69,6 +71,7 @@
     "operational_audit",
     "portfolio_interview",
     "admin_controls",
-    "lifecycle"
+    "lifecycle",
+    "evaluation"
   ]
 }

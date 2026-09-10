@@ -31,6 +31,7 @@ capability it demonstrates.
 | `11-portfolio-interview-mode.png` | `/portfolio` | Reviewer dashboard, architecture walkthrough, evidence explanations, validation paths, and interview prompts. |
 | `12-admin-controls.png` | `/admin` | Admin controls for organization users, RBAC presets, runtime posture, safe workflows, and operator commands. |
 | `13-lifecycle.png` | `/lifecycle` | Project Lifecycle readiness across datasets, feature store, experiments, training, registry, deployment, inference, monitoring, drift detection, and retraining. |
+| `14-evaluation.png` | `/evaluation` | Evaluation leaderboard, metric slices, model-card evidence, approval checklist, and reviewer narrative. |
 
 ## Capture Contract
 
@@ -48,4 +49,6 @@ referenced by the portfolio readiness, release evidence UX, and operational
 audit UX contracts. Before a fresh capture, `make demo-reset` clears prior
 browser outputs and `make demo-stack-fresh` rebuilds local demo state and release
 evidence from the repo. Run `make lifecycle-polish` when the Lifecycle page,
-API, release evidence, or screenshot catalog changes.
+API, release evidence, or screenshot catalog changes. Run
+`make evaluation-comparison` when the Evaluation page, API, release evidence, or
+screenshot catalog changes.

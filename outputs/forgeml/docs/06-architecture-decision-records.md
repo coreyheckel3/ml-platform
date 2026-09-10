@@ -752,3 +752,31 @@ a new source of truth. Deriving it from datasets, features, experiments,
 training, registry, deployment, inference, monitoring, drift detection, and
 retraining keeps the modular monolith honest while giving reviewers a single
 place to validate a project’s end-to-end ML path.
+
+## ADR-037: Evaluation Comparison Read Model
+
+Status: Accepted
+
+Decision: Add evaluation comparison as a read-only project-scoped module that
+aggregates experiment runs, training runs, registered model versions, approval
+state, and lineage into
+`GET /api/v1/projects/{project_id}/evaluation/comparison` and the `/evaluation`
+console route.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Read-only aggregate model | Keeps evaluation decisions traceable to source systems, avoids duplicated state, and supports reviewer-ready evidence | Requires cross-module repository queries and careful metric normalization |
+| Persisted comparison table | Fast reads and easy report history | Creates synchronization risk when experiments, training runs, or approvals change |
+| Frontend-only comparison | Quick UI iteration | Moves metric semantics and RBAC-sensitive evidence composition into the browser |
+
+Recommendation: Keep evaluation comparison behind a dedicated application read
+model with repository interface, SQLAlchemy implementation, `evaluation:read`
+RBAC, Pydantic schemas, and frontend polling.
+
+Justification: Model evaluation is a decision-support workflow layered on top
+of existing experiment, training, registry, approval, and lineage records. A
+read-only aggregate gives ML engineers and reviewers a credible comparison
+surface without inventing a second source of truth or coupling the frontend to
+module internals.

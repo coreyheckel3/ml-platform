@@ -9,6 +9,7 @@ from forgeml.modules.auth.api.routes import router as auth_router
 from forgeml.modules.datasets.api.routes import router as datasets_router
 from forgeml.modules.deployments.api.routes import router as deployments_router
 from forgeml.modules.drift_detection.api.routes import router as drift_detection_router
+from forgeml.modules.evaluation.api.routes import router as evaluation_router
 from forgeml.modules.experiments.api.routes import router as experiments_router
 from forgeml.modules.feature_store.api.routes import router as feature_store_router
 from forgeml.modules.inference.api.routes import router as inference_router
@@ -101,6 +102,7 @@ def create_app(
     app.include_router(datasets_router, prefix="/api/v1")
     app.include_router(feature_store_router, prefix="/api/v1")
     app.include_router(experiments_router, prefix="/api/v1")
+    app.include_router(evaluation_router, prefix="/api/v1")
     app.include_router(training_router, prefix="/api/v1")
     app.include_router(model_registry_router, prefix="/api/v1")
     app.include_router(deployments_router, prefix="/api/v1")

@@ -63,6 +63,14 @@ const ExperimentsPage = lazy(() =>
   })),
 );
 
+const loadEvaluationPage = () =>
+  import("../modules/evaluation/pages/EvaluationPage");
+const EvaluationPage = lazy(() =>
+  loadEvaluationPage().then(({ EvaluationPage }) => ({
+    default: EvaluationPage,
+  })),
+);
+
 const loadFeatureStorePage = () =>
   import("../modules/feature_store/pages/FeatureStorePage");
 const FeatureStorePage = lazy(() =>
@@ -178,6 +186,11 @@ export const appRoutes: readonly AppRoute[] = [
     path: "/experiments",
     element: <ExperimentsPage />,
     preload: loadExperimentsPage,
+  },
+  {
+    path: "/evaluation",
+    element: <EvaluationPage />,
+    preload: loadEvaluationPage,
   },
   {
     path: "/training-runs",
