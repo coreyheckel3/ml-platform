@@ -20,6 +20,7 @@ describe("App", () => {
     expect(screen.getByText("Models")).toBeInTheDocument();
     expect(screen.getByText("Deployments")).toBeInTheDocument();
     expect(screen.getByText("Inference")).toBeInTheDocument();
+    expect(screen.getByText("Lifecycle")).toBeInTheDocument();
     expect(screen.getByText("Monitoring")).toBeInTheDocument();
     expect(screen.getByText("Drift")).toBeInTheDocument();
     expect(screen.getByText("Retraining")).toBeInTheDocument();

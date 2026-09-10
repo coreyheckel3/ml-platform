@@ -332,6 +332,25 @@ traceable across live audit rows and release annotations:
 - Verify the operational audit UX contract matches source files, portfolio
   docs, CI wiring, production-readiness, and release manifest evidence.
 
+## Lifecycle Polish Tests
+
+Lifecycle polish tests should keep the project-level readiness view tied to
+real module state instead of handcrafted demo text:
+
+- Unit test lifecycle service readiness scoring, recommended actions, missing
+  permissions, cross-organization denial, and missing-project behavior.
+- Integration test SQLAlchemy aggregate counts across datasets, feature store,
+  experiments, training, model registry, deployments, inference, monitoring,
+  drift detection, alerts, and retraining with tenant isolation.
+- API test `GET /api/v1/projects/{project_id}/lifecycle/summary` through FastAPI
+  dependency overrides.
+- Frontend test authenticated summary loading, signed-out behavior, stage links,
+  Project Signals, Recommended Actions, and Dependency Map rendering.
+- Capture `13-lifecycle.png` in the deterministic Playwright screenshot flow.
+- Verify the lifecycle polish contract matches backend sources, permission
+  catalog, frontend route/navigation, release evidence, docs, CI wiring, and
+  production-readiness.
+
 ## Artifact Manifest Tests
 
 Artifact manifest tests protect object-store metadata and lineage:

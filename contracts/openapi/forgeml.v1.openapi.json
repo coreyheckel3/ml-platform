@@ -4455,6 +4455,203 @@
         "title": "PredictResponse",
         "type": "object"
       },
+      "ProjectLifecycleDependencyResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "source_stage": {
+            "title": "Source Stage",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "target_stage": {
+            "title": "Target Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_stage",
+          "target_stage",
+          "status",
+          "detail"
+        ],
+        "title": "ProjectLifecycleDependencyResponse",
+        "type": "object"
+      },
+      "ProjectLifecycleMetricResponse": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "tone": {
+            "title": "Tone",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "value",
+          "detail",
+          "tone"
+        ],
+        "title": "ProjectLifecycleMetricResponse",
+        "type": "object"
+      },
+      "ProjectLifecycleStageResponse": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated At"
+          },
+          "primary_signal": {
+            "title": "Primary Signal",
+            "type": "string"
+          },
+          "recommended_action": {
+            "title": "Recommended Action",
+            "type": "string"
+          },
+          "route_path": {
+            "title": "Route Path",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "status",
+          "description",
+          "primary_signal",
+          "count",
+          "last_updated_at",
+          "route_path",
+          "recommended_action"
+        ],
+        "title": "ProjectLifecycleStageResponse",
+        "type": "object"
+      },
+      "ProjectLifecycleSummaryResponse": {
+        "properties": {
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectLifecycleDependencyResponse"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectLifecycleMetricResponse"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_name": {
+            "title": "Project Name",
+            "type": "string"
+          },
+          "project_slug": {
+            "title": "Project Slug",
+            "type": "string"
+          },
+          "project_status": {
+            "title": "Project Status",
+            "type": "string"
+          },
+          "readiness_score": {
+            "title": "Readiness Score",
+            "type": "integer"
+          },
+          "ready_stage_count": {
+            "title": "Ready Stage Count",
+            "type": "integer"
+          },
+          "recommended_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Recommended Actions",
+            "type": "array"
+          },
+          "schema_version": {
+            "default": "forgeml.project_lifecycle.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectLifecycleStageResponse"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "total_stage_count": {
+            "title": "Total Stage Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id",
+          "project_name",
+          "project_slug",
+          "project_status",
+          "readiness_score",
+          "ready_stage_count",
+          "total_stage_count",
+          "generated_at"
+        ],
+        "title": "ProjectLifecycleSummaryResponse",
+        "type": "object"
+      },
       "ProjectListResponse": {
         "properties": {
           "items": {
@@ -11033,6 +11230,54 @@
         "summary": "Create Inference Endpoint",
         "tags": [
           "inference"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/lifecycle/summary": {
+      "get": {
+        "operationId": "get_project_lifecycle_summary_api_v1_projects__project_id__lifecycle_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectLifecycleSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Project Lifecycle Summary",
+        "tags": [
+          "lifecycle"
         ]
       }
     },

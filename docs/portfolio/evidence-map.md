@@ -28,6 +28,7 @@ training script.
 | Release evidence notifications | `backend/src/forgeml/platform/notifications`, `frontend/src/modules/release_evidence`, `contracts/ops/release-evidence-notifications.v1.json` |
 | Operational audit UX | `frontend/src/modules/operational_audit`, `contracts/ops/operational-audit-ux.v1.json`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Admin controls | `backend/src/forgeml/modules/administration`, `frontend/src/modules/admin_controls`, `contracts/ops/platform-admin-controls.v1.json`, `docs/runbooks/admin-controls.md` |
+| Project lifecycle polish | `backend/src/forgeml/modules/lifecycle`, `frontend/src/modules/lifecycle`, `contracts/ops/lifecycle-polish.v1.json`, `docs/runbooks/lifecycle-polish.md` |
 | Portfolio interview mode | `frontend/src/modules/portfolio`, `docs/portfolio/interview-mode.md`, `contracts/ops/portfolio-interview-mode.v1.json`, `frontend/tests/e2e/demo-walkthrough.spec.ts` |
 | Browser lifecycle coverage | `frontend/tests/e2e/platform-lifecycle.spec.ts`, `frontend/tests/e2e/demo-screenshots.spec.ts` |
 | Reviewer-ready demo path | `docs/runbooks/demo-readiness.md`, `scripts/dev/demo_stack.py`, `scripts/dev/demo_reset.py`, `scripts/dev/refresh_demo_data.py`, `frontend/tests/e2e/demo-walkthrough.spec.ts`, `contracts/ops/demo-readiness.v1.json` |
@@ -46,7 +47,7 @@ The main CI workflow validates:
   orchestration, deployment, release, release evidence UX, live release
   evidence retrieval, release evidence drilldown API, scheduled release
   evidence refresh, release evidence notifications, operational audit UX,
-  platform admin controls, portfolio interview mode, demo, CI runtime, and
+  platform admin controls, lifecycle polish, portfolio interview mode, demo, CI runtime, and
   portfolio readiness contracts
 - Release manifest generation, verification, and artifact publication on
   main-branch pushes

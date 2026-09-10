@@ -155,6 +155,7 @@ async function handleApiRoute(
         "model_versions:review",
         "deployments:rollback",
         "inference:predict",
+        "lifecycle:read",
         "admin:controls:read",
         "admin:audit_log:read",
         "admin:release_evidence:read",
@@ -272,6 +273,15 @@ async function handleApiRoute(
     state.projects = [project, ...state.projects];
     seedProjectDependencies(state, project.id, name, false);
     return fulfillJson(route, project);
+  }
+
+  const lifecycleSummaryMatch = path.match(
+    /^\/api\/v1\/projects\/([^/]+)\/lifecycle\/summary$/,
+  );
+  if (method === "GET" && lifecycleSummaryMatch) {
+    const [, projectId] = lifecycleSummaryMatch;
+    ensureProjectDependencies(state, projectId);
+    return fulfillJson(route, buildProjectLifecycleSummary(state, projectId));
   }
 
   const monitoringSummaryMatch = path.match(
@@ -1276,8 +1286,8 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
     manifest_git_sha: "e4cd6aa4f9ce0000000000000000000000000000",
     manifest_git_branch: "main",
     ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
-    artifact_count: 43,
-    quality_gate_count: 31,
+    artifact_count: 44,
+    quality_gate_count: 32,
     missing_artifacts: [],
     missing_quality_gates: [],
     comparison: {
@@ -1295,6 +1305,7 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
         "release_evidence_scheduled_refresh_contract",
         "release_evidence_notifications_contract",
         "platform_admin_controls_contract",
+        "lifecycle_polish_contract",
       ],
       quality_gate_names: [
         "external_training_package_contract",
@@ -1302,6 +1313,7 @@ function releaseEvidenceReport(id: string, status: string, createdAt: string): E
         "release_evidence_scheduled_refresh_contract",
         "release_evidence_notifications_contract",
         "platform_admin_controls_contract",
+        "lifecycle_polish_contract",
       ],
       ci_run_url: "https://github.com/coreyheckel3/ml-platform/actions/runs/31826993476",
     },
@@ -1394,6 +1406,7 @@ function adminControlsResponse(state: ForgeMLApiMockState): Entity {
     "deployments:rollback",
     "inference:predict",
     "monitoring:read",
+    "lifecycle:read",
   ];
   return {
     schema_version: "forgeml.platform_admin_controls.v1",
@@ -1553,7 +1566,7 @@ function adminControlsResponse(state: ForgeMLApiMockState): Entity {
       audit_event_count: auditEventCount,
       release_evidence_report_count: reportCount,
       role_preset_count: 3,
-      permission_count: 11,
+      permission_count: permissions.length,
       permission_group_count: 3,
     },
   };
@@ -1848,6 +1861,308 @@ function buildEndpointMonitoring(
       p95_latency_ms: numberValue(latestSnapshot?.p95_latency_ms, 17.5),
     };
   });
+}
+
+function buildProjectLifecycleSummary(state: ForgeMLApiMockState, projectId: string): Entity {
+  const project = state.projects.find((item) => item.id === projectId) ?? projectRecord(
+    projectId,
+    "ML Project",
+    "Mock project",
+  );
+  const datasets = state.datasetsByProject.get(projectId) ?? [];
+  const datasetVersions = datasets.flatMap(
+    (dataset) => state.versionsByDataset.get(dataset.id) ?? [],
+  );
+  const validationRuns = datasetVersions.flatMap(
+    (version) => state.validationRunsByVersion.get(version.id) ?? [],
+  );
+  const featureSets = state.featureSetsByProject.get(projectId) ?? [];
+  const experiments = state.experimentsByProject.get(projectId) ?? [];
+  const trainingRuns = state.trainingRunsByProject.get(projectId) ?? [];
+  const models = state.modelsByProject.get(projectId) ?? [];
+  const modelVersions = models.flatMap(
+    (model) => state.versionsByModel.get(stringValue(model.id, "")) ?? [],
+  );
+  const deployments = state.deploymentsByProject.get(projectId) ?? [];
+  const revisions = deployments.flatMap(
+    (deployment) => state.revisionsByDeployment.get(stringValue(deployment.id, "")) ?? [],
+  );
+  const endpoints = state.endpointsByProject.get(projectId) ?? [];
+  const endpointMonitoring = buildEndpointMonitoring(state, projectId);
+  const predictionCount = endpointMonitoring.reduce(
+    (total, endpoint) => total + endpoint.prediction_count,
+    0,
+  );
+  const errorCount = endpointMonitoring.reduce(
+    (total, endpoint) => total + endpoint.error_count,
+    0,
+  );
+  const alertRules = state.alertRulesByProject.get(projectId) ?? [];
+  const alertEvents = state.alertEventsByProject.get(projectId) ?? [];
+  const driftReportCount = predictionCount > 0 ? 1 : 0;
+  const breachedDriftReports = alertEvents.length > 0 ? 1 : 0;
+  const retrainingRunCount = trainingRuns.some((run) => run.status === "succeeded") ? 1 : 0;
+  const counts = {
+    datasetVersions: datasetVersions.length,
+    validationRuns: validationRuns.length,
+    featureSets: featureSets.length,
+    materializations: featureSets.length,
+    experiments: experiments.length,
+    experimentRuns: trainingRuns.length,
+    trainingRuns: trainingRuns.length,
+    succeededTrainingRuns: trainingRuns.filter((run) => run.status === "succeeded").length,
+    failedTrainingRuns: trainingRuns.filter((run) =>
+      ["failed", "dead_lettered"].includes(run.status),
+    ).length,
+    modelVersions: modelVersions.length,
+    approvedModelVersions: modelVersions.filter((version) => version.status === "approved").length,
+    deployments: deployments.length,
+    activeDeployments: deployments.filter((deployment) => deployment.status === "active").length,
+    endpoints: endpoints.length,
+    activeEndpoints: endpoints.filter((endpoint) => endpoint.status === "active").length,
+    predictionCount,
+    errorCount,
+    driftReportCount,
+    breachedDriftReports,
+    alertRules: alertRules.length,
+    activeAlertEvents: alertEvents.filter((event) => event.status === "open").length,
+    retrainingPolicies: deployments.length > 0 ? 1 : 0,
+    retrainingRunCount,
+  };
+  const stages = [
+    projectLifecycleStage({
+      key: "datasets",
+      title: "Datasets",
+      status: lifecycleStatus(
+        counts.datasetVersions > 0 && counts.validationRuns > 0,
+        counts.datasetVersions > 0 && counts.validationRuns === 0,
+        datasets.length > 0,
+      ),
+      signal: `${counts.datasetVersions} versions, ${counts.validationRuns} validation runs`,
+      count: counts.datasetVersions,
+      routePath: "/datasets",
+      action: "Register a dataset version and run schema validation.",
+    }),
+    projectLifecycleStage({
+      key: "feature_store",
+      title: "Feature Store",
+      status: lifecycleStatus(
+        counts.featureSets > 0 && counts.materializations > 0,
+        counts.featureSets > 0 && counts.materializations === 0,
+        counts.featureSets > 0,
+      ),
+      signal: `${counts.featureSets} sets, ${counts.materializations} materializations`,
+      count: counts.featureSets,
+      routePath: "/feature-store",
+      action: "Create and materialize feature sets for reusable training inputs.",
+    }),
+    projectLifecycleStage({
+      key: "experiments",
+      title: "Experiments",
+      status: lifecycleStatus(counts.experimentRuns > 0, false, counts.experiments > 0),
+      signal: `${counts.experimentRuns} tracked runs`,
+      count: counts.experimentRuns,
+      routePath: "/experiments",
+      action: "Start an experiment run with logged metrics.",
+    }),
+    projectLifecycleStage({
+      key: "training",
+      title: "Training",
+      status: lifecycleStatus(
+        counts.succeededTrainingRuns > 0,
+        counts.trainingRuns > 0 && counts.succeededTrainingRuns === 0,
+        counts.trainingRuns > 0,
+      ),
+      signal: `${counts.succeededTrainingRuns} succeeded, ${counts.failedTrainingRuns} failed`,
+      count: counts.trainingRuns,
+      routePath: "/training-runs",
+      action: "Run the training worker until one run succeeds.",
+    }),
+    projectLifecycleStage({
+      key: "model_registry",
+      title: "Model Registry",
+      status: lifecycleStatus(
+        counts.modelVersions > 0 && counts.approvedModelVersions > 0,
+        counts.modelVersions > 0 && counts.approvedModelVersions === 0,
+        models.length > 0,
+      ),
+      signal: `${counts.modelVersions} versions, ${counts.approvedModelVersions} approved`,
+      count: counts.modelVersions,
+      routePath: "/models",
+      action: "Promote and approve a model version.",
+    }),
+    projectLifecycleStage({
+      key: "deployment",
+      title: "Deployment",
+      status: lifecycleStatus(
+        counts.activeDeployments > 0 && revisions.length > 0,
+        counts.activeDeployments > 0 && revisions.length === 0,
+        counts.deployments > 0,
+      ),
+      signal: `${counts.activeDeployments} active of ${counts.deployments} deployments`,
+      count: counts.deployments,
+      routePath: "/deployments",
+      action: "Create a healthy deployment revision.",
+    }),
+    projectLifecycleStage({
+      key: "inference",
+      title: "Inference",
+      status: lifecycleStatus(
+        counts.activeEndpoints > 0 && counts.predictionCount > 0,
+        counts.activeEndpoints > 0 && counts.predictionCount === 0,
+        counts.endpoints > 0,
+      ),
+      signal: `${counts.predictionCount} predictions, ${counts.errorCount} errors`,
+      count: counts.endpoints,
+      routePath: "/inference",
+      action: "Create an endpoint and send a probe prediction.",
+    }),
+    projectLifecycleStage({
+      key: "monitoring",
+      title: "Monitoring",
+      status: lifecycleStatus(
+        counts.predictionCount > 0 && counts.alertRules > 0,
+        counts.predictionCount > 0 && counts.alertRules === 0,
+        counts.predictionCount > 0,
+      ),
+      signal: `${counts.alertRules} rules, ${counts.activeAlertEvents} active alerts`,
+      count: counts.alertRules,
+      routePath: "/monitoring",
+      action: "Create alert rules for latency and error rate.",
+    }),
+    projectLifecycleStage({
+      key: "drift_detection",
+      title: "Drift Detection",
+      status: lifecycleStatus(
+        counts.driftReportCount > 0,
+        endpoints.length > 0 && counts.driftReportCount === 0,
+        endpoints.length > 0,
+      ),
+      signal: `${counts.driftReportCount} reports, ${counts.breachedDriftReports} threshold breaches`,
+      count: counts.driftReportCount,
+      routePath: "/drift",
+      action: "Run a drift report for the latest production window.",
+    }),
+    projectLifecycleStage({
+      key: "retraining",
+      title: "Retraining",
+      status: lifecycleStatus(
+        counts.retrainingPolicies > 0 && counts.retrainingRunCount > 0,
+        counts.retrainingPolicies > 0 && counts.retrainingRunCount === 0,
+        counts.retrainingPolicies > 0,
+      ),
+      signal: `${counts.retrainingPolicies} enabled policies, ${counts.retrainingRunCount} runs`,
+      count: counts.retrainingRunCount,
+      routePath: "/retraining",
+      action: "Trigger and approve a retraining run to close the loop.",
+    }),
+  ];
+  const readyStageCount = stages.filter((stage) => stage.status === "ready").length;
+  const recommendedActions = stages
+    .filter((stage) => stage.status !== "ready")
+    .map((stage) => stringValue(stage.recommended_action, "Review lifecycle stage."))
+    .slice(0, 4);
+  return {
+    schema_version: "forgeml.project_lifecycle.v1",
+    project_id: projectId,
+    project_name: project.name,
+    project_slug: project.slug,
+    project_status: stringValue(project.status, "active"),
+    readiness_score: Math.round((readyStageCount / stages.length) * 100),
+    ready_stage_count: readyStageCount,
+    total_stage_count: stages.length,
+    stages,
+    dependencies: buildLifecycleDependencies(stages),
+    metrics: [
+      lifecycleMetric("Dataset Versions", String(counts.datasetVersions), `${counts.validationRuns} validation runs`, counts.validationRuns > 0),
+      lifecycleMetric("Successful Training", String(counts.succeededTrainingRuns), `${counts.trainingRuns} total runs`, counts.succeededTrainingRuns > 0),
+      lifecycleMetric("Approved Models", String(counts.approvedModelVersions), `${counts.modelVersions} model versions`, counts.approvedModelVersions > 0),
+      lifecycleMetric("Predictions", String(counts.predictionCount), `${counts.errorCount} errors`, counts.predictionCount > 0),
+      lifecycleMetric("Drift Breaches", String(counts.breachedDriftReports), `${counts.driftReportCount} reports`, counts.breachedDriftReports === 0),
+      lifecycleMetric("Retraining Runs", String(counts.retrainingRunCount), `${counts.retrainingPolicies} policies`, counts.retrainingRunCount > 0),
+    ],
+    recommended_actions: recommendedActions,
+    generated_at: "2026-08-18T16:30:00Z",
+  };
+}
+
+function projectLifecycleStage({
+  key,
+  title,
+  status,
+  signal,
+  count,
+  routePath,
+  action,
+}: {
+  key: string;
+  title: string;
+  status: string;
+  signal: string;
+  count: number;
+  routePath: string;
+  action: string;
+}): Entity {
+  return {
+    key,
+    title,
+    status,
+    description: `${title} evidence for the project ML lifecycle.`,
+    primary_signal: signal,
+    count,
+    last_updated_at: "2026-08-18T16:00:00Z",
+    route_path: routePath,
+    recommended_action: action,
+  };
+}
+
+function buildLifecycleDependencies(stages: Entity[]): Entity[] {
+  const edges = [
+    ["datasets", "feature_store"],
+    ["feature_store", "experiments"],
+    ["experiments", "training"],
+    ["training", "model_registry"],
+    ["model_registry", "deployment"],
+    ["deployment", "inference"],
+    ["inference", "monitoring"],
+    ["monitoring", "drift_detection"],
+    ["drift_detection", "retraining"],
+  ];
+  return edges.map(([sourceStage, targetStage]) => {
+    const source = stages.find((stage) => stage.key === sourceStage);
+    const target = stages.find((stage) => stage.key === targetStage);
+    const connected = source?.status === "ready" && target?.status !== "missing";
+    return {
+      source_stage: sourceStage,
+      target_stage: targetStage,
+      status: connected ? "connected" : "blocked",
+      detail: connected
+        ? `${stringValue(source?.title, sourceStage)} feeds ${stringValue(target?.title, targetStage)}.`
+        : `${stringValue(target?.title, targetStage)} needs upstream evidence.`,
+    };
+  });
+}
+
+function lifecycleStatus(ready: boolean, needsAttention: boolean, pending: boolean): string {
+  if (ready) {
+    return "ready";
+  }
+  if (needsAttention) {
+    return "needs_attention";
+  }
+  if (pending) {
+    return "pending";
+  }
+  return "missing";
+}
+
+function lifecycleMetric(label: string, value: string, detail: string, healthy: boolean): Entity {
+  return {
+    label,
+    value,
+    detail,
+    tone: healthy ? "success" : "warning",
+  };
 }
 
 function prependDeploymentEvent(

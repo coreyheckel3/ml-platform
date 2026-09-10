@@ -95,6 +95,12 @@ Owns deployment records, rollout plans, canary state, rollback state, environmen
 
 Owns inference endpoint contracts, prediction request validation, prediction response metadata, latency/error metrics, and prediction sampling.
 
+### Lifecycle
+
+Owns read-only project lifecycle summaries, cross-module readiness scoring,
+dependency health, and recommended next actions derived from existing platform
+records.
+
 ### Monitoring
 
 Owns service health, training metrics, inference metrics, operational dashboards, and metric metadata.

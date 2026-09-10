@@ -42,8 +42,8 @@ export type ScheduledReleaseEvidenceRefresh = {
 };
 
 export const releaseEvidenceSummary = {
-  artifactCount: 43,
-  qualityGateCount: 31,
+  artifactCount: 44,
+  qualityGateCount: 32,
   imageTargetCount: 5,
   ciArtifactName: "forgeml-release-manifest",
   manifestPath: "dist/release/forgeml-release-manifest.json",
@@ -100,6 +100,13 @@ export const releaseArtifacts: EvidenceArtifact[] = [
     path: "contracts/ops/platform-admin-controls.v1.json",
     signal:
       "Verifies organization users, RBAC presets, runtime posture, safe admin workflows, and route coverage.",
+  },
+  {
+    name: "Lifecycle Polish Contract",
+    kind: "Operations contract",
+    path: "contracts/ops/lifecycle-polish.v1.json",
+    signal:
+      "Verifies the project lifecycle API, ten-stage readiness map, RBAC, screenshots, and CI coverage.",
   },
   {
     name: "Release Evidence Retrieval Contract",
@@ -203,6 +210,12 @@ export const qualityGates: EvidenceGate[] = [
       "Admin Controls route, RBAC visibility, runtime posture, safe workflows, and docs stay enforced in CI.",
   },
   {
+    name: "lifecycle_polish_contract",
+    owner: "Operations",
+    signal:
+      "Lifecycle route, cross-module readiness API, RBAC, screenshots, and docs stay enforced in CI.",
+  },
+  {
     name: "release_evidence_retrieval_contract",
     owner: "Operations",
     signal:
@@ -277,6 +290,12 @@ export const screenshotEvidence: ScreenshotEvidence[] = [
     route: "/admin",
     signal:
       "Organization users, RBAC presets, runtime posture, safe workflows, and operator commands.",
+  },
+  {
+    fileName: "13-lifecycle.png",
+    route: "/lifecycle",
+    signal:
+      "Project lifecycle readiness across datasets, features, training, registry, deployment, inference, monitoring, drift, and retraining.",
   },
 ];
 

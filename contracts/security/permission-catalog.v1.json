@@ -391,6 +391,15 @@
       "module": "inference"
     },
     {
+      "action": "read",
+      "code": "lifecycle:read",
+      "description": "Read cross-module project lifecycle readiness summaries.",
+      "enforced_at": [
+        "backend/src/forgeml/modules/lifecycle/application/services.py:33"
+      ],
+      "module": "lifecycle"
+    },
+    {
       "action": "create",
       "code": "model_versions:create",
       "description": "Register model versions and promote training artifacts.",
@@ -598,6 +607,7 @@
         "feature_pipelines:write",
         "feature_sets:create",
         "feature_sets:read",
+        "lifecycle:read",
         "model_versions:create",
         "model_versions:request_approval",
         "models:create",
@@ -635,6 +645,7 @@
         "inference_endpoints:create",
         "inference_endpoints:read",
         "inference_metrics:write",
+        "lifecycle:read",
         "models:read",
         "monitoring:read",
         "projects:read",
@@ -663,6 +674,7 @@
         "experiments:read",
         "feature_sets:read",
         "inference_endpoints:read",
+        "lifecycle:read",
         "models:read",
         "monitoring:read",
         "projects:read",
@@ -693,8 +705,8 @@
   ],
   "schema_version": "forgeml.permission_catalog.v1",
   "summary": {
-    "enforced_permission_count": 58,
-    "permission_count": 58,
+    "enforced_permission_count": 59,
+    "permission_count": 59,
     "role_preset_count": 5
   }
 }

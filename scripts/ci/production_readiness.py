@@ -34,6 +34,9 @@ try:
     from scripts.ci.check_external_training_package_contract import (
         check_external_training_package_contract as verify_external_training_package_contract,
     )
+    from scripts.ci.check_lifecycle_polish_contract import (
+        check_lifecycle_polish_contract as verify_lifecycle_polish_contract,
+    )
     from scripts.ci.check_mlflow_tracking_contract import (
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
     )
@@ -106,6 +109,9 @@ except ModuleNotFoundError:
     )
     from check_external_training_package_contract import (  # type: ignore[no-redef]
         check_external_training_package_contract as verify_external_training_package_contract,
+    )
+    from check_lifecycle_polish_contract import (  # type: ignore[no-redef]
+        check_lifecycle_polish_contract as verify_lifecycle_polish_contract,
     )
     from check_mlflow_tracking_contract import (  # type: ignore[no-redef]
         check_mlflow_tracking_contract as verify_mlflow_tracking_contract,
@@ -265,6 +271,20 @@ REQUIRED_FILES = (
     "backend/tests/unit/monitoring/test_monitoring_service.py",
     "backend/tests/api/test_monitoring_api.py",
     "frontend/src/modules/monitoring/pages/MonitoringPage.test.tsx",
+    "scripts/ci/check_lifecycle_polish_contract.py",
+    "contracts/ops/lifecycle-polish.v1.json",
+    "backend/src/forgeml/modules/lifecycle/domain/entities.py",
+    "backend/src/forgeml/modules/lifecycle/application/services.py",
+    "backend/src/forgeml/modules/lifecycle/infrastructure/sqlalchemy_repositories.py",
+    "backend/src/forgeml/modules/lifecycle/api/routes.py",
+    "backend/tests/unit/lifecycle/test_lifecycle_service.py",
+    "backend/tests/integration/lifecycle/test_lifecycle_repository.py",
+    "backend/tests/api/test_lifecycle_api.py",
+    "backend/tests/unit/ops/test_lifecycle_polish_contract.py",
+    "frontend/src/modules/lifecycle/api/lifecycle.ts",
+    "frontend/src/modules/lifecycle/pages/LifecyclePage.tsx",
+    "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+    "docs/runbooks/lifecycle-polish.md",
     "scripts/ci/generate_openapi_contract.py",
     "contracts/openapi/forgeml.v1.openapi.json",
     "backend/src/forgeml/platform/api/problem_details.py",
@@ -419,6 +439,7 @@ def run_checks(repo_root: Path = REPO_ROOT) -> list[ReadinessCheck]:
         check_airflow_orchestration_contract(repo_root),
         check_deployment_runtime_contract(repo_root),
         check_monitoring_dashboard_contract(repo_root),
+        check_lifecycle_polish_contract(repo_root),
         check_frontend_supply_chain_contract(repo_root),
         check_frontend_performance_contract(repo_root),
         check_frontend_e2e_contract(repo_root),
@@ -1155,6 +1176,144 @@ def check_monitoring_dashboard_contract(repo_root: Path) -> ReadinessCheck:
     )
 
 
+def check_lifecycle_polish_contract(repo_root: Path) -> ReadinessCheck:
+    ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    contract_path = repo_root / "contracts/ops/lifecycle-polish.v1.json"
+    has_ci_gate = "python scripts/ci/check_lifecycle_polish_contract.py" in ci_source
+    if not contract_path.is_file():
+        return ReadinessCheck(
+            name="lifecycle polish contract",
+            passed=False,
+            detail=f"missing contract: {contract_path}",
+        )
+
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    route = contract.get("route", {})
+    source_assets = {asset for asset in contract.get("required_source_assets", [])}
+    ui_sections = set(contract.get("required_ui_sections", []))
+    lifecycle_stages = set(contract.get("required_lifecycle_stages", []))
+    quality_gates = set(contract.get("quality_gates", []))
+    page_source = (
+        repo_root / "frontend/src/modules/lifecycle/pages/LifecyclePage.tsx"
+    ).read_text(encoding="utf-8")
+    lifecycle_repository_path = (
+        "backend/src/forgeml/modules/lifecycle/infrastructure/"
+        "sqlalchemy_repositories.py"
+    )
+    repository_source = (
+        repo_root / lifecycle_repository_path
+    ).read_text(encoding="utf-8")
+    service_source = (
+        repo_root / "backend/src/forgeml/modules/lifecycle/application/services.py"
+    ).read_text(encoding="utf-8")
+    release_manifest_source = (
+        repo_root / "scripts/ops/build_release_manifest.py"
+    ).read_text(encoding="utf-8")
+    release_evidence_source = (
+        repo_root / "frontend/src/modules/release_evidence/data/releaseEvidence.ts"
+    ).read_text(encoding="utf-8")
+    screenshot_catalog = (repo_root / "docs/portfolio/screenshot-catalog.md").read_text(
+        encoding="utf-8"
+    )
+    lifecycle_runbook = (repo_root / "docs/runbooks/lifecycle-polish.md").read_text(
+        encoding="utf-8"
+    )
+    contract_current, contract_detail = verify_lifecycle_polish_contract(
+        contract_path,
+        ci_path=repo_root / ".github/workflows/ci.yml",
+        repo_root=repo_root,
+    )
+    has_route = (
+        route.get("path") == "/lifecycle"
+        and route.get("label") == "Lifecycle"
+        and "LifecyclePage" in page_source
+    )
+    has_stage_depth = {
+        "datasets",
+        "feature_store",
+        "experiments",
+        "training",
+        "model_registry",
+        "deployment",
+        "inference",
+        "monitoring",
+        "drift_detection",
+        "retraining",
+    }.issubset(lifecycle_stages)
+    has_ui_sections = {
+        "End-to-End Lifecycle Readiness",
+        "Stage Readiness",
+        "Recommended Actions",
+        "Project Signals",
+        "Dependency Map",
+    }.issubset(ui_sections)
+    has_source_assets = {
+        "backend/src/forgeml/modules/lifecycle/infrastructure/sqlalchemy_repositories.py",
+        "backend/tests/integration/lifecycle/test_lifecycle_repository.py",
+        "frontend/src/modules/lifecycle/pages/LifecyclePage.tsx",
+        "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+        "frontend/tests/e2e/demo-walkthrough.spec.ts",
+    }.issubset(source_assets)
+    has_quality_gates = {
+        "python scripts/ci/check_lifecycle_polish_contract.py",
+        "backend/tests/unit/lifecycle/test_lifecycle_service.py",
+        "backend/tests/integration/lifecycle/test_lifecycle_repository.py",
+        "backend/tests/api/test_lifecycle_api.py",
+        "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+    }.issubset(quality_gates)
+    has_backend_contract = (
+        "ProjectModel.organization_id" in repository_source
+        and "TrainingRunModel.organization_id" in repository_source
+        and "RetrainingRunModel.organization_id" in repository_source
+        and "lifecycle:read" in service_source
+    )
+    has_release_evidence = (
+        "lifecycle_polish_contract" in release_manifest_source
+        and "contracts/ops/lifecycle-polish.v1.json" in release_manifest_source
+        and "Lifecycle Polish Contract" in release_evidence_source
+        and "13-lifecycle.png" in screenshot_catalog
+    )
+    has_runbook = (
+        "GET /api/v1/projects/{project_id}/lifecycle/summary" in lifecycle_runbook
+        and "lifecycle:read" in lifecycle_runbook
+        and "make lifecycle-polish" in lifecycle_runbook
+    )
+    passed = (
+        has_ci_gate
+        and contract_current
+        and has_route
+        and has_stage_depth
+        and has_ui_sections
+        and has_source_assets
+        and has_quality_gates
+        and has_backend_contract
+        and has_release_evidence
+        and has_runbook
+    )
+    return ReadinessCheck(
+        name="lifecycle polish contract",
+        passed=passed,
+        detail=(
+            "project lifecycle API, read model, RBAC, UI, screenshots, "
+            "release evidence, docs, and CI gate are configured"
+            if passed
+            else (
+                f"has_ci_gate={has_ci_gate}, "
+                f"contract_current={contract_current}, "
+                f"contract_detail={contract_detail}, "
+                f"has_route={has_route}, "
+                f"has_stage_depth={has_stage_depth}, "
+                f"has_ui_sections={has_ui_sections}, "
+                f"has_source_assets={has_source_assets}, "
+                f"has_quality_gates={has_quality_gates}, "
+                f"has_backend_contract={has_backend_contract}, "
+                f"has_release_evidence={has_release_evidence}, "
+                f"has_runbook={has_runbook}"
+            )
+        ),
+    )
+
+
 def check_frontend_supply_chain_contract(repo_root: Path) -> ReadinessCheck:
     ci_source = (repo_root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     package_lock = json.loads(
@@ -1813,6 +1972,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "contracts/ops/release-evidence-workflow.v1.json",
         "contracts/ops/release-evidence-ux.v1.json",
         "contracts/ops/release-evidence-retrieval.v1.json",
+        "contracts/ops/lifecycle-polish.v1.json",
         "contracts/ops/release-manifest-verification.v1.json",
         "contracts/ops/demo-readiness.v1.json",
         "contracts/ops/ci-runtime.v1.json",
@@ -1848,6 +2008,7 @@ def check_release_manifest_contract(repo_root: Path) -> ReadinessCheck:
         "airflow_orchestration_contract",
         "deployment_runtime_contract",
         "monitoring_dashboard_contract",
+        "lifecycle_polish_contract",
     }
     missing_artifacts = sorted(required_artifacts - artifact_paths)
     missing_images = sorted(required_images - image_names)
@@ -2000,6 +2161,7 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
         "python scripts/ci/check_release_evidence_ux_contract.py",
         "python scripts/ci/check_portfolio_interview_mode_contract.py",
         "python scripts/ci/check_platform_admin_controls_contract.py",
+        "python scripts/ci/check_lifecycle_polish_contract.py",
         "backend/tests/unit/ops/test_release_evidence_ux_contract.py",
         "frontend/src/modules/release_evidence/pages/ReleaseEvidencePage.test.tsx",
     }.issubset(quality_gates)
@@ -2011,12 +2173,15 @@ def check_release_evidence_ux_contract(repo_root: Path) -> ReadinessCheck:
         and "release_manifest_verifier_contract" in data_source
         and "portfolio_interview_mode_contract" in data_source
         and "platform_admin_controls_contract" in data_source
+        and "lifecycle_polish_contract" in data_source
         and "contracts/ops/platform-admin-controls.v1.json" in data_source
+        and "contracts/ops/lifecycle-polish.v1.json" in data_source
     )
     has_screenshot_catalog = (
         "09-release-evidence.png" in screenshot_catalog
         and "11-portfolio-interview-mode.png" in screenshot_catalog
         and "12-admin-controls.png" in screenshot_catalog
+        and "13-lifecycle.png" in screenshot_catalog
     )
     has_evidence_map = "Release evidence UX" in evidence_map
     has_release_manifest_artifact = (
@@ -2817,6 +2982,7 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "manual_review_runbook",
         "reviewer_reset_flow",
         "architecture_walkthrough",
+        "lifecycle_readiness_review",
     }.issubset(capabilities)
     has_seeded_surfaces = {
         "projects",
@@ -2831,6 +2997,7 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "retraining",
         "release_evidence",
         "operational_audit",
+        "lifecycle",
     }.issubset(seeded_surfaces)
     has_quality_gates = {
         "backend/tests/unit/dev/test_demo_stack.py",
@@ -2838,6 +3005,7 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "backend/tests/unit/dev/test_refresh_demo_data.py",
         "frontend/tests/e2e/demo-walkthrough.spec.ts",
         "frontend/tests/e2e/demo-screenshots.spec.ts",
+        "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
     }.issubset(quality_gates)
     has_live_command = (
         "make demo-stack" in runbook_source
@@ -2865,8 +3033,12 @@ def check_demo_readiness_contract(repo_root: Path) -> ReadinessCheck:
         "walks reviewer through demo readiness paths" in browser_walkthrough_source
         and "demoWalkthroughSteps" in browser_walkthrough_source
         and "installForgeMLApiMock" in browser_walkthrough_source
+        and "/lifecycle" in browser_walkthrough_source
     )
-    has_screenshot_capture = "page.screenshot" in screenshots_source
+    has_screenshot_capture = (
+        "page.screenshot" in screenshots_source
+        and "13-lifecycle.png" in screenshots_source
+    )
     passed = (
         has_ci_gate
         and contract_current

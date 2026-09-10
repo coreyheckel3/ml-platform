@@ -12,6 +12,7 @@ from forgeml.modules.drift_detection.api.routes import router as drift_detection
 from forgeml.modules.experiments.api.routes import router as experiments_router
 from forgeml.modules.feature_store.api.routes import router as feature_store_router
 from forgeml.modules.inference.api.routes import router as inference_router
+from forgeml.modules.lifecycle.api.routes import router as lifecycle_router
 from forgeml.modules.model_registry.api.routes import router as model_registry_router
 from forgeml.modules.monitoring.api.routes import router as monitoring_router
 from forgeml.modules.projects.api.routes import router as projects_router
@@ -104,6 +105,7 @@ def create_app(
     app.include_router(model_registry_router, prefix="/api/v1")
     app.include_router(deployments_router, prefix="/api/v1")
     app.include_router(inference_router, prefix="/api/v1")
+    app.include_router(lifecycle_router, prefix="/api/v1")
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(alerting_router, prefix="/api/v1")
     app.include_router(drift_detection_router, prefix="/api/v1")

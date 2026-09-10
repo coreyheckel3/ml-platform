@@ -1,0 +1,111 @@
+{
+  "api_surface": [
+    "GET /api/v1/projects/{project_id}/lifecycle/summary"
+  ],
+  "generated_from": [
+    "backend.modules.lifecycle",
+    "backend.platform.security.permissions",
+    "frontend.modules.lifecycle",
+    "frontend.tests.e2e.forgeml_api_mock",
+    "docs.runbooks.lifecycle-polish"
+  ],
+  "operator_commands": [
+    "make lifecycle-polish",
+    "PYTHONPATH=. python scripts/ci/check_lifecycle_polish_contract.py",
+    "PYTHONPATH=backend/src:. python scripts/ci/generate_openapi_contract.py --check",
+    "PYTHONPATH=. python scripts/ci/check_permission_catalog.py"
+  ],
+  "quality_gates": [
+    "python scripts/ci/check_lifecycle_polish_contract.py",
+    "backend/tests/unit/lifecycle/test_lifecycle_service.py",
+    "backend/tests/integration/lifecycle/test_lifecycle_repository.py",
+    "backend/tests/api/test_lifecycle_api.py",
+    "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+    "frontend/tests/e2e/demo-walkthrough.spec.ts",
+    "frontend/tests/e2e/demo-screenshots.spec.ts"
+  ],
+  "rbac_permission": "lifecycle:read",
+  "required_backend_layers": [
+    "domain_entities",
+    "repository_interface",
+    "sqlalchemy_repository",
+    "application_service",
+    "api_route",
+    "pydantic_schemas",
+    "unit_tests",
+    "integration_tests",
+    "api_tests"
+  ],
+  "required_lifecycle_stages": [
+    "datasets",
+    "feature_store",
+    "experiments",
+    "training",
+    "model_registry",
+    "deployment",
+    "inference",
+    "monitoring",
+    "drift_detection",
+    "retraining"
+  ],
+  "required_release_signals": [
+    "lifecycle_polish_contract",
+    "contracts/ops/lifecycle-polish.v1.json",
+    "13-lifecycle.png",
+    "lifecycle:read"
+  ],
+  "required_source_assets": [
+    "backend/src/forgeml/modules/lifecycle/domain/entities.py",
+    "backend/src/forgeml/modules/lifecycle/repositories/interfaces.py",
+    "backend/src/forgeml/modules/lifecycle/infrastructure/sqlalchemy_repositories.py",
+    "backend/src/forgeml/modules/lifecycle/application/services.py",
+    "backend/src/forgeml/modules/lifecycle/api/routes.py",
+    "backend/src/forgeml/modules/lifecycle/api/schemas.py",
+    "backend/src/forgeml/main.py",
+    "backend/src/forgeml/platform/security/permissions.py",
+    "backend/tests/unit/lifecycle/test_lifecycle_service.py",
+    "backend/tests/integration/lifecycle/test_lifecycle_repository.py",
+    "backend/tests/api/test_lifecycle_api.py",
+    "frontend/src/modules/lifecycle/api/lifecycle.ts",
+    "frontend/src/modules/lifecycle/pages/LifecyclePage.tsx",
+    "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx",
+    "frontend/src/app/navigation.ts",
+    "frontend/src/app/routes.tsx",
+    "frontend/src/app/App.test.tsx",
+    "frontend/tests/e2e/fixtures/forgemlApiMock.ts",
+    "frontend/tests/e2e/smoke.spec.ts",
+    "frontend/tests/e2e/demo-walkthrough.spec.ts",
+    "frontend/tests/e2e/demo-screenshots.spec.ts",
+    "frontend/src/modules/release_evidence/data/releaseEvidence.ts",
+    "docs/runbooks/lifecycle-polish.md",
+    "docs/runbooks/demo-readiness.md",
+    "docs/runbooks/production-readiness.md",
+    "docs/portfolio/evidence-map.md",
+    "docs/portfolio/screenshot-catalog.md",
+    "Makefile"
+  ],
+  "required_ui_sections": [
+    "End-to-End Lifecycle Readiness",
+    "Stage Readiness",
+    "Recommended Actions",
+    "Project Signals",
+    "Dependency Map"
+  ],
+  "route": {
+    "label": "Lifecycle",
+    "navigation_icon": "GitPullRequestArrow",
+    "path": "/lifecycle"
+  },
+  "schema_version": "forgeml.lifecycle_polish_contract.v1",
+  "schema_versions": [
+    "forgeml.project_lifecycle.v1",
+    "forgeml.lifecycle_polish_contract.v1"
+  ],
+  "summary": {
+    "backend_layer_count": 9,
+    "lifecycle_stage_count": 10,
+    "release_signal_count": 4,
+    "source_asset_count": 28,
+    "ui_section_count": 5
+  }
+}

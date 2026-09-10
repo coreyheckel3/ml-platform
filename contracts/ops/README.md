@@ -219,6 +219,25 @@ Verify the checked-in contract:
 PYTHONPATH=. python scripts/ci/check_platform_admin_controls_contract.py
 ```
 
+## Lifecycle Polish
+
+`lifecycle-polish.v1.json` records the project lifecycle readiness contract:
+`/lifecycle` routing, `GET /api/v1/projects/{project_id}/lifecycle/summary`,
+`lifecycle:read` RBAC, ten-stage readiness coverage, release evidence wiring,
+deterministic screenshot capture, and runbook coverage.
+
+Regenerate after an intentional lifecycle product-surface change:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_lifecycle_polish_contract.py --write
+```
+
+Verify the checked-in contract:
+
+```bash
+PYTHONPATH=. python scripts/ci/check_lifecycle_polish_contract.py
+```
+
 ## Release Manifest Verification
 
 `release-manifest-verification.v1.json` records the required verifier behavior for

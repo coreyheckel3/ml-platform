@@ -59,6 +59,11 @@ const demoWalkthroughSteps = [
     signals: ["Probe Console"],
   },
   {
+    path: "/lifecycle",
+    heading: "Lifecycle",
+    signals: ["Stage Readiness", "Dependency Map", "Project Signals"],
+  },
+  {
     path: "/monitoring",
     heading: "Monitoring",
     signals: ["Operational Focus"],

@@ -43,6 +43,7 @@ Required checks:
 | Release evidence workflow | Manifest generation and artifact upload after required release gates |
 | Release evidence UX contract | Frontend evidence route, reviewer commands, screenshot catalog, and product-surface coverage |
 | Operational audit UX contract | Operator audit timeline route, admin audit API usage, release annotations, screenshot catalog, and product-surface coverage |
+| Lifecycle polish contract | Project lifecycle API, ten-stage readiness UI, RBAC, screenshot catalog, and release evidence coverage |
 | Release manifest verifier | Artifact integrity, Dockerfile integrity, quality gates, and CI evidence linkage |
 | Demo readiness contract | One-command demo stack, seeded refresh, screenshot capture, runbook, and architecture walkthrough |
 | CI runtime contract | Current GitHub Actions runtime pins and retired action major detection |
@@ -56,7 +57,7 @@ After merge:
 1. Build versioned Docker images.
 2. Push images to ECR.
 3. Generate OpenAPI contract artifact.
-4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, security hardening, release evidence UX, live release evidence retrieval, operational audit UX, demo readiness, CI runtime, and portfolio readiness contracts.
+4. Validate artifact manifest storage, MLflow tracking, Airflow orchestration, deployment runtime, monitoring dashboard, security hardening, release evidence UX, live release evidence retrieval, operational audit UX, lifecycle polish, demo readiness, CI runtime, and portfolio readiness contracts.
 5. Run database migration dry-run against staging clone where available.
 6. Deploy to staging.
 7. Run release smoke, API smoke tests, and k6 smoke load tests against staging.

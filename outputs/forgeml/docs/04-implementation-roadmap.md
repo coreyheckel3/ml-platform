@@ -225,5 +225,5 @@ the remaining product/runtime platform roadmap.
 | 71 | Demo Environment Polish | Completed: fresh demo reset, local release manifest generation, seeded release evidence refresh, deterministic browser walkthrough, Make targets, docs, contracts, and CI-ready validation. |
 | 72 | Portfolio Interview Mode | Completed: reviewer dashboard, architecture walkthrough page, evidence explanations, interview-ready validation paths, product route, docs, contract gate, release evidence, and screenshot coverage. |
 | 73 | Platform Admin Controls | Completed: organization-scoped admin read model, user access visibility, RBAC presets, runtime posture, safe admin workflows, `/admin` UI, docs, contract gate, release evidence, and screenshot coverage. |
-| 74 | End-to-End ML Lifecycle Polish | Planned: tighten example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 74 | End-to-End ML Lifecycle Polish | Completed: project lifecycle API, ten-stage readiness read model, `/lifecycle` UI, RBAC, demo walkthrough, screenshot coverage, runbook, release evidence, and CI contract. |
 | 75 | Evaluation and Model Comparison UX | Planned: add richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |

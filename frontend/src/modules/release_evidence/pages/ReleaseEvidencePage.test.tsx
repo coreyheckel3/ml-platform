@@ -26,8 +26,8 @@ describe("ReleaseEvidencePage", () => {
     expect(
       screen.getByRole("heading", { name: "Release Evidence" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("43")).toBeInTheDocument();
-    expect(screen.getByText("31")).toBeInTheDocument();
+    expect(screen.getByText("44")).toBeInTheDocument();
+    expect(screen.getByText("32")).toBeInTheDocument();
     expect(screen.getAllByText("forgeml-release-manifest").length).toBeGreaterThan(1);
     expect(screen.getByText("Release Manifest")).toBeInTheDocument();
     expect(screen.getByText("Live Evidence Retrieval")).toBeInTheDocument();
@@ -55,6 +55,9 @@ describe("ReleaseEvidencePage", () => {
     ).toBeGreaterThan(0);
     expect(
       screen.getAllByText("Platform Admin Controls Contract").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Lifecycle Polish Contract").length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText("Security Hardening Contract").length).toBeGreaterThan(0);
     expect(
@@ -86,11 +89,13 @@ describe("ReleaseEvidencePage", () => {
     expect(screen.getByText("release_evidence_notifications_contract")).toBeInTheDocument();
     expect(screen.getByText("portfolio_interview_mode_contract")).toBeInTheDocument();
     expect(screen.getByText("platform_admin_controls_contract")).toBeInTheDocument();
+    expect(screen.getByText("lifecycle_polish_contract")).toBeInTheDocument();
     expect(screen.getByText("Demo Screenshot Evidence")).toBeInTheDocument();
     expect(screen.getByText("09-release-evidence.png")).toBeInTheDocument();
     expect(screen.getByText("10-operational-audit.png")).toBeInTheDocument();
     expect(screen.getByText("11-portfolio-interview-mode.png")).toBeInTheDocument();
     expect(screen.getByText("12-admin-controls.png")).toBeInTheDocument();
+    expect(screen.getByText("13-lifecycle.png")).toBeInTheDocument();
     expect(screen.getByText("/release-evidence")).toBeInTheDocument();
   });
 

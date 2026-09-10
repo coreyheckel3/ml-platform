@@ -725,3 +725,30 @@ without introducing unsafe mutation paths. The modular monolith boundary still
 keeps domain read models, repository interfaces, SQLAlchemy implementations,
 application service orchestration, API schemas, and frontend surfaces ready for
 a later audited mutation workflow.
+
+## ADR-036: Project Lifecycle Readiness Read Model
+
+Status: Accepted
+
+Decision: Add a read-only lifecycle module that aggregates existing
+project-scoped records into `GET /api/v1/projects/{project_id}/lifecycle/summary`
+and a `/lifecycle` console route instead of persisting a separate lifecycle
+state table.
+
+Options considered:
+
+| Option | Pros | Cons |
+| --- | --- | --- |
+| Read-only aggregate model | Avoids duplicated state, keeps every stage traceable to owning modules, and can be contract-tested end to end | Requires broader SQLAlchemy queries across module tables |
+| Persisted lifecycle status table | Fast reads and easy dashboard rendering | Introduces synchronization risk and a second source of truth |
+| Frontend-only lifecycle composition | Quick product surface | Pushes domain semantics into the browser and bypasses RBAC/API governance |
+
+Recommendation: Keep lifecycle readiness as a dedicated application read model
+with a repository interface, SQLAlchemy implementation, `lifecycle:read` RBAC,
+Pydantic response schemas, and frontend live polling.
+
+Justification: Lifecycle readiness is an operating view over the platform, not
+a new source of truth. Deriving it from datasets, features, experiments,
+training, registry, deployment, inference, monitoring, drift detection, and
+retraining keeps the modular monolith honest while giving reviewers a single
+place to validate a project’s end-to-end ML path.

@@ -30,6 +30,11 @@ const demoScreens = [
     path: "/admin",
     heading: "Admin Controls",
     fileName: "12-admin-controls.png"
+  },
+  {
+    path: "/lifecycle",
+    heading: "Lifecycle",
+    fileName: "13-lifecycle.png"
   }
 ] as const;
 

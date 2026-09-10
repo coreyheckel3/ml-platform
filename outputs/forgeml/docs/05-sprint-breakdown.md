@@ -2466,6 +2466,46 @@ Implemented scope:
   contract generation, Make target, CI wiring, production-readiness coverage,
   and unit contract tests.
 
+## Sprint 74: End-to-End ML Lifecycle Polish
+
+Theme: expose a single project-level Lifecycle surface that summarizes whether
+an ML project has evidence across ingestion, features, experiments, training,
+registry, deployment, inference, monitoring, drift detection, and retraining.
+
+Acceptance criteria:
+
+- The backend exposes `GET /api/v1/projects/{project_id}/lifecycle/summary`
+  behind the `lifecycle:read` permission.
+- The lifecycle module keeps clean architecture boundaries across domain
+  entities, repository interface, SQLAlchemy implementation, application
+  service, API route, and Pydantic schemas.
+- The frontend exposes `/lifecycle` through navigation with End-to-End
+  Lifecycle Readiness, Stage Readiness, Recommended Actions, Project Signals,
+  and Dependency Map sections.
+- CI verifies backend layers, RBAC, route wiring, frontend tests, deterministic
+  browser coverage, release evidence data, docs, screenshot catalog, and the
+  `13-lifecycle.png` screenshot through a dedicated contract.
+- The summary is read-only and derives state from existing project-scoped
+  platform records without adding duplicated lifecycle tables.
+
+Implemented scope:
+
+- Added `backend/src/forgeml/modules/lifecycle` with immutable domain read
+  models, repository boundary, SQLAlchemy aggregate queries, application
+  readiness composition, Pydantic schemas, and the lifecycle API route.
+- Added `lifecycle:read` to the permission catalog and operator/viewer role
+  presets.
+- Added `frontend/src/modules/lifecycle` with typed API client, live-refreshed
+  `LifecyclePage`, route loading, navigation, page tests, stateful Playwright
+  API mocks, smoke coverage, demo walkthrough coverage, and screenshot capture
+  for `13-lifecycle.png`.
+- Added `docs/runbooks/lifecycle-polish.md` and updated production readiness,
+  demo readiness, evidence map, screenshot catalog, README, release evidence,
+  release manifest, and ops contract documentation.
+- Added `scripts/ci/check_lifecycle_polish_contract.py`, checked-in contract
+  generation, Make target, CI wiring, production-readiness coverage, and unit
+  contract tests.
+
 ## Unified Sprint Plan from Sprint 46
 
 This track reconciles the completed release-governance work with the
@@ -2503,7 +2543,7 @@ sequence.
 | 71 | Demo Environment Polish | Completed | Fresh demo reset, local release manifest generation, seeded release evidence refresh, deterministic browser walkthrough, Make targets, docs, contracts, and CI-ready validation. |
 | 72 | Portfolio Interview Mode | Completed | Reviewer dashboard, architecture walkthrough page, evidence explanations, interview-ready validation paths, product route, docs, CI contract, release evidence, and screenshot coverage. |
 | 73 | Platform Admin Controls | Completed | Organization-scoped admin read model, user access visibility, RBAC presets, runtime posture, safe admin workflows, `/admin` UI, docs, CI contract, release evidence, and screenshot coverage. |
-| 74 | End-to-End ML Lifecycle Polish | Planned | Example project journeys from dataset registration through training, registry, deployment, inference, monitoring, and retraining. |
+| 74 | End-to-End ML Lifecycle Polish | Completed | Project lifecycle API, ten-stage readiness read model, `/lifecycle` UI, RBAC, demo walkthrough, screenshot coverage, runbook, release evidence, and CI contract. |
 | 75 | Evaluation and Model Comparison UX | Planned | Richer experiment comparison, model card evidence, metric slices, approval checklists, and reviewer-ready evaluation narratives. |
 
 The numbering keeps the shipped release-governance sprints intact and moves the

@@ -77,6 +77,14 @@ const InferencePage = lazy(() =>
   loadInferencePage().then(({ InferencePage }) => ({ default: InferencePage })),
 );
 
+const loadLifecyclePage = () =>
+  import("../modules/lifecycle/pages/LifecyclePage");
+const LifecyclePage = lazy(() =>
+  loadLifecyclePage().then(({ LifecyclePage }) => ({
+    default: LifecyclePage,
+  })),
+);
+
 const loadModelsPage = () => import("../modules/models/pages/ModelsPage");
 const ModelsPage = lazy(() =>
   loadModelsPage().then(({ ModelsPage }) => ({ default: ModelsPage })),
@@ -186,6 +194,11 @@ export const appRoutes: readonly AppRoute[] = [
     path: "/inference",
     element: <InferencePage />,
     preload: loadInferencePage,
+  },
+  {
+    path: "/lifecycle",
+    element: <LifecyclePage />,
+    preload: loadLifecyclePage,
   },
   {
     path: "/monitoring",

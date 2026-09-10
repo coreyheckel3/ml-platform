@@ -56,6 +56,7 @@ def test_demo_readiness_contract_shape() -> None:
     assert "frontend_screenshot_capture" in parsed["demo_capabilities"]
     assert "portfolio_interview_mode" in parsed["demo_capabilities"]
     assert "admin_controls_review" in parsed["demo_capabilities"]
+    assert "lifecycle_readiness_review" in parsed["demo_capabilities"]
     assert "reviewer_reset_flow" in parsed["demo_capabilities"]
     assert "architecture_walkthrough" in parsed["demo_capabilities"]
     assert "training_runs" in parsed["seeded_surfaces"]
@@ -63,6 +64,7 @@ def test_demo_readiness_contract_shape() -> None:
     assert "operational_audit" in parsed["seeded_surfaces"]
     assert "portfolio_interview" in parsed["seeded_surfaces"]
     assert "admin_controls" in parsed["seeded_surfaces"]
+    assert "lifecycle" in parsed["seeded_surfaces"]
     assert "fraud-detection" in parsed["demo_projects"]
     assert "python scripts/ci/check_demo_readiness_contract.py" in parsed["quality_gates"]
     assert "backend/tests/unit/dev/test_demo_reset.py" in parsed["quality_gates"]
@@ -71,5 +73,8 @@ def test_demo_readiness_contract_shape() -> None:
         "quality_gates"
     ]
     assert "frontend/src/modules/admin_controls/pages/AdminControlsPage.test.tsx" in parsed[
+        "quality_gates"
+    ]
+    assert "frontend/src/modules/lifecycle/pages/LifecyclePage.test.tsx" in parsed[
         "quality_gates"
     ]

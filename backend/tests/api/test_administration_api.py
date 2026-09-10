@@ -252,14 +252,17 @@ class FakeAdministrationService:
             manifest_git_sha="abc123",
             manifest_git_branch="main",
             ci_run_url="https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-            artifact_count=43,
-            quality_gate_count=31,
+            artifact_count=44,
+            quality_gate_count=32,
             missing_artifacts=(),
             missing_quality_gates=(),
             comparison={"passed": True},
             manifest_summary={
                 "git_sha": "abc123",
-                "artifact_names": ["release_evidence_drilldown_api_contract"],
+                "artifact_names": [
+                    "release_evidence_drilldown_api_contract",
+                    "lifecycle_polish_contract",
+                ],
             },
             report={
                 "schema_version": "forgeml.release_evidence_retrieval.v1",
@@ -513,14 +516,17 @@ def release_evidence_report_response(
         "manifest_git_sha": "abc123",
         "manifest_git_branch": "main",
         "ci_run_url": "https://github.com/coreyheckel3/ml-platform/actions/runs/12345",
-        "artifact_count": 43,
-        "quality_gate_count": 31,
+        "artifact_count": 44,
+        "quality_gate_count": 32,
         "missing_artifacts": [],
         "missing_quality_gates": [],
         "comparison": {"passed": True},
         "manifest_summary": {
             "git_sha": "abc123",
-            "artifact_names": ["release_evidence_drilldown_api_contract"],
+            "artifact_names": [
+                "release_evidence_drilldown_api_contract",
+                "lifecycle_polish_contract",
+            ],
         },
         "report": {
             "schema_version": "forgeml.release_evidence_retrieval.v1",
